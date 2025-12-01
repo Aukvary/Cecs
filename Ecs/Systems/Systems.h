@@ -18,8 +18,8 @@ typedef struct System {
     Action destroy;
 } EcsSystem;
 
-EcsSystem* ecs_system_new(void (*)(const EcsManager*, void*), Action, Action,
-                          Action, Action);
+EcsSystem* ecs_system_new(void (*init)(const EcsManager*, void*), Action pre_update,
+                          Action update, Action post_update, Action destroy);
 
 struct SystemHandler {
     const EcsManager* manager;

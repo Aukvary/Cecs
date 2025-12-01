@@ -3,8 +3,9 @@
 
 #include "systems.h"
 
-EcsSystem* ecs_system_new(void (*init)(const EcsManager*, void*), Action pre_update,
-                          Action update, Action post_update, Action destroy) {
+EcsSystem* ecs_system_new(void (*init)(const EcsManager*, void*),
+                          const Action pre_update, const Action update,
+                          const Action post_update, const Action destroy) {
     EcsSystem* system = malloc(sizeof(EcsSystem));
 
     *system = (EcsSystem) {
