@@ -27,7 +27,7 @@ typedef struct {
 } EcsConfig;
 
 struct ECSMask {
-    EcsManager* manager;
+    const EcsManager* manager;
 
     PoolInfo* include_pools;
     size_t include_size;
@@ -39,7 +39,7 @@ struct ECSMask {
     uint64_t hash;
 };
 
-EcsMask mask_new(EcsManager*, size_t, size_t);
+EcsMask mask_new(const EcsManager*, size_t, size_t);
 
 void mask_inc(EcsMask*, PoolInfo);
 
@@ -136,5 +136,7 @@ void ecs_manager_add_pool(EcsManager*, EcsPool*);
 EcsPool* ecs_manager_get_pool(const EcsManager*, PoolInfo);
 
 void on_entity_change(const EcsManager*, Entity, size_t, int);
+
+void ecs_manager_free(EcsManager*);
 
 #endif

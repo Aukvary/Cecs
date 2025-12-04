@@ -2,6 +2,7 @@
 #define COLLECTIONS_H
 
 #include <stdint.h>
+#include <stdlib.h>
 #include "Iterator.h"
 
 typedef struct {
@@ -19,26 +20,29 @@ typedef struct {
 
 #define VEC(T) T*
 
-#define VEC_NEW(T, capacity) (T*)vec_new(sizeof(T), capacity)
+#define VEC_NEW(T, capacity) (T*) vec_new(sizeof(T), capacity)
 
-#define VEC_COUNT(data) vec_header(data)->count
-#define VEC_CAPACITY(data) vec_header(data)->capacity
+#define VEC_ADD(data, value)                                                             \
+    ({                                                                                   \
+        typeof(value) tmp_var = (value);                                                 \
+        *(data) = vec_add(*(data), &tmp_var);                                            \
+    })
 
-#define VEC_ADD(data, value) ({ \
-typeof(value) tmp_var = value; \
-*(data) = vec_add(*(data), &tmp_var); \
-})
-#define VEC_POP(data, idx) vec_pop(data, idx)
-#define VEC_REMOVE(data, el) {\
-typeof(el) e = el;\
-vec_remove(data, &e);\
-}
+#define VEC_REMOVE(data, el)                                                             \
+    {                                                                                    \
+        typeof(el) e = el;                                                               \
+        vec_remove(data, &e);                                                            \
+    }
 
 #define VEC_ITERATOR(data) vec_header(data)
 
 void* vec_new(size_t, size_t);
 
 VecHeader* vec_header(void*);
+
+inline size_t vec_capacity(void* data) { return vec_header(data)->capacity; }
+
+inline size_t vec_count(void* data) { return vec_header(data)->count; }
 
 void* vec_add(void*, void*);
 void vec_pop(void*, int);
@@ -48,5 +52,7 @@ VecHeader* vec_iterator(void*);
 void vec_start(void*);
 void* vec_current(void*);
 int vec_next(void*);
+
+inline void vec_free(void* data) { free(vec_header(data)); }
 
 #endif

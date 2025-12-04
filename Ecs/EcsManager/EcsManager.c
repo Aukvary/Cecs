@@ -10,10 +10,11 @@
 static int cmp_pools(const void*, const void*);
 
 
-static EcsFilter* new_filter(EcsManager*, EcsMask);
+static EcsFilter* filter_new(EcsManager*, EcsMask);
 static void filter_add_entity(EcsFilter*, Entity);
 static void filter_remove_entity(EcsFilter*, Entity);
 static void filter_resize(EcsFilter*, size_t);
+static void filter_free(EcsFilter*);
 
 
 static void ecs_manager_resize_filters(EcsManager*);
@@ -23,7 +24,7 @@ static EcsFilter* get_filter(EcsManager*, EcsMask);
 static int is_mask_compatible(const EcsManager*, EcsMask, Entity);
 static int is_mask_compatible_without(const EcsManager*, EcsMask, Entity, int);
 
-EcsMask mask_new(EcsManager* manager, const size_t inc_size, const size_t exc_size) {
+EcsMask mask_new(const EcsManager* manager, const size_t inc_size, const size_t exc_size) {
     return (EcsMask) {
         .manager = manager,
         .include_size = inc_size,
@@ -85,7 +86,7 @@ EcsFilter* mask_end(EcsMask mask) {
     return get_filter(mask.manager, mask);
 }
 
-static EcsFilter* new_filter(EcsManager* manager, EcsMask const mask) {
+static EcsFilter* filter_new(EcsManager* manager, EcsMask const mask) {
     EcsFilter* new_filter = malloc(sizeof(EcsFilter));
 
     *new_filter = (EcsFilter) {
@@ -110,6 +111,11 @@ static void filter_remove_entity(EcsFilter* filter, const Entity entity) {
 
 static void filter_resize(EcsFilter* filter, const size_t new_size) {
     entity_container_resize(&filter->entities, new_size);
+}
+
+static void filter_free(EcsFilter* filter) {
+    entity_container_free(&filter->entities);
+    free(filter);
 }
 
 
@@ -156,7 +162,7 @@ Entity ecs_manager_new_entity(EcsManager* manager) {
         entity = manager->recycled_entities[manager->recycled_ptr--];
         manager->sparce_entities[entity].gen =
             abs(manager->sparce_entities[entity].gen) + 1;
-        printf("[DEBUG]\t new entity \"%d\" was created\n", entity);
+        printf("[DEBUG]\t recycled entity \"%d\" was created\n", entity);
     } else {
         entity = manager->entities_ptr++;
         if (entity == manager->sparse_size) {
@@ -181,7 +187,7 @@ Entity ecs_manager_new_entity(EcsManager* manager) {
                     filter_resize(manager->filters[i], manager->sparse_size);
             }
         }
-        printf("[DEBUG]\t recycled entity \"%d\" was created\n", entity);
+        printf("[DEBUG]\t new entity \"%d\" was created\n", entity);
     }
 
     return entity;
@@ -208,6 +214,22 @@ void ecs_manager_kill_entity(EcsManager* manager, const Entity entity) {
 
     manager->recycled_entities[manager->recycled_ptr++] = entity;
     manager->sparce_entities[entity].gen *= -1;
+
+    for (int i = 0; i < manager->pools_size; i++) {
+        if (manager->pools[i] == NULL)
+            continue;
+
+        if (ecs_pool_has(manager->pools[i], entity))
+            ecs_pool_remove(manager->pools[i], entity);
+    }
+
+    for (int i = 0; i < manager->filters_size; i++) {
+        if (manager->filters[i] == NULL)
+            continue;
+
+        if (entity_container_has(&manager->filters[i]->entities, entity))
+            filter_remove_entity(manager->filters[i], entity);
+    }
 
     printf("[DEBUG]\t entity \"%d\" was killed\n", entity);
 }
@@ -383,7 +405,7 @@ static EcsFilter* get_filter(EcsManager* manager, const EcsMask mask) {
     if (filter)
         return filter;
 
-    filter = new_filter(manager, mask);
+    filter = filter_new(manager, mask);
 
     while (manager->filters[idx] != NULL) {
         idx = (idx + 1) % manager->filters_size;
@@ -523,4 +545,25 @@ static int is_mask_compatible_without(const EcsManager* manager, const EcsMask f
         }
     }
     return 1;
+}
+
+void ecs_manager_free(EcsManager* manager) {
+    free(manager->sparce_entities);
+    free(manager->components);
+    free(manager->recycled_entities);
+
+    for (int i = 0; i < manager->pools_count; i++) {
+        if (manager->pools[i] != NULL)
+            ecs_pool_free(manager->pools[i]);
+    }
+
+    vec_free(manager->masks);
+
+    for (int i = 0; i < manager->filters_size; i++) {
+        if (manager->filters[i] != NULL)
+            filter_free(manager->filters[i]);
+    }
+
+    vec_free(manager->filter_by_include);
+    vec_free(manager->filter_by_exclude);
 }
