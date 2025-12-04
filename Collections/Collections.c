@@ -1,10 +1,11 @@
 #include "Collections.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 void* vec_new(size_t el_size, size_t capacity) {
-    VecHeader* header = malloc(sizeof(VecHeader) + el_size * capacity);;
+    VecHeader* header = malloc(sizeof(VecHeader) + el_size * capacity);
+    ;
 
     *header = (VecHeader) {
         .element_size = el_size,
@@ -13,19 +14,20 @@ void* vec_new(size_t el_size, size_t capacity) {
 
         .data = header + 1,
 
-        .iterator = (Iterator){
-            .start = vec_start,
-            .current = vec_current,
-            .next = vec_next
-        },
-        .iter_locked = 0
+        .iterator =
+            (Iterator) {
+                .start = vec_start,
+                .current = vec_current,
+                .next = vec_next,
+            },
+        .iter_locked = 0,
     };
 
     return header->data;
 }
 
 inline VecHeader* vec_header(void* data) {
-    return (VecHeader*)((uint8_t*)data - sizeof(VecHeader));
+    return (VecHeader*) ((uint8_t*) data - sizeof(VecHeader));
 }
 
 void* vec_add(void* data, void* el) {
@@ -38,7 +40,8 @@ void* vec_add(void* data, void* el) {
 
     if (header->count == header->capacity) {
         size_t new_capacity = header->capacity == 0 ? 1 : header->capacity * 2;
-        VecHeader* temp = realloc(header, sizeof(VecHeader) + new_capacity * header->element_size);
+        VecHeader* temp =
+            realloc(header, sizeof(VecHeader) + new_capacity * header->element_size);
 
         if (temp == NULL) {
             printf("vector memory allocation exception\n");
@@ -52,7 +55,7 @@ void* vec_add(void* data, void* el) {
         data = header->data;
     }
 
-    uint8_t* data_ptr = (uint8_t*)header->data;
+    uint8_t* data_ptr = header->data;
     size_t offset = header->count * header->element_size;
 
     memcpy(data_ptr + offset, el, header->element_size);
@@ -68,14 +71,12 @@ void vec_pop(void* data, int idx) {
         printf("cant change vector where it's locked\n");
         exit(1);
     }
-    if (idx >= header->count) exit(1);
+    if (idx >= header->count)
+        exit(1);
 
     for (int i = idx; i < header->count - 1; i++) {
-        memcpy(
-            (uint8_t*)data + header->element_size * i,
-            (uint8_t*)data + header->element_size * (i + 1),
-            header->element_size
-        );
+        memcpy((uint8_t*) data + header->element_size * i,
+               (uint8_t*) data + header->element_size * (i + 1), header->element_size);
     }
 
     header->count--;
@@ -92,7 +93,8 @@ void vec_remove(void* data, void* el) {
     int idx;
 
     for (int i = 0; i < header->count; i++) {
-        if (memcmp(el, (uint8_t*)data + header->element_size * i, header->element_size) == 0) {
+        if (memcmp(el, (uint8_t*) data + header->element_size * i,
+                   header->element_size) == 0) {
             idx = i;
             header->count--;
             break;
@@ -100,11 +102,8 @@ void vec_remove(void* data, void* el) {
     }
 
     for (int i = idx; i < header->count; i++) {
-        memcpy(
-            (uint8_t*)data + header->element_size * i,
-            (uint8_t*)data + header->element_size * (i + 1),
-            header->element_size
-        );
+        memcpy((uint8_t*) data + header->element_size * i,
+               (uint8_t*) data + header->element_size * (i + 1), header->element_size);
     }
 }
 
@@ -121,7 +120,7 @@ void* vec_current(void* data) {
         return NULL;
     }
 
-    void* element = (char*)header->data + (header->current * header->element_size);
+    void* element = (char*) header->data + (header->current * header->element_size);
     return element;
 }
 
@@ -131,7 +130,10 @@ int vec_next(void* data) {
     header->current++;
     int has_next = header->current < header->count;
 
-    if (!has_next) header->iter_locked = 0;
+    if (!has_next)
+        header->iter_locked = 0;
 
     return has_next;
 }
+
+inline void vec_free(void* data) { free(vec_header(data)); }

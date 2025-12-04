@@ -53,6 +53,6 @@ void vec_start(void*);
 void* vec_current(void*);
 int vec_next(void*);
 
-inline void vec_free(void* data) { free(vec_header(data)); }
+void vec_free(void* data);
 
 #endif

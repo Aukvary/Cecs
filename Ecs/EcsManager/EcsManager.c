@@ -24,7 +24,8 @@ static EcsFilter* get_filter(EcsManager*, EcsMask);
 static int is_mask_compatible(const EcsManager*, EcsMask, Entity);
 static int is_mask_compatible_without(const EcsManager*, EcsMask, Entity, int);
 
-EcsMask mask_new(const EcsManager* manager, const size_t inc_size, const size_t exc_size) {
+EcsMask mask_new(const EcsManager* manager, const size_t inc_size,
+                 const size_t exc_size) {
     return (EcsMask) {
         .manager = manager,
         .include_size = inc_size,
@@ -479,8 +480,6 @@ void on_entity_change(const EcsManager* manager, const Entity entity, const size
 
     if (added) {
         if (include_list != NULL) {
-            printf("inc\n");
-
             FOREACH(EcsFilter*, filter, *VEC_ITERATOR(include_list), {
                 if (is_mask_compatible(manager, filter->mask, entity)) {
                     filter_add_entity(filter, entity);
@@ -553,8 +552,11 @@ void ecs_manager_free(EcsManager* manager) {
     free(manager->recycled_entities);
 
     for (int i = 0; i < manager->pools_count; i++) {
-        if (manager->pools[i] != NULL)
-            ecs_pool_free(manager->pools[i]);
+        if (manager->pools[i] == NULL)
+            continue;
+        ecs_pool_free(manager->pools[i]);
+        vec_free(manager->filter_by_include[i]);
+        vec_free(manager->filter_by_exclude[i]);
     }
 
     vec_free(manager->masks);
@@ -564,6 +566,5 @@ void ecs_manager_free(EcsManager* manager) {
             filter_free(manager->filters[i]);
     }
 
-    vec_free(manager->filter_by_include);
-    vec_free(manager->filter_by_exclude);
+    free(manager);
 }

@@ -19,4 +19,5 @@ add_executable(Double_Trouble main.c
         Ecs/Systems/Systems.c
         Ecs/Pools/TagPool.c
         Ecs/Pools/ComponentPool.c
+        Ecs/Ecs.h
 )

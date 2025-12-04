@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "Ecs/EcsManager/EcsManager.h"
-#include "Ecs/Systems/Systems.h"
+#include "Ecs/Ecs.h"
 
 typedef struct Position Position;
 
