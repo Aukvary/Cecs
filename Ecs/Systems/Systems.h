@@ -1,12 +1,12 @@
 #ifndef SYSTEMS_H
 #define SYSTEMS_H
 
-#include "../ECSManager/EcsManager.h"
+#include "../EcsManager/EcsManager.h"
 #include "../EcsTypes.h"
 
 typedef void (*Action)(void*);
 
-typedef struct System {
+typedef struct EcsSystem {
     void* data;
 
     void (*init)(const EcsManager*, void*);

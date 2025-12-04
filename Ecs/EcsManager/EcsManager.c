@@ -25,16 +25,16 @@ static int is_mask_compatible_without(const EcsManager*, EcsMask, Entity, int);
 
 EcsMask mask_new(EcsManager* manager, const size_t inc_size, const size_t exc_size) {
     return (EcsMask) {
-            .manager = manager,
-            .include_size = inc_size,
-            .exclude_size = exc_size,
+        .manager = manager,
+        .include_size = inc_size,
+        .exclude_size = exc_size,
     };
 }
 
-void mask_inc(EcsMask* mask, const PoolData data) {
+void mask_inc(EcsMask* mask, const PoolInfo data) {
     if (mask->include_count == mask->include_size) {
         mask->include_count *= 2;
-        void* tmp = realloc(mask->include_pools, mask->include_size * sizeof(PoolData));
+        void* tmp = realloc(mask->include_pools, mask->include_size * sizeof(PoolInfo));
 
         if (!tmp) {
             printf("mask realloc failed\n");
@@ -47,10 +47,10 @@ void mask_inc(EcsMask* mask, const PoolData data) {
     mask->include_pools[mask->include_count++] = data;
 }
 
-void mask_exc(EcsMask* mask, const PoolData data) {
+void mask_exc(EcsMask* mask, const PoolInfo data) {
     if (mask->exclude_count == mask->exclude_size) {
         mask->exclude_size *= 2;
-        void* tmp = realloc(mask->exclude_pools, mask->exclude_size * sizeof(PoolData));
+        void* tmp = realloc(mask->exclude_pools, mask->exclude_size * sizeof(PoolInfo));
 
         if (!tmp) {
             printf("mask realloc failed\n");
@@ -64,12 +64,12 @@ void mask_exc(EcsMask* mask, const PoolData data) {
 }
 
 static int cmp_pools(const void* p1, const void* p2) {
-    return ((PoolData*) p1)->id - ((PoolData*) p2)->id;
+    return ((PoolInfo*) p1)->id - ((PoolInfo*) p2)->id;
 }
 
 EcsFilter* mask_end(EcsMask mask) {
-    qsort(mask.include_pools, mask.include_count, sizeof(PoolData), cmp_pools);
-    qsort(mask.exclude_pools, mask.exclude_count, sizeof(PoolData), cmp_pools);
+    qsort(mask.include_pools, mask.include_count, sizeof(PoolInfo), cmp_pools);
+    qsort(mask.exclude_pools, mask.exclude_count, sizeof(PoolInfo), cmp_pools);
 
     mask.hash = 314519;
     for (int i = 0; i < mask.include_count; i++) {
@@ -89,11 +89,11 @@ static EcsFilter* new_filter(EcsManager* manager, EcsMask const mask) {
     EcsFilter* new_filter = malloc(sizeof(EcsFilter));
 
     *new_filter = (EcsFilter) {
-            .manager = manager,
-            .entities = entity_container_new(sizeof(Entity), manager->cfg_dense_size,
-                                             manager->sparse_size,
-                                             manager->cfg_recycle_size, NULL, NULL),
-            .mask = mask,
+        .manager = manager,
+        .entities = entity_container_new(sizeof(Entity), manager->cfg_dense_size,
+                                         manager->sparse_size, manager->cfg_recycle_size,
+                                         NULL, NULL),
+        .mask = mask,
     };
 
 
@@ -116,34 +116,34 @@ static void filter_resize(EcsFilter* filter, const size_t new_size) {
 EcsManager* ecs_manager_new(const EcsConfig* cfg) {
     EcsManager* manager = malloc(sizeof(EcsManager));
     *manager = (EcsManager) {
-            .sparce_entities = calloc(cfg->sparce_size, sizeof(EntityInfo)),
-            .sparse_size = cfg->sparce_size,
-            .entities_ptr = 0,
+        .sparce_entities = calloc(cfg->sparce_size, sizeof(EntityInfo)),
+        .sparse_size = cfg->sparce_size,
+        .entities_ptr = 0,
 
-            .cfg_dense_size = cfg->dense_size,
-            .cfg_recycle_size = cfg->recycle_size,
+        .cfg_dense_size = cfg->dense_size,
+        .cfg_recycle_size = cfg->recycle_size,
 
-            .components = calloc(cfg->components_count, sizeof(PoolData)),
-            .components_count = cfg->components_count,
+        .components = calloc(cfg->components_count, sizeof(PoolInfo)),
+        .components_count = cfg->components_count,
 
-            .recycled_entities = calloc(cfg->recycle_size, sizeof(Entity)),
-            .recycled_size = cfg->recycle_size,
-            .recycled_ptr = 0,
+        .recycled_entities = calloc(cfg->recycle_size, sizeof(Entity)),
+        .recycled_size = cfg->recycle_size,
+        .recycled_ptr = 0,
 
-            .pools = calloc(cfg->pools_size, sizeof(EcsPool*)),
-            .pools_size = cfg->pools_size,
-            .pools_count = 0,
+        .pools = calloc(cfg->pools_size, sizeof(EcsPool*)),
+        .pools_size = cfg->pools_size,
+        .pools_count = 0,
 
-            .masks = VEC_NEW(EcsMask, cfg->masks_size),
-            .include_mask_count = cfg->include_mask_count,
-            .exclude_mask_count = cfg->exclude_mask_count,
+        .masks = VEC_NEW(EcsMask, cfg->masks_size),
+        .include_mask_count = cfg->include_mask_count,
+        .exclude_mask_count = cfg->exclude_mask_count,
 
-            .filters = calloc(cfg->filters_size, sizeof(EcsFilter*)),
-            .filters_size = cfg->filters_size,
-            .filters_count = 0,
+        .filters = calloc(cfg->filters_size, sizeof(EcsFilter*)),
+        .filters_size = cfg->filters_size,
+        .filters_count = 0,
 
-            .filter_by_include = calloc(cfg->pools_size, sizeof(VEC(EcsFilter*))),
-            .filter_by_exclude = calloc(cfg->pools_size, sizeof(VEC(EcsFilter*))),
+        .filter_by_include = calloc(cfg->pools_size, sizeof(VEC(EcsFilter*))),
+        .filter_by_exclude = calloc(cfg->pools_size, sizeof(VEC(EcsFilter*))),
     };
 
     return manager;
@@ -155,7 +155,7 @@ Entity ecs_manager_new_entity(EcsManager* manager) {
     if (manager->recycled_ptr > 0) {
         entity = manager->recycled_entities[manager->recycled_ptr--];
         manager->sparce_entities[entity].gen =
-                abs(manager->sparce_entities[entity].gen) + 1;
+            abs(manager->sparce_entities[entity].gen) + 1;
         printf("[DEBUG]\t new entity \"%d\" was created\n", entity);
     } else {
         entity = manager->entities_ptr++;
@@ -195,8 +195,8 @@ void ecs_manager_kill_entity(EcsManager* manager, const Entity entity) {
 
     if (manager->recycled_ptr == manager->recycled_size) {
         manager->recycled_size *= 2;
-        void* tmp = realloc(manager->recycled_entities,
-                            manager->recycled_size * sizeof(Entity));
+        void* tmp =
+            realloc(manager->recycled_entities, manager->recycled_size * sizeof(Entity));
 
         if (!tmp) {
             printf("entity kill realloc failed\n");
@@ -253,13 +253,13 @@ void ecs_manager_copy_entity(const EcsManager* manager, const Entity dst,
         return;
 
     const size_t count = manager->sparce_entities[src].component_count =
-            manager->sparce_entities[dst].component_count;
+        manager->sparce_entities[dst].component_count;
     memcpy(&manager->components[src], &manager->components[src],
-           count * sizeof(PoolData));
+           count * sizeof(PoolInfo));
 }
 
 void ecs_manager_entity_add_component(const EcsManager* manager, const Entity entity,
-                                      const PoolData pool_hash, void* data) {
+                                      const PoolInfo pool_hash, void* data) {
     if (manager->entities_ptr < entity || entity < 0)
         return;
     if (manager->sparce_entities[entity].gen < 0)
@@ -271,7 +271,7 @@ void ecs_manager_entity_add_component(const EcsManager* manager, const Entity en
 }
 
 void ecs_manager_entity_remove_component(const EcsManager* manager, const Entity entity,
-                                         const PoolData pool_hash) {
+                                         const PoolInfo pool_hash) {
     if (manager->entities_ptr < entity || entity < 0)
         return;
     if (manager->sparce_entities[entity].gen < 0)
@@ -282,10 +282,10 @@ void ecs_manager_entity_remove_component(const EcsManager* manager, const Entity
 }
 
 void ecs_manager_add_pool(EcsManager* manager, EcsPool* pool) {
-    size_t idx = pool->data.hash % manager->pools_size;
+    size_t idx = pool->info.hash % manager->pools_size;
     size_t start = idx;
     while (manager->pools[idx] != NULL) {
-        if (pool->data.id == manager->pools[idx]->data.id)
+        if (pool->info.id == manager->pools[idx]->info.id)
             return;
 
         idx = (idx + 1) % manager->pools_size;
@@ -295,7 +295,7 @@ void ecs_manager_add_pool(EcsManager* manager, EcsPool* pool) {
         }
     }
 
-    idx = pool->data.hash % manager->pools_size;
+    idx = pool->info.hash % manager->pools_size;
 
     while (manager->pools[idx] != NULL) {
         idx = (idx + 1) % manager->pools_size;
@@ -303,14 +303,14 @@ void ecs_manager_add_pool(EcsManager* manager, EcsPool* pool) {
 
     manager->pools[idx] = pool;
 
-    pool->data.id = idx;
+    pool->info.id = idx;
 }
 
-EcsPool* ecs_manager_get_pool(const EcsManager* manager, const PoolData pool_hash) {
+EcsPool* ecs_manager_get_pool(const EcsManager* manager, const PoolInfo pool_hash) {
     size_t idx = pool_hash.hash % manager->pools_size;
     size_t start = idx;
     while (manager->pools[idx] &&
-           strcmp(pool_hash.name, manager->pools[idx]->data.name) != 0) {
+           strcmp(pool_hash.name, manager->pools[idx]->info.name) != 0) {
         idx = (idx + 1) % manager->pools_size;
         if (idx == start) {
             return NULL;
@@ -330,7 +330,7 @@ static void ecs_manager_resize_pools(EcsManager* manager) {
     }
 
     void* tmp =
-            realloc(manager->filter_by_include, manager->pools_size * sizeof(EcsFilter*));
+        realloc(manager->filter_by_include, manager->pools_size * sizeof(EcsFilter*));
 
     if (!tmp) {
         printf("[DEBUG]\t Failed to allocate memory for filters by include\n]");
@@ -349,14 +349,14 @@ static void ecs_manager_resize_pools(EcsManager* manager) {
     manager->filter_by_exclude = tmp;
 
     for (int i = 0; i < manager->pools_count; i++) {
-        size_t idx = manager->pools[i]->data.hash % manager->pools_size;
+        size_t idx = manager->pools[i]->info.hash % manager->pools_size;
 
         while (manager->pools[idx] != NULL) {
             idx = (idx + 1) % manager->pools_size;
         }
 
         pools[idx] = manager->pools[i];
-        manager->pools[i]->data.id = (int) idx;
+        manager->pools[i]->info.id = idx;
     }
 
     free(manager->pools);

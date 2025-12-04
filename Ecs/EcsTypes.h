@@ -2,7 +2,6 @@
 #define ECS_TYPES_H
 
 #include <stdint.h>
-#include <stddef.h>
 
 typedef int16_t Entity;
 
@@ -16,8 +15,7 @@ typedef void (*ResetItemHandler)(void*, size_t);
 
 typedef void (*CopyItemHandler)(void*, const void*, size_t);
 
-typedef struct UpdateSystem UpdateSystem;
-typedef struct DrawSystem DrawSystem;
+typedef struct EcsSystem EcsSystem;
 typedef struct SystemHandler SystemHandler;
 
 #endif

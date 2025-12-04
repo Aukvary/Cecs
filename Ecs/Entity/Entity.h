@@ -56,4 +56,6 @@ int get_container_items(EntityContainer*, void**, size_t);
 
 void entity_container_resize(EntityContainer*, size_t);
 
+void entity_container_free(EntityContainer*);
+
 #endif

@@ -1,6 +1,4 @@
 #include <stdlib.h>
-
-
 #include "systems.h"
 
 EcsSystem* ecs_system_new(void (*init)(const EcsManager*, void*),

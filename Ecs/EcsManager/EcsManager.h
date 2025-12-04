@@ -29,11 +29,11 @@ typedef struct {
 struct ECSMask {
     EcsManager* manager;
 
-    PoolData* include_pools;
+    PoolInfo* include_pools;
     size_t include_size;
     int include_count;
 
-    PoolData* exclude_pools;
+    PoolInfo* exclude_pools;
     size_t exclude_size;
     int exclude_count;
     uint64_t hash;
@@ -41,9 +41,9 @@ struct ECSMask {
 
 EcsMask mask_new(EcsManager*, size_t, size_t);
 
-void mask_inc(EcsMask*, PoolData);
+void mask_inc(EcsMask*, PoolInfo);
 
-void mask_exc(EcsMask*, PoolData);
+void mask_exc(EcsMask*, PoolInfo);
 
 EcsFilter* mask_end(EcsMask);
 
@@ -62,7 +62,7 @@ struct EcsManager {
     size_t cfg_dense_size;
     size_t cfg_recycle_size;
 
-    PoolData* components;
+    PoolInfo* components;
     size_t components_count;
 
     Entity* recycled_entities;
@@ -85,21 +85,32 @@ struct EcsManager {
     VEC(EcsFilter*) * filter_by_exclude;
 };
 
-#define GET_POOL(manager, ComponentType)                                                                               \
-    ({                                                                                                                 \
-        EcsPool* res_pool = ecs_manager_get_pool((manager), POOL_DATA(ComponentType));                                 \
-        if (res_pool == NULL) {                                                                                        \
-            res_pool = POOL_NEW(ComponentType, (manager), (manager)->cfg_dense_size, (manager)->sparse_size,           \
-                                (manager)->cfg_recycle_size);                                                          \
-            ecs_manager_add_pool((manager), res_pool);                                                                  \
-        }                                                                                                              \
-        res_pool;                                                                                                      \
+static EcsPool* generate_component_pool();
+
+#define GET_TAG_POOL(manager, T)                                                         \
+    ({                                                                                   \
+        EcsPool* res_pool = ecs_manager_get_pool((manager), POOL_DATA(T));               \
+        if (res_pool == NULL) {                                                          \
+            res_pool = TAG_POOL_NEW(T, (manager), (manager)->sparse_size);               \
+        }                                                                                \
+        res_pool;                                                                        \
     })
 
-#define GET_MASK(manager, ComponentType)                                                                               \
-    ({                                                                                                                 \
-        ComponentType _v;                                                                                              \
-        mask_new(manager, manager->include_mask_count, manager->exclude_mask_count);                                   \
+#define GET_COMPONENT_POOL(manager, T)                                                   \
+    ({                                                                                   \
+        EcsPool* res_pool = ecs_manager_get_pool((manager), POOL_DATA(T));               \
+        if (res_pool == NULL) {                                                          \
+            res_pool =                                                                   \
+                COMPONENT_POOL_NEW(T, (manager), (manager)->cfg_dense_size,              \
+                                   (manager)->sparse_size, (manager)->cfg_recycle_size); \
+        }                                                                                \
+        res_pool;                                                                        \
+    })
+
+#define GET_MASK(manager, T)                                                             \
+    ({                                                                                   \
+        T* _v;                                                                           \
+        mask_new(manager, manager->include_mask_count, manager->exclude_mask_count);     \
     })
 
 EcsManager* ecs_manager_new(const EcsConfig*);
@@ -116,13 +127,13 @@ uint16_t ecs_manager_get_entity_gen(const EcsManager*, Entity);
 
 void ecs_manager_copy_entity(const EcsManager*, Entity, Entity);
 
-void ecs_manager_entity_add_component(const EcsManager*, Entity, PoolData, void*);
+void ecs_manager_entity_add_component(const EcsManager*, Entity, PoolInfo, void*);
 
-void ecs_manager_entity_remove_component(const EcsManager*, Entity, PoolData);
+void ecs_manager_entity_remove_component(const EcsManager*, Entity, PoolInfo);
 
 void ecs_manager_add_pool(EcsManager*, EcsPool*);
 
-EcsPool* ecs_manager_get_pool(const EcsManager*, PoolData);
+EcsPool* ecs_manager_get_pool(const EcsManager*, PoolInfo);
 
 void on_entity_change(const EcsManager*, Entity, size_t, int);
 

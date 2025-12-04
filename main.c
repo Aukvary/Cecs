@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include "Ecs/EcsManager/EcsManager.h"
 #include "Ecs/Systems/Systems.h"
 
-typedef struct {
-    float x, y;
-} Position;
+typedef struct Position Position;
 
 typedef struct {
     EcsSystem system;
@@ -21,21 +18,19 @@ void init(EcsManager* manager, void* data) {
     EcsMask mask = GET_MASK(manager, Position);
     system->filter = mask_end(mask);
 
-    system->pool = GET_POOL(manager, Position);
+    system->pool = GET_TAG_POOL(manager, Position);
 }
 
 void update(void* data) {
     PositionSystem* system = data;
 
     FOREACH(Entity, e, system->filter->entities, {
-        Position* pos = ecs_pool_get_item(system->pool, e);
-
-        pos->x += 0.006;
+        printf("%d", e);
     });
 }
 
-UpdateSystem* new_position_system() {
-    UpdateSystem* system = malloc(sizeof(EcsSystem));
+EcsSystem* new_position_system() {
+    EcsSystem* system = malloc(sizeof(EcsSystem));
 
     return system;
 }
@@ -57,14 +52,17 @@ int main() {
 
     Entity e = ecs_manager_new_entity(manager);
 
-    EcsPool* pool = GET_POOL(manager, Position);
-
-    printf("%zu\n", pool->data.id);
+    EcsPool* pool = GET_TAG_POOL(manager, Position);
 
     ecs_pool_add_item(pool, e, NULL);
 
+    SystemHandler* handler = system_handler_new(manager, 1);
+    system_handler_add(handler, new_position_system());
+    system_handler_init(handler);
 
-
+    for (int i = 0; i < 10; i++) {
+        system_handler_update(handler);
+    }
 
     return 0;
 }

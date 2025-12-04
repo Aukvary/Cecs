@@ -6,37 +6,56 @@
 #include "../EcsTypes.h"
 #include "../Entity/Entity.h"
 
+typedef struct ComponentPool ComponentPool;
+typedef struct TagPool TagPool;
 
-typedef struct PoolData {
+typedef enum { Component, Tag } PoolType;
+
+typedef struct PoolInfo {
     const char* name;
     uint64_t hash;
     size_t id;
-} PoolData;
+} PoolInfo;
 
 struct EcsPool {
     const EcsManager* manager;
-    PoolData data;
     size_t count;
-    EntityContainer component_container;
+    PoolInfo info;
+    void* data;
+
+    void (*add)(void*, Entity, const void*);
+    void* (*get)(const void*, Entity);
+    int (*has)(const void*, Entity);
+    void (*remove)(void*, Entity);
+    void (*resize)(void*, size_t);
+    void (*free)(void*);
 };
 
-#define POOL_NEW(T, manager, dense, sparse, recycle) (ecs_pool_new(manager, (#T), sizeof(T), dense, sparse, recycle))
+#define COMPONENT_POOL_NEW(T, manager, dense, sparse, recycle)                           \
+    (component_pool_new(manager, (#T), sizeof(T), dense, sparse, recycle, NULL, NULL))
 
-#define POOL_HASH(component)                                                                                           \
-    ({                                                                                                                 \
-        component _;                                                                                                   \
-        ecs_pool_hash(#component);                                                                                     \
+#define TAG_POOL_NEW(T, manager, sparse)                                                 \
+    ({                                                                                   \
+        T* _;                                                                            \
+        (tag_pool_new(manager, (#T), sparse));                                           \
     })
 
-#define POOL_DATA(component)                                                                                           \
-    ({                                                                                                                 \
-        component _;                                                                                                   \
-        (PoolData){.name = #component, .hash = ecs_pool_get_hash(#component)};                                         \
+#define POOL_HASH(component)                                                             \
+    ({                                                                                   \
+        component* _;                                                                     \
+        ecs_pool_hash(#component);                                                       \
     })
 
-#define POOL_GET(T, pool, entity) (T*) (__ecs_pool_get_item(pool, entity))
+#define POOL_DATA(component)                                                             \
+    ({                                                                                   \
+        component* _;                                                                     \
+        (PoolInfo){.name = #component, .hash = ecs_pool_get_hash(#component)};           \
+    })
 
-EcsPool* ecs_pool_new(const EcsManager*, const char*, size_t, size_t, size_t, size_t);
+EcsPool* component_pool_new(const EcsManager*, const char*, size_t, size_t, size_t,
+                            size_t, ResetItemHandler, CopyItemHandler);
+
+EcsPool* tag_pool_new(const EcsManager*, const char*, size_t);
 
 uint64_t ecs_pool_get_hash(const char*);
 

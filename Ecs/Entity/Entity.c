@@ -160,8 +160,14 @@ void entity_container_resize(EntityContainer* container, const size_t new_size) 
 
 static void default_entity_item_reset(void* data, size_t size) { memset(data, 0, size); }
 
-static void default_entity_item_copy(void* dst, const void* src, size_t size) { memcpy(dst, src, size); }
+void entity_container_free(EntityContainer* container) {
+    free(container->dense_items);
+    free(container->dense_entities);
+    free(container->sparce_entities);
+    free(container->recycle_entities);
+}
 
+static void default_entity_item_copy(void* dst, const void* src, size_t size) { memcpy(dst, src, size); }
 
 static void entity_container_start(void* data) {
     ((EntityContainer*)data)->iterator_ptr = 0;
