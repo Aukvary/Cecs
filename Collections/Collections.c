@@ -33,11 +33,6 @@ inline VecHeader* vec_header(void* data) {
 void* vec_add(void* data, void* el) {
     VecHeader* header = vec_header(data);
 
-    if (header->iter_locked) {
-        printf("cant change vector where it's locked\n");
-        exit(1);
-    }
-
     if (header->count == header->capacity) {
         size_t new_capacity = header->capacity == 0 ? 1 : header->capacity * 2;
         VecHeader* temp =
@@ -110,7 +105,6 @@ void vec_remove(void* data, void* el) {
 void vec_start(void* data) {
     VecHeader* header = data;
     header->current = -1;
-    header->iter_locked = 1;
 }
 
 void* vec_current(void* data) {
@@ -128,12 +122,8 @@ int vec_next(void* data) {
     VecHeader* header = data;
 
     header->current++;
-    int has_next = header->current < header->count;
 
-    if (!has_next)
-        header->iter_locked = 0;
-
-    return has_next;
+    return header->current < header->count;
 }
 
 inline void vec_free(void* data) { free(vec_header(data)); }

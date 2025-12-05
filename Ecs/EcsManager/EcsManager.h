@@ -39,7 +39,7 @@ struct ECSMask {
     uint64_t hash;
 };
 
-EcsMask mask_new(const EcsManager*, size_t, size_t);
+EcsMask mask_new(const EcsManager*, size_t, size_t, PoolInfo);
 
 void mask_inc(EcsMask*, PoolInfo);
 
@@ -96,22 +96,22 @@ static EcsPool* generate_component_pool();
         res_pool;                                                                        \
     })
 
-#define GET_COMPONENT_POOL(manager, T)                                                   \
+#define ECS_MANAGER_GET_POOL(manager, T)                                                 \
     ({                                                                                   \
-        EcsPool* res_pool = ecs_manager_get_pool((manager), POOL_DATA(T));               \
-        if (res_pool == NULL) {                                                          \
-            res_pool =                                                                   \
-                COMPONENT_POOL_NEW(T, (manager), (manager)->cfg_dense_size,              \
-                                   (manager)->sparse_size, (manager)->cfg_recycle_size); \
+        EcsPool* pool = ecs_manager_get_pool((manager), POOL_DATA(T));                   \
+        if (pool == NULL) {                                                              \
+            pool = ECS_POOL_NEW(T, manager);                                             \
+            ecs_manager_add_pool(manager, pool);                                         \
         }                                                                                \
-        res_pool;                                                                        \
+        pool;                                                                            \
     })
 
 #define GET_MASK(manager, T)                                                             \
-    ({                                                                                   \
-        T* _v;                                                                           \
-        mask_new(manager, manager->include_mask_count, manager->exclude_mask_count);     \
-    })
+    mask_new(manager, manager->include_mask_count, manager->exclude_mask_count,          \
+             (ECS_MANAGER_GET_POOL(manager, T))->info);
+
+#define MASK_INC(mask, T) mask_inc(&(mask), (ECS_MANAGER_GET_POOL(manager, T))->info)
+#define MASK_EXC(mask, T) mask_exc(&(mask), (ECS_MANAGER_GET_POOL(manager, T))->info)
 
 EcsManager* ecs_manager_new(const EcsConfig*);
 

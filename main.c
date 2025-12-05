@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include "Ecs/Ecs.h"
 
-typedef struct Position Position;
+typedef struct Component1 { } Component1;
+typedef struct Component2 { } Component2;
+typedef struct Component3 { } Component3;
 
 typedef struct {
     EcsSystem system;
@@ -13,10 +15,10 @@ typedef struct {
 void init(const EcsManager* manager, void* data) {
     PositionSystem* system = data;
 
-    EcsMask mask = GET_MASK(manager, Position);
+    EcsMask mask = GET_MASK(manager, Component1);
+    MASK_INC(mask, Component2);
+    MASK_EXC(mask, Component3);
     system->filter = mask_end(mask);
-
-    system->pool = GET_TAG_POOL(manager, Position);
 }
 
 void update(void* data) {
@@ -57,13 +59,22 @@ int main() {
 
     EcsManager* manager = ecs_manager_new(&config);
 
-    Entity e = ecs_manager_new_entity(manager);
+    Entity e1 = ecs_manager_new_entity(manager);
+    Entity e2 = ecs_manager_new_entity(manager);
+    Entity e3 = ecs_manager_new_entity(manager);
 
-    EcsPool* pool = GET_TAG_POOL(manager, Position);
+    EcsPool* pool1 = ECS_MANAGER_GET_POOL(manager, Component1);
+    EcsPool* pool2 = ECS_MANAGER_GET_POOL(manager, Component2);
+    EcsPool* pool3 = ECS_MANAGER_GET_POOL(manager, Component3);
 
-    ecs_pool_add_item(pool, e, NULL);
+    ecs_pool_add(pool1, e1, NULL);
+    ecs_pool_add(pool2, e1, NULL);
 
-    printf("%d\n", ecs_pool_has(pool, e));
+    ecs_pool_add(pool1, e2, NULL);
+
+    ecs_pool_add(pool1, e3, NULL);
+    ecs_pool_add(pool2, e3, NULL);
+    ecs_pool_add(pool3, e3, NULL);
 
     SystemHandlerConfig sys_cfg = (SystemHandlerConfig) {
         .init_size = 1,
@@ -79,9 +90,7 @@ int main() {
 
     system_handler_init(handler);
 
-    for (int i = 0; i < 10; i++) {
-        system_handler_update(handler);
-    }
+    system_handler_update(handler);
 
     ecs_manager_free(manager);
 

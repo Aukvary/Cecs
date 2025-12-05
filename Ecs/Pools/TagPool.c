@@ -1,7 +1,8 @@
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdint.h>
+#include "../EcsManager/EcsManager.h"
 #include "EcsPool.h"
 
 typedef uint16_t TagBucket;
@@ -20,12 +21,12 @@ typedef struct TagPool {
     size_t max_entities;
 } TagPool;
 
-EcsPool* tag_pool_new(const EcsManager* manager, const char* name,
-                      const size_t sparse_size) {
+EcsPool* tag_pool_new(const EcsManager* manager, const char* name) {
     TagPool* pool = malloc(sizeof(TagPool));
-    if (!pool) return NULL;
+    if (!pool)
+        return NULL;
 
-    size_t num_buckets = (sparse_size + BUCKET_SIZE - 1) / BUCKET_SIZE;
+    size_t num_buckets = (manager->sparse_size + BUCKET_SIZE - 1) / BUCKET_SIZE;
 
     *pool = (TagPool) {
         .pool =
@@ -113,6 +114,6 @@ static void tag_pool_resize(void* pool, size_t new_max_entities) {
 }
 
 void tag_pool_free(void* pool) {
-    free(((TagPool*)pool)->buckets);
+    free(((TagPool*) pool)->buckets);
     free(pool);
 }

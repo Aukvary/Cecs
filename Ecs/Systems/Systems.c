@@ -38,31 +38,31 @@ SystemHandler* system_handler_new(const EcsManager* manager,
 
 inline void system_handler_add(SystemHandler* handler, EcsSystem* system) {
     if (system->init)
-        VEC_ADD(&handler->inits, ((InitDataPair) {
+        VEC_ADD(handler->inits, ((InitDataPair) {
                                      .data = system->data,
                                      .init = system->init,
                                  }));
 
     if (system->pre_update)
-        VEC_ADD(&handler->pre_updates, ((ActionDataPair) {
+        VEC_ADD(handler->pre_updates, ((ActionDataPair) {
                                            .data = system->data,
                                            .action = system->pre_update,
                                        }));
 
     if (system->update)
-        VEC_ADD(&handler->updates, ((ActionDataPair) {
+        VEC_ADD(handler->updates, ((ActionDataPair) {
                                        .data = system->data,
                                        .action = system->update,
                                    }));
 
     if (system->post_update)
-        VEC_ADD(&handler->post_updates, ((ActionDataPair) {
+        VEC_ADD(handler->post_updates, ((ActionDataPair) {
                                             .data = system->data,
                                             .action = system->post_update,
                                         }));
 
     if (system->destroy)
-        VEC_ADD(&handler->destroys, ((ActionDataPair) {
+        VEC_ADD(handler->destroys, ((ActionDataPair) {
                                         .data = system->data,
                                         .action = system->destroy,
                                     }));

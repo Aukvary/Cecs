@@ -24,13 +24,23 @@ static EcsFilter* get_filter(EcsManager*, EcsMask);
 static int is_mask_compatible(const EcsManager*, EcsMask, Entity);
 static int is_mask_compatible_without(const EcsManager*, EcsMask, Entity, int);
 
-EcsMask mask_new(const EcsManager* manager, const size_t inc_size,
-                 const size_t exc_size) {
-    return (EcsMask) {
+EcsMask mask_new(const EcsManager* manager, const size_t inc_size, const size_t exc_size,
+                 const PoolInfo pool) {
+    EcsMask mask = (EcsMask) {
         .manager = manager,
+
+        .include_pools = calloc(inc_size, sizeof(PoolInfo)),
         .include_size = inc_size,
+        .include_count = 0,
+
+        .exclude_pools = calloc(inc_size, sizeof(PoolInfo)),
         .exclude_size = exc_size,
+        .exclude_count = 0,
     };
+
+    mask_inc(&mask, pool);
+
+    return mask;
 }
 
 void mask_inc(EcsMask* mask, const PoolInfo data) {
@@ -290,7 +300,7 @@ void ecs_manager_entity_add_component(const EcsManager* manager, const Entity en
 
     EcsPool* pool = ecs_manager_get_pool(manager, pool_hash);
 
-    ecs_pool_add_item(pool, entity, data);
+    ecs_pool_add(pool, entity, data);
 }
 
 void ecs_manager_entity_remove_component(const EcsManager* manager, const Entity entity,
@@ -416,11 +426,10 @@ static EcsFilter* get_filter(EcsManager* manager, const EcsMask mask) {
 
 
     for (int i = 0; i < mask.include_count; i++) {
-        VEC(EcsFilter*)
-        list = manager->filter_by_include[mask.include_pools[i].id];
+        VEC(EcsFilter*) list = manager->filter_by_include[mask.include_pools[i].id];
 
         if (!list) {
-            list = VEC_NEW(EcsFilter*, manager->include_mask_count);
+            list = VEC_NEW(EcsFilter*, mask.include_count);
             manager->filter_by_include[mask.include_pools[i].id] = list;
         }
 
@@ -428,11 +437,10 @@ static EcsFilter* get_filter(EcsManager* manager, const EcsMask mask) {
     }
 
     for (int i = 0; i < mask.exclude_count; i++) {
-        VEC(EcsFilter*)
-        list = manager->filter_by_exclude[mask.exclude_pools[i].id];
+        VEC(EcsFilter*) list = manager->filter_by_exclude[mask.exclude_pools[i].id];
 
         if (!list) {
-            list = VEC_NEW(EcsFilter*, manager->exclude_mask_count);
+            list = VEC_NEW(EcsFilter*, mask.exclude_count);
             manager->filter_by_exclude[mask.include_pools[i].id] = list;
         }
 
@@ -515,12 +523,15 @@ void on_entity_change(const EcsManager* manager, const Entity entity, const size
 
 static int is_mask_compatible(const EcsManager* manager, const EcsMask filterMask,
                               const Entity entity) {
-    for (Entity i = 0, len = (Entity) filterMask.include_count; i < len; i++) {
+    EcsPool* pool1 = manager->pools[filterMask.include_pools[0].id];
+    EcsPool* pool2 = manager->pools[filterMask.include_pools[1].id];
+
+    for (int i = 0; i < filterMask.include_count; i++) {
         if (!ecs_pool_has(manager->pools[filterMask.include_pools[i].id], entity)) {
             return 0;
         }
     }
-    for (Entity i = 0, len = (Entity) filterMask.exclude_count; i < len; i++) {
+    for (int i = 0; i < filterMask.exclude_count; i++) {
         if (ecs_pool_has(manager->pools[filterMask.exclude_pools[i].id], entity)) {
             return 0;
         }
@@ -530,14 +541,14 @@ static int is_mask_compatible(const EcsManager* manager, const EcsMask filterMas
 
 static int is_mask_compatible_without(const EcsManager* manager, const EcsMask filterMask,
                                       const Entity entity, int id) {
-    for (Entity i = 0, len = (Entity) filterMask.include_count; i < len; i++) {
+    for (int i = 0; i < filterMask.include_count; i++) {
         size_t typeId = filterMask.include_pools[i].id;
         if (typeId == id || !ecs_pool_has(manager->pools[typeId], entity)) {
             return 0;
         }
     }
 
-    for (Entity i = 0, len = (Entity) filterMask.exclude_count; i < len; i++) {
+    for (int i = 0; i < filterMask.exclude_count; i++) {
         size_t typeId = filterMask.exclude_pools[i].id;
         if (typeId != id && !ecs_pool_has(manager->pools[typeId], entity)) {
             return 0;

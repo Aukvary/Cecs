@@ -31,8 +31,10 @@ struct EcsPool {
     void (*free)(void*);
 };
 
-#define COMPONENT_POOL_NEW(T, manager, dense, sparse, recycle)                           \
-    (component_pool_new(manager, (#T), sizeof(T), dense, sparse, recycle, NULL, NULL))
+#define ECS_POOL_NEW(T, manager) ecs_pool_new(manager, #T, sizeof(T))
+
+#define COMPONENT_POOL_NEW(T, manager, reset, copy)                                      \
+    (component_pool_new(manager, (#T), sizeof(T), reset, copy))
 
 #define TAG_POOL_NEW(T, manager, sparse)                                                 \
     ({                                                                                   \
@@ -42,24 +44,26 @@ struct EcsPool {
 
 #define POOL_HASH(component)                                                             \
     ({                                                                                   \
-        component* _;                                                                     \
+        component* _;                                                                    \
         ecs_pool_hash(#component);                                                       \
     })
 
 #define POOL_DATA(component)                                                             \
     ({                                                                                   \
-        component* _;                                                                     \
+        component* _;                                                                    \
         (PoolInfo){.name = #component, .hash = ecs_pool_get_hash(#component)};           \
     })
 
-EcsPool* component_pool_new(const EcsManager*, const char*, size_t, size_t, size_t,
-                            size_t, ResetItemHandler, CopyItemHandler);
+EcsPool* ecs_pool_new(const EcsManager*, const char*, size_t);
 
-EcsPool* tag_pool_new(const EcsManager*, const char*, size_t);
+EcsPool* component_pool_new(const EcsManager*, const char*, size_t, ResetItemHandler,
+                            CopyItemHandler);
+
+EcsPool* tag_pool_new(const EcsManager*, const char*);
 
 uint64_t ecs_pool_get_hash(const char*);
 
-void ecs_pool_add_item(EcsPool*, Entity, const void*);
+void ecs_pool_add(EcsPool*, Entity, const void*);
 
 void* ecs_pool_get_item(const EcsPool*, Entity);
 

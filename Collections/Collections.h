@@ -25,7 +25,7 @@ typedef struct {
 #define VEC_ADD(data, value)                                                             \
     ({                                                                                   \
         typeof(value) tmp_var = (value);                                                 \
-        *(data) = vec_add(*(data), &tmp_var);                                            \
+        data = vec_add(data, &tmp_var);                                                  \
     })
 
 #define VEC_REMOVE(data, el)                                                             \

@@ -7,7 +7,7 @@
 #include "../../Collections/Iterator.h"
 
 #define ENTITY_NULL (-1)
-#define ENTITY_INFO_NULL                                                                                               \
+#define ENTITY_INFO_NULL                                                                 \
     (EntityInfo) { .id = ENTITY_NULL }
 
 typedef struct {
@@ -38,7 +38,8 @@ struct EntityContainer {
     CopyItemHandler auto_copy;
 };
 
-EntityContainer entity_container_new(size_t, size_t, size_t, size_t, ResetItemHandler, CopyItemHandler);
+EntityContainer entity_container_new(size_t, size_t, size_t, size_t, ResetItemHandler,
+                                     CopyItemHandler);
 
 Entity entity_container_push(EntityContainer*);
 
