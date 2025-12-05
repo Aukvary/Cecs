@@ -130,6 +130,7 @@ void entity_container_remove(EntityContainer* container, const Entity entity) {
     }
 
     container->recycle_entities[container->recycle_ptr++] = entity;
+
 }
 
 inline int entity_container_has(const EntityContainer* container, const Entity entity) {

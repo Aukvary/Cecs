@@ -87,15 +87,6 @@ struct EcsManager {
 
 static EcsPool* generate_component_pool();
 
-#define GET_TAG_POOL(manager, T)                                                         \
-    ({                                                                                   \
-        EcsPool* res_pool = ecs_manager_get_pool((manager), POOL_DATA(T));               \
-        if (res_pool == NULL) {                                                          \
-            res_pool = TAG_POOL_NEW(T, (manager), (manager)->sparse_size);               \
-        }                                                                                \
-        res_pool;                                                                        \
-    })
-
 #define ECS_MANAGER_GET_POOL(manager, T)                                                 \
     ({                                                                                   \
         EcsPool* pool = ecs_manager_get_pool((manager), POOL_DATA(T));                   \

@@ -52,21 +52,19 @@ EcsPool* component_pool_new(const EcsManager* manager, const char* name, size_t 
 static void component_pool_add(void* pool, Entity entity, const void* data) {
     ComponentPool* component_pool = pool;
     entity_container_add(&component_pool->entities, entity, data);
-    printf("[DEBUG]\t entity \"%d\" was added to %s pool\n", entity,
-           component_pool->pool.info.name);
 }
 
 static void* component_pool_get_item(const void* pool, Entity entity) {
-    ComponentPool* component_pool = pool;
+    const ComponentPool* component_pool = pool;
     return entity_container_get(&component_pool->entities, entity);
 }
 
 static int component_pool_has(const void* pool, const Entity entity) {
-    ComponentPool* component_pool = pool;
+    const ComponentPool* component_pool = pool;
     return entity_container_has(&component_pool->entities, entity);
 }
 
-static void component_pool_remove(void* pool, Entity entity) {
+static void component_pool_remove(void* pool, const Entity entity) {
     ComponentPool* component_pool = pool;
     entity_container_remove(&component_pool->entities, entity);
 }

@@ -54,6 +54,12 @@ struct EcsPool {
         (PoolInfo){.name = #component, .hash = ecs_pool_get_hash(#component)};           \
     })
 
+#define ECS_POOL_ADD(pool, e, data)                                                      \
+    ({                                                                                   \
+        typeof((data)) tmp_var = (data);                                                 \
+        ecs_pool_add(pool, e, &tmp_var);                                                 \
+    })
+
 EcsPool* ecs_pool_new(const EcsManager*, const char*, size_t);
 
 EcsPool* component_pool_new(const EcsManager*, const char*, size_t, ResetItemHandler,

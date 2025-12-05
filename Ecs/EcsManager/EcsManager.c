@@ -495,8 +495,6 @@ void on_entity_change(const EcsManager* manager, const Entity entity, const size
             });
         }
         if (exclude_list != NULL) {
-            printf("exc\n");
-
             FOREACH(EcsFilter*, filter, *VEC_ITERATOR(exclude_list), {
                 if (is_mask_compatible_without(manager, filter->mask, entity, id)) {
                     filter_remove_entity(filter, entity);
@@ -569,6 +567,11 @@ void ecs_manager_free(EcsManager* manager) {
         vec_free(manager->filter_by_include[i]);
         vec_free(manager->filter_by_exclude[i]);
     }
+
+    FOREACH(EcsMask, m, *VEC_ITERATOR(manager->masks), {
+        free(m.include_pools);
+        free(m.exclude_pools);
+    });
 
     vec_free(manager->masks);
 
