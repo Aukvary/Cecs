@@ -12,7 +12,7 @@ typedef struct {
     EcsFilter* filter;
 } PositionSystem;
 
-void init(const EcsManager* manager, void* data) {
+void init(EcsManager* manager, void* data) {
     PositionSystem* system = data;
 
     EcsMask mask = GET_MASK(manager, Component1);

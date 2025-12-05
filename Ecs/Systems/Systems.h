@@ -5,7 +5,7 @@
 #include "../EcsTypes.h"
 
 typedef void (*Action)(void*);
-typedef void (*Init)(const EcsManager*, void*);
+typedef void (*Init)(EcsManager*, void*);
 
 typedef struct {
     void* data;
