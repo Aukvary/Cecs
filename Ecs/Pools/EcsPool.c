@@ -38,8 +38,8 @@ inline int ecs_pool_has(const EcsPool* pool, const Entity entity) {
 
 inline void ecs_pool_remove(EcsPool* pool, Entity entity) {
     pool->count--;
-    pool->remove(pool->data, entity);
     on_entity_change(pool->manager, entity, pool->info.id, 0);
+    pool->remove(pool->data, entity);
     printf("[DEBUG]\t entity \"%d\" was removed from %s pool\n", entity, pool->info.name);
 }
 
