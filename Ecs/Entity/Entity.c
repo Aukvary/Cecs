@@ -11,32 +11,34 @@ static int entity_container_next(void*);
 static void default_entity_item_reset(void* data, size_t);
 static void default_entity_item_copy(void* dst, const void* src, size_t);
 
-EntityContainer entity_container_new(const size_t item_size, const size_t dense_size, const size_t sparse_size, const size_t recycle_size,
-                                     const ResetItemHandler auto_reset, const CopyItemHandler auto_copy) {
+EntityContainer entity_container_new(const size_t item_size, const size_t dense_size,
+                                     const size_t sparse_size, const size_t recycle_size,
+                                     const ResetItemHandler auto_reset,
+                                     const CopyItemHandler auto_copy) {
     EntityContainer ec = {
-            .dense_items = calloc(dense_size, item_size),
-            .dense_entities = calloc(dense_size, sizeof(Entity)),
-            .item_size = item_size,
-            .dense_ptr = 0,
-            .dense_size = dense_size,
-            .count = 0,
+        .dense_items = calloc(dense_size, item_size),
+        .dense_entities = calloc(dense_size, sizeof(Entity)),
+        .item_size = item_size,
+        .dense_ptr = 0,
+        .dense_size = dense_size,
+        .count = 0,
 
-            .sparce_entities = calloc(sparse_size, sizeof(Entity)),
-            .sparse_size = sparse_size,
+        .sparce_entities = calloc(sparse_size, sizeof(Entity)),
+        .sparse_size = sparse_size,
 
-            .recycle_entities = calloc(recycle_size, sizeof(Entity)),
-            .recycle_ptr = 0,
-            .recycle_size = recycle_size,
+        .recycle_entities = calloc(recycle_size, sizeof(Entity)),
+        .recycle_ptr = 0,
+        .recycle_size = recycle_size,
 
-            .auto_reset = auto_reset ? auto_reset : default_entity_item_reset,
-            .auto_copy = auto_copy ? auto_copy : default_entity_item_copy,
+        .auto_reset = auto_reset ? auto_reset : default_entity_item_reset,
+        .auto_copy = auto_copy ? auto_copy : default_entity_item_copy,
 
-            .iterator =
-                    (Iterator) {
-                            .start = entity_container_start,
-                            .current = entity_container_current,
-                            .next = entity_container_next,
-                    },
+        .iterator =
+            (Iterator) {
+                .start = entity_container_start,
+                .current = entity_container_current,
+                .next = entity_container_next,
+            },
     };
 
     for (size_t i = 0; i < sparse_size; i++) {
@@ -46,7 +48,8 @@ EntityContainer entity_container_new(const size_t item_size, const size_t dense_
     return ec;
 }
 
-void entity_container_add(EntityContainer* container, const Entity entity, const void* data) {
+void entity_container_add(EntityContainer* container, const Entity entity,
+                          const void* data) {
     if (entity > container->sparse_size)
         return;
     if (entity_container_has(container, entity))
@@ -59,7 +62,8 @@ void entity_container_add(EntityContainer* container, const Entity entity, const
     } else {
         if (container->dense_ptr == container->dense_size) {
             container->dense_size *= 2;
-            void* tmp = realloc(container->dense_items, container->dense_size * container->item_size);
+            void* tmp = realloc(container->dense_items,
+                                container->dense_size * container->item_size);
 
             if (!tmp) {
                 printf("[DEBUG] entity container realloc exception]\n");
@@ -68,7 +72,8 @@ void entity_container_add(EntityContainer* container, const Entity entity, const
 
             container->dense_items = tmp;
 
-            tmp = realloc(container->dense_entities, container->dense_size * sizeof(Entity));
+            tmp = realloc(container->dense_entities,
+                          container->dense_size * sizeof(Entity));
 
             if (!tmp) {
                 printf("[DEBUG] entity container realloc exception]\n");
@@ -101,13 +106,15 @@ void entity_container_remove(EntityContainer* container, const Entity entity) {
         return;
 
     Entity dense_index = container->sparce_entities[entity];
-    Entity last_index = (Entity)(container->dense_ptr - 1);
+    Entity last_index = (Entity) (container->dense_ptr - 1);
 
     if (dense_index != last_index) {
         Entity last_entity = container->dense_entities[last_index];
 
-        container->auto_copy((char*) container->dense_items + dense_index * container->item_size,
-                             (char*) container->dense_items + last_index * container->item_size, container->item_size);
+        container->auto_copy(
+            (char*) container->dense_items + dense_index * container->item_size,
+            (char*) container->dense_items + last_index * container->item_size,
+            container->item_size);
 
         container->dense_entities[dense_index] = last_entity;
         container->sparce_entities[last_entity] = dense_index;
@@ -119,7 +126,8 @@ void entity_container_remove(EntityContainer* container, const Entity entity) {
 
     if (container->recycle_ptr >= container->recycle_size) {
         container->recycle_size *= 2;
-        void* tmp = realloc(container->recycle_entities, container->recycle_size * sizeof(Entity));
+        void* tmp = realloc(container->recycle_entities,
+                            container->recycle_size * sizeof(Entity));
 
         if (!tmp) {
             printf("[DEBUG] entity container realloc exception]\n");
@@ -130,11 +138,11 @@ void entity_container_remove(EntityContainer* container, const Entity entity) {
     }
 
     container->recycle_entities[container->recycle_ptr++] = entity;
-
 }
 
 inline int entity_container_has(const EntityContainer* container, const Entity entity) {
-    return entity < container->sparse_size && container->sparce_entities[entity] != ENTITY_NULL;
+    return entity < container->sparse_size &&
+           container->sparce_entities[entity] != ENTITY_NULL;
 }
 
 void* entity_container_get(const EntityContainer* container, const Entity entity) {
@@ -145,7 +153,8 @@ void* entity_container_get(const EntityContainer* container, const Entity entity
         return NULL;
     }
 
-    return (char*) container->dense_items + container->sparce_entities[entity] * container->item_size;
+    return (char*) container->dense_items +
+           container->sparce_entities[entity] * container->item_size;
 }
 
 void entity_container_resize(EntityContainer* container, const size_t new_size) {
@@ -168,10 +177,12 @@ void entity_container_free(EntityContainer* container) {
     free(container->recycle_entities);
 }
 
-static void default_entity_item_copy(void* dst, const void* src, size_t size) { memcpy(dst, src, size); }
+static void default_entity_item_copy(void* dst, const void* src, size_t size) {
+    memcpy(dst, src, size);
+}
 
 static void entity_container_start(void* data) {
-    ((EntityContainer*)data)->iterator_ptr = 0;
+    ((EntityContainer*) data)->iterator_ptr = 0;
 }
 
 static void* entity_container_current(void* data) {
@@ -181,5 +192,5 @@ static void* entity_container_current(void* data) {
 
 static int entity_container_next(void* data) {
     EntityContainer* container = data;
-    return container->iterator_ptr++ < container->count; //lil popA
+    return container->iterator_ptr++ < container->count; // lil popA
 }

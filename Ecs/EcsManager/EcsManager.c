@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "../../Collections/Iterator.h"
+#include "../Pools/BaseComponents.h"
 
 static int cmp_pools(const void*, const void*);
 
@@ -20,6 +21,7 @@ static void filter_free(EcsFilter*);
 static void ecs_manager_resize_filters(EcsManager*);
 static void ecs_manager_resize_pools(EcsManager*);
 static EcsFilter* get_filter(EcsManager*, EcsMask);
+static void remove_hierarchy_tag(EcsManager*);
 
 static int is_mask_compatible(const EcsManager*, EcsMask, Entity);
 static int is_mask_compatible_without(const EcsManager*, EcsMask, Entity, int);
@@ -130,12 +132,14 @@ static void filter_free(EcsFilter* filter) {
 }
 
 
-EcsManager* ecs_manager_new(const EcsConfig* cfg) {
+EcsManager* ecs_manager_new(const EcsManagerConfig* cfg) {
     EcsManager* manager = malloc(sizeof(EcsManager));
     *manager = (EcsManager) {
-        .sparce_entities = calloc(cfg->sparce_size, sizeof(EntityInfo)),
+        .sparse_entities = calloc(cfg->sparce_size, sizeof(EntityInfo)),
         .sparse_size = cfg->sparce_size,
         .entities_ptr = 0,
+        .parents = calloc(cfg->sparce_size, sizeof(Entity)),
+        .children = calloc(cfg->sparce_size * (cfg->children_size + 1), sizeof(Entity)),
 
         .cfg_dense_size = cfg->dense_size,
         .cfg_recycle_size = cfg->recycle_size,
@@ -163,6 +167,10 @@ EcsManager* ecs_manager_new(const EcsConfig* cfg) {
         .filter_by_exclude = calloc(cfg->pools_size, sizeof(VEC(EcsFilter*))),
     };
 
+    memset(manager->parents, ENTITY_NULL, sizeof(Entity) * cfg->sparce_size);
+
+    manager->hierarchy_dirty_pool = ECS_MANAGER_GET_POOL(manager, HierarchyDirty);
+
     return manager;
 }
 
@@ -171,14 +179,14 @@ Entity ecs_manager_new_entity(EcsManager* manager) {
 
     if (manager->recycled_ptr > 0) {
         entity = manager->recycled_entities[manager->recycled_ptr--];
-        manager->sparce_entities[entity].gen =
-            abs(manager->sparce_entities[entity].gen) + 1;
+        manager->sparse_entities[entity].gen =
+            abs(manager->sparse_entities[entity].gen) + 1;
         printf("[DEBUG]\t recycled entity \"%d\" was created\n", entity);
     } else {
         entity = manager->entities_ptr++;
         if (entity == manager->sparse_size) {
             manager->sparse_size *= 2;
-            void* tmp = realloc(manager->sparce_entities,
+            void* tmp = realloc(manager->sparse_entities,
                                 manager->sparse_size * sizeof(EntityInfo));
 
             if (!tmp) {
@@ -186,7 +194,7 @@ Entity ecs_manager_new_entity(EcsManager* manager) {
                 exit(1);
             }
 
-            manager->sparce_entities = tmp;
+            manager->sparse_entities = tmp;
 
             for (int i = 0; i < manager->pools_size; i++) {
                 if (manager->pools[i])
@@ -204,10 +212,62 @@ Entity ecs_manager_new_entity(EcsManager* manager) {
     return entity;
 }
 
+inline Entity ecs_manager_get_parent(const EcsManager* manager, Entity entity) {
+    return manager->parents[entity];
+}
+
+void ecs_manager_set_parent(EcsManager* manager, Entity parent, Entity child) {
+    if (manager->parents[child] == parent)
+        return;
+
+    if (manager->parents[parent] != ENTITY_NULL) {
+        ecs_manager_remove_child(manager, manager->parents[parent], child);
+    }
+
+    ecs_manager_add_child(manager, parent, child);
+}
+
+void ecs_manager_add_child(EcsManager* manager, Entity parent, Entity child) {
+    for (int i = 0; i < manager->children[parent]; i++) {
+        if (manager->children[parent * manager->children_size + i] == child)
+            return;
+    }
+
+    manager->children[parent * manager->children_size +
+                      manager->children[parent * manager->children_size]++] = child;
+
+    manager->parents[child] = parent;
+
+    ecs_pool_add(manager->hierarchy_dirty_pool, parent, NULL);
+    ecs_pool_add(manager->hierarchy_dirty_pool, child, NULL);
+}
+
+void ecs_manager_remove_child(EcsManager* manager, const Entity parent,
+                              const Entity child) {
+    for (int i = 0; i < manager->children[parent]; i++) {
+        if (manager->children[parent * manager->children_size + i] != child)
+            continue;
+
+        manager->children[parent * manager->children_size + i] =
+            manager->children[parent]--;
+
+
+        ecs_pool_add(manager->hierarchy_dirty_pool, parent, NULL);
+        ecs_pool_add(manager->hierarchy_dirty_pool, child, NULL);
+    }
+}
+
+const Entity* ecs_manager_get_children(const EcsManager* manager, Entity entity,
+                                 size_t* max_count) {
+    *max_count = __min(manager->children[entity], *max_count) + 1;
+
+    return &manager->children[entity] + 1;
+}
+
 void ecs_manager_kill_entity(EcsManager* manager, const Entity entity) {
     if (manager->entities_ptr < entity || entity < 0)
         return;
-    if (manager->sparce_entities[entity].gen < 0)
+    if (manager->sparse_entities[entity].gen < 0)
         return;
 
     if (manager->recycled_ptr == manager->recycled_size) {
@@ -224,7 +284,7 @@ void ecs_manager_kill_entity(EcsManager* manager, const Entity entity) {
     }
 
     manager->recycled_entities[manager->recycled_ptr++] = entity;
-    manager->sparce_entities[entity].gen *= -1;
+    manager->sparse_entities[entity].gen *= -1;
 
     for (int i = 0; i < manager->pools_size; i++) {
         if (manager->pools[i] == NULL)
@@ -248,45 +308,45 @@ void ecs_manager_kill_entity(EcsManager* manager, const Entity entity) {
 EntityInfo ecs_manager_get_entity(const EcsManager* manager, const Entity entity) {
     if (manager->entities_ptr < entity || entity < 0)
         return ENTITY_INFO_NULL;
-    if (manager->sparce_entities[entity].gen < 0)
+    if (manager->sparse_entities[entity].gen < 0)
         return ENTITY_INFO_NULL;
 
-    return manager->sparce_entities[entity];
+    return manager->sparse_entities[entity];
 }
 
 size_t ecs_manager_get_entity_components_count(const EcsManager* manager,
                                                const Entity entity) {
     if (manager->entities_ptr < entity || entity < 0)
         return 0;
-    if (manager->sparce_entities[entity].gen < 0)
+    if (manager->sparse_entities[entity].gen < 0)
         return 0;
 
-    return manager->sparce_entities[entity].component_count;
+    return manager->sparse_entities[entity].component_count;
 }
 
 uint16_t ecs_manager_get_entity_gen(const EcsManager* manager, const Entity entity) {
     if (manager->entities_ptr < entity || entity < 0)
         return 0;
-    if (manager->sparce_entities[entity].gen < 0)
+    if (manager->sparse_entities[entity].gen < 0)
         return 0;
 
-    return manager->sparce_entities[entity].gen;
+    return manager->sparse_entities[entity].gen;
 }
 
 void ecs_manager_copy_entity(const EcsManager* manager, const Entity dst,
                              const Entity src) {
     if (manager->entities_ptr < dst || dst < 0)
         return;
-    if (manager->sparce_entities[dst].gen < 0)
+    if (manager->sparse_entities[dst].gen < 0)
         return;
 
     if (manager->entities_ptr < src || src < 0)
         return;
-    if (manager->sparce_entities[src].gen < 0)
+    if (manager->sparse_entities[src].gen < 0)
         return;
 
-    const size_t count = manager->sparce_entities[src].component_count =
-        manager->sparce_entities[dst].component_count;
+    const size_t count = manager->sparse_entities[src].component_count =
+        manager->sparse_entities[dst].component_count;
     memcpy(&manager->components[src], &manager->components[src],
            count * sizeof(PoolInfo));
 }
@@ -295,7 +355,7 @@ void ecs_manager_entity_add_component(const EcsManager* manager, const Entity en
                                       const PoolInfo pool_hash, void* data) {
     if (manager->entities_ptr < entity || entity < 0)
         return;
-    if (manager->sparce_entities[entity].gen < 0)
+    if (manager->sparse_entities[entity].gen < 0)
         return;
 
     EcsPool* pool = ecs_manager_get_pool(manager, pool_hash);
@@ -307,7 +367,7 @@ void ecs_manager_entity_remove_component(const EcsManager* manager, const Entity
                                          const PoolInfo pool_hash) {
     if (manager->entities_ptr < entity || entity < 0)
         return;
-    if (manager->sparce_entities[entity].gen < 0)
+    if (manager->sparse_entities[entity].gen < 0)
         return;
 
     EcsPool* pool = ecs_manager_get_pool(manager, pool_hash);
@@ -448,7 +508,7 @@ static EcsFilter* get_filter(EcsManager* manager, const EcsMask mask) {
     }
 
     for (Entity i = 0; i < manager->entities_ptr; i++) {
-        if (manager->sparce_entities[i].gen > -1 &&
+        if (manager->sparse_entities[i].gen > -1 &&
             is_mask_compatible(manager, mask, i)) {
             filter_add_entity(filter, i);
         }
@@ -521,9 +581,6 @@ void on_entity_change(const EcsManager* manager, const Entity entity, const size
 
 static int is_mask_compatible(const EcsManager* manager, const EcsMask filterMask,
                               const Entity entity) {
-    EcsPool* pool1 = manager->pools[filterMask.include_pools[0].id];
-    EcsPool* pool2 = manager->pools[filterMask.include_pools[1].id];
-
     for (int i = 0; i < filterMask.include_count; i++) {
         if (!ecs_pool_has(manager->pools[filterMask.include_pools[i].id], entity)) {
             return 0;
@@ -556,7 +613,7 @@ static int is_mask_compatible_without(const EcsManager* manager, const EcsMask f
 }
 
 void ecs_manager_free(EcsManager* manager) {
-    free(manager->sparce_entities);
+    free(manager->sparse_entities);
     free(manager->components);
     free(manager->recycled_entities);
 
@@ -581,4 +638,15 @@ void ecs_manager_free(EcsManager* manager) {
     }
 
     free(manager);
+}
+
+void ecs_manager_post_update(EcsManager* manager) { remove_hierarchy_tag(manager); }
+
+static void remove_hierarchy_tag(EcsManager* manager) {
+    for (int i = 0; i < manager->entities_ptr; i++) {
+        if (manager->sparse_entities[i].gen < 0)
+            continue;
+
+        ecs_pool_remove(manager->hierarchy_dirty_pool, i);
+    }
 }

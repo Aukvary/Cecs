@@ -6,16 +6,34 @@
 
 #include "../../Collections/Iterator.h"
 
+/**
+ * @brief id of NULL entity
+ */
 #define ENTITY_NULL (-1)
+
+/**
+ * @brief Entity info with NULL id
+ */
 #define ENTITY_INFO_NULL                                                                 \
     (EntityInfo) { .id = ENTITY_NULL }
 
+/**
+ * @brief entity data in ecs manager
+ *
+ * @note if gen < 0 entity was killed
+ */
 typedef struct {
     Entity id;
     size_t component_count;
     int gen;
 } EntityInfo;
 
+/**
+ * @brief data struct for contains entity
+ *
+ * @note use dense_items/dense_entities and count to iteration
+ * @note implements an ID recycled system for reuse
+ */
 struct EntityContainer {
     void* dense_items;
     Entity* dense_entities;
@@ -38,25 +56,88 @@ struct EntityContainer {
     CopyItemHandler auto_copy;
 };
 
-EntityContainer entity_container_new(size_t, size_t, size_t, size_t, ResetItemHandler,
-                                     CopyItemHandler);
+/**
+ * @brief return new entity container
+ *
+ * @param item_size size of item
+ * @param dense_size size of dense array
+ * @param sparse_size size of sparse array
+ * @param recycle_size size of recycled array
+ * @param auto_reset func to reset data
+ * @param auto_copy func to copy data
+ *
+ * @return new entity container
+ *
+ * @note dense size can be smaller than sparse size
+ * @note sparse_size must be equals sparse_size of ecs manager else it can throw
+ * exceptions
+ * @note component data is zero-initialized by default
+ * @note component data is copied using memcpy func by default
+ */
+EntityContainer entity_container_new(size_t item_size, size_t dense_size,
+                                     size_t sparse_size, size_t recycle_size,
+                                     ResetItemHandler auto_reset,
+                                     CopyItemHandler auto_copy);
 
-Entity entity_container_push(EntityContainer*);
+/**
+ * @brief add entity to container
+ *
+ * @param container container with data
+ * @param entity entity that we will add
+ * @param data data to write in container
+ *
+ * @note data can be NULL
+ * @note if data isn't NULL it override reset func
+ */
+void entity_container_add(EntityContainer* container, Entity entity, const void* data);
 
-void entity_container_add(EntityContainer*, Entity, const void*);
+/**
+ * @brief containing entity in container
+ *
+ * @param container container with data
+ * @param entity entity
+ *
+ * @return 1 if container has entity else return 0
+ */
+int entity_container_has(const EntityContainer* container, Entity entity);
 
-void entity_container_remove(EntityContainer*, Entity);
+/**
+ * @brief return entity data
+ *
+ * @param container container with data
+ * @param entity entity that we try found
+ *
+ * @return pointer to entity data
+ *
+ * @warning return NULL if container hasn't entity
+ */
+void* entity_container_get(const EntityContainer* container, Entity entity);
 
-int entity_container_has(const EntityContainer*, Entity);
+/**
+ * @brief return entity data
+ *
+ * @param container container with data
+ * @param entity entity that we try get
+ */
+void entity_container_remove(EntityContainer* container, Entity entity);
 
-void* entity_container_get(const EntityContainer*, Entity);
+/**
+ * @brief resize container when entity count out of range
+ *
+ * @param container container with data
+ * @param size new container size
+ *
+ * @warning func must be called by wrapper else it can throw exceptions
+ */
+void entity_container_resize(EntityContainer* container, size_t size);
 
-int get_container_entities(EntityContainer*, Entity*, size_t);
-
-int get_container_items(EntityContainer*, void**, size_t);
-
-void entity_container_resize(EntityContainer*, size_t);
-
-void entity_container_free(EntityContainer*);
+/**
+ * @brief free container memory
+ *
+ * @param container container with data
+ *
+ * @warning func must be called by wrapper else it can throw exceptions
+ */
+void entity_container_free(EntityContainer* container);
 
 #endif
