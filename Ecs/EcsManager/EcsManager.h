@@ -8,6 +8,7 @@
 #include "../EcsTypes.h"
 #include "../Entity/Entity.h"
 #include "../Pools/ECSPool.h"
+
 /**
  * @brief contains data to initialize ecs manager
  */
@@ -187,7 +188,7 @@ EcsManager* ecs_manager_new(const EcsManagerConfig* cfg);
 /**
  * @brief return new entity
  *
- * @param manager manager from we will get enity
+ * @param manager manager from we will get entity
  *
  * @note entity can be restored from recycled array
  */

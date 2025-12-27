@@ -5,13 +5,7 @@
 #include "Game/Game.h"
 #include "include/raylib.h"
 
-void func(int* num) {
-    *num = 10;
-}
-
-
 int main() {
-    func(&(int){10});
 
     //
     //
