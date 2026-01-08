@@ -22,11 +22,36 @@
  *
  * @note if gen < 0 entity was killed
  */
-typedef struct {
+
+typedef struct EntityInfo{
     Entity id;
-    size_t component_count;
+    int* components;
+    int component_size;
+    int component_count;
+
+    struct EntityInfo* parent;
+    struct EntityInfo** children;
+    int children_size;
+    int base_children_size;
+    int children_count;
+
     int gen;
 } EntityInfo;
+
+EntityInfo entity_info_new(Entity id, int component_count, int children_size);
+void entity_info_reuse(EntityInfo* info);
+void entity_info_set_parent(EntityInfo* info, EntityInfo* parent);
+void entity_info_add_child(EntityInfo* info, EntityInfo* child);
+void entity_info_remove_child(EntityInfo* info, EntityInfo* child);
+void entity_info_remove_all_children(EntityInfo* info);
+
+void entity_info_add_component(EntityInfo* info, int id);
+void entity_info_remove_component(EntityInfo* info, int id);
+
+void entity_info_reset(EntityInfo* info);
+void entity_info_copy(EntityInfo* dst, EntityInfo* src);
+
+void entity_info_kill(EntityInfo* info);
 
 /**
  * @brief data struct for contains entity

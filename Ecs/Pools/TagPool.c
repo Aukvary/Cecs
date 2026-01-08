@@ -26,18 +26,16 @@ EcsPool* tag_pool_new(const EcsManager* manager, const char* name) {
     if (!pool)
         return NULL;
 
-    size_t num_buckets = (manager->sparse_size + BUCKET_SIZE - 1) / BUCKET_SIZE;
+    const size_t num_buckets = (manager->sparse_size + BUCKET_SIZE - 1) / BUCKET_SIZE;
+    const int id = component_get_data_by_name(name).id;
 
     *pool = (TagPool) {
         .pool =
             (EcsPool) {
                 .manager = manager,
                 .count = 0,
-                .info =
-                    (PoolInfo) {
-                        .name = name,
-                        .hash = ecs_pool_get_hash(name),
-                    },
+                .name = name,
+                .component_id = id,
                 .data = pool,
 
                 .add = tag_pool_add,

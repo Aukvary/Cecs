@@ -1,8 +1,12 @@
 #ifndef BASE_COMPONENTS_H
 #define BASE_COMPONENTS_H
 
-typedef struct {
+#include "EcsPool.h"
 
-} HierarchyDirty;
+struct HierarchyDirty{
+
+};
+
+REGISTER_COMPONENT(HierarchyDirty)
 
 #endif

@@ -20,15 +20,19 @@ struct ComponentPool {
     EntityContainer entities;
 };
 
-EcsPool* component_pool_new(const EcsManager* manager, const char* name, size_t item_size,
-                            ResetItemHandler auto_reset, CopyItemHandler auto_copy) {
+EcsPool* component_pool_new(const EcsManager* manager, const char* name,
+                            const size_t item_size, ResetItemHandler reset_handler,
+                            CopyItemHandler copy_handler) {
     ComponentPool* pool = malloc(sizeof(ComponentPool));
+
+    const int id = component_get_data_by_name(name).id;
 
     *pool = (ComponentPool) {
         .pool =
             (EcsPool) {
                 .manager = manager,
-                .info = (PoolInfo) {.name = name, .hash = ecs_pool_get_hash(name)},
+                .name = name,
+                .component_id = id,
                 .count = 0,
 
                 .data = pool,
@@ -43,7 +47,7 @@ EcsPool* component_pool_new(const EcsManager* manager, const char* name, size_t 
 
         .entities =
             entity_container_new(item_size, manager->cfg_dense_size, manager->sparse_size,
-                                 manager->recycled_size, auto_reset, auto_copy),
+                                 manager->recycled_size, reset_handler, copy_handler),
     };
 
     return &pool->pool;

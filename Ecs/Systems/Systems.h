@@ -33,6 +33,8 @@ typedef struct {
     size_t update_size;
     size_t post_update_size;
 
+    size_t tag_remove_size;
+
     size_t destroy_size;
 } SystemHandlerConfig;
 
@@ -51,6 +53,8 @@ struct EcsSystem {
     Action update;
     Action post_update;
 
+    Action tag_remove;
+
     Action destroy;
 };
 
@@ -61,24 +65,27 @@ struct EcsSystem {
  * @param pre_update called before update func
  * @param update called on main update cycle
  * @param post_update called after update func
+ * @param tag_remove use for remove tags after update funcs
  * @param destroy called on system handler destroy
  *
  * @warning if system hasn't any func it must be initialized by NULL
  */
 EcsSystem* ecs_system_new(Init init, Action pre_update, Action update, Action post_update,
-                          Action destroy);
+                          Action tag_remove, Action destroy);
 
 /**
  * @brief container where systems grouped by funcs
  */
 struct SystemHandler {
-    const EcsManager* manager;
+    EcsManager* manager;
 
     VEC(InitDataPair) inits;
 
     VEC(ActionDataPair) pre_updates;
     VEC(ActionDataPair) updates;
     VEC(ActionDataPair) post_updates;
+
+    VEC(ActionDataPair) tag_removes;
 
     VEC(ActionDataPair) destroys;
 };
@@ -91,8 +98,7 @@ struct SystemHandler {
  *
  * @return return pointer to new system handler
  */
-SystemHandler* system_handler_new(const EcsManager* manager,
-                                  const SystemHandlerConfig* cfg);
+SystemHandler* system_handler_new(EcsManager* manager, const SystemHandlerConfig* cfg);
 
 /**
  * @brief add system in pools if system has needed func
@@ -102,30 +108,35 @@ SystemHandler* system_handler_new(const EcsManager* manager,
  *
  * @return return pointer to new system handler
  */
-void system_handler_add(SystemHandler* handler, EcsSystem* system);
+void system_handler_add(SystemHandler* handler, const EcsSystem* system);
 
 /**
- * @brief call all init system funcs
+ * @brief call all init systems funcs
  */
 void system_handler_init(const SystemHandler* handler);
 
 /**
- * @brief call all pre_update system funcs
+ * @brief call all pre_update systems funcs
  */
 void system_handler_pre_update(const SystemHandler* handler);
 
 /**
- * @brief call all update system funcs
+ * @brief call all update systems funcs
  */
 void system_handler_update(const SystemHandler* handler);
 
 /**
- * @brief call all post_update system funcs
+ * @brief call all post_update systems funcs
  */
 void system_handler_post_update(const SystemHandler* handler);
 
 /**
- * @brief call all destroy system funcs
+ * @brief call all remove_tag systems funcs
+ */
+void system_handler_remove_tag(const SystemHandler* handler);
+
+/**
+ * @brief call all destroy systems funcs
  */
 void system_handler_destroy(const SystemHandler* handler);
 

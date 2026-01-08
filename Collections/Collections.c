@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-void* vec_new(size_t el_size, size_t capacity) {
-    VecHeader* header = malloc(sizeof(VecHeader) + el_size * capacity);
+void* vec_new(const size_t item_size, const size_t capacity) {
+    VecHeader* header = malloc(sizeof(VecHeader) + item_size * capacity);
     ;
 
     *header = (VecHeader) {
-        .element_size = el_size,
+        .element_size = item_size,
         .capacity = capacity,
         .count = 0,
 
@@ -30,7 +30,7 @@ inline VecHeader* vec_header(void* data) {
     return (VecHeader*) ((uint8_t*) data - sizeof(VecHeader));
 }
 
-void* vec_add(void* data, void* el) {
+void* vec_add(void* data, void* value) {
     VecHeader* header = vec_header(data);
 
     if (header->count == header->capacity) {
@@ -53,7 +53,7 @@ void* vec_add(void* data, void* el) {
     uint8_t* data_ptr = header->data;
     size_t offset = header->count * header->element_size;
 
-    memcpy(data_ptr + offset, el, header->element_size);
+    memcpy(data_ptr + offset, value, header->element_size);
     header->count++;
 
     return header->data;
@@ -77,7 +77,7 @@ void vec_pop(void* data, int idx) {
     header->count--;
 }
 
-void vec_remove(void* data, void* el) {
+void vec_remove(void* data, void* value) {
     VecHeader* header = vec_header(data);
 
     if (header->iter_locked) {
@@ -88,7 +88,7 @@ void vec_remove(void* data, void* el) {
     int idx;
 
     for (int i = 0; i < header->count; i++) {
-        if (memcmp(el, (uint8_t*) data + header->element_size * i,
+        if (memcmp(value, (uint8_t*) data + header->element_size * i,
                    header->element_size) == 0) {
             idx = i;
             header->count--;

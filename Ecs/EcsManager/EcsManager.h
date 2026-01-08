@@ -7,7 +7,7 @@
 #include "../../Collections/Iterator.h"
 #include "../EcsTypes.h"
 #include "../Entity/Entity.h"
-#include "../Pools/ECSPool.h"
+#include "../Pools/EcsPool.h"
 
 /**
  * @brief contains data to initialize ecs manager
@@ -35,7 +35,7 @@ typedef struct {
  * @brief mask with data about ecs filter
  */
 struct ECSMask {
-    const EcsManager* manager;
+    EcsManager* manager;
 
     int* include_pools;
     size_t include_size;
@@ -53,15 +53,14 @@ struct ECSMask {
  * @param manager manager that contains this mask
  * @param inc_size size of include array
  * @param exc_size size of exclude array
- * @param id id of default pool
  */
-EcsMask mask_new(const EcsManager* manager, size_t inc_size, size_t exc_size, int id);
+EcsMask mask_new(EcsManager* manager, size_t inc_size, size_t exc_size);
 
 /**
  * @brief add pool to include pool
  *
  * @param mask pointer to mask
- * @param id id of component type that we add
+ * @param id index of pool in ecs manager
  *
  * @warning don't call after mask_end else it throws exception
  */
@@ -71,7 +70,7 @@ void mask_inc(EcsMask* mask, int id);
  * @brief add pool to exclude pool
  *
  * @param mask pointer to mask
- * @param id id of component type that we add
+ * @param id index of pool in ecs manager
  *
  * @warning don't call after mask_end else it throws exception
  */
@@ -79,8 +78,6 @@ void mask_exc(EcsMask* mask, int id);
 
 /**
  * @brief build filter from mask and return it
- *
- * @param mask pointer to mask
  */
 EcsFilter* mask_end(EcsMask mask);
 
@@ -102,15 +99,8 @@ struct EcsManager {
     size_t sparse_size;
     Entity entities_ptr;
 
-    Entity* parents;
-    Entity* children;
-    Entity children_size;
-
     size_t cfg_dense_size;
     size_t cfg_recycle_size;
-
-    int* components;
-    size_t components_count;
 
     Entity* recycled_entities;
     size_t recycled_size;
@@ -143,14 +133,7 @@ struct EcsManager {
  * @note if manager hasn't pool with type T create new pool and return it
  */
 #define ECS_MANAGER_GET_POOL(manager, T)                                                 \
-    ({                                                                                   \
-        EcsPool* pool = ecs_manager_get_pool((manager), POOL_DATA(T));                   \
-        if (pool == NULL) {                                                              \
-            pool = ECS_POOL_NEW(T, manager);                                             \
-            ecs_manager_add_pool(manager, pool);                                         \
-        }                                                                                \
-        pool;                                                                            \
-    })
+    ({ ecs_manager_get_pool_by_name((manager), #T); })
 
 /**
  * @brief return mask where default type is T
@@ -168,7 +151,8 @@ struct EcsManager {
  * @param mask mask where we're including T
  * @param T type that we include
  */
-#define MASK_INC(mask, T) mask_inc(&(mask), (ECS_MANAGER_GET_POOL(manager, T))->info)
+#define MASK_INC(mask, T)                                                                \
+    mask_inc(&(mask), (ECS_MANAGER_GET_POOL(manager, T))->ecs_manager_id)
 
 /**
  * @brief exclude type T in mask
@@ -176,7 +160,8 @@ struct EcsManager {
  * @param mask mask where we're excluding T
  * @param T type that we exclude
  */
-#define MASK_EXC(mask, T) mask_exc(&(mask), (ECS_MANAGER_GET_POOL(manager, T))->info)
+#define MASK_EXC(mask, T)                                                                \
+    mask_exc(&(mask), (ECS_MANAGER_GET_POOL(manager, T))->ecs_manager_id)
 
 /**
  * @brief return new ecs manager
@@ -224,7 +209,7 @@ Entity ecs_manager_get_parent(const EcsManager* manager, Entity entity);
  * @note add HierarchyDirty component to parent, child and old child parent if it exists
  * @note if parent already is parent of child func do nothing
  */
-void ecs_manager_set_parent(EcsManager* manager, Entity parent, Entity child);
+void ecs_manager_set_parent(const EcsManager* manager, Entity parent, Entity child);
 
 /**
  * @brief add child to parent child pool
@@ -236,7 +221,7 @@ void ecs_manager_set_parent(EcsManager* manager, Entity parent, Entity child);
  * @note add HierarchyDirty component to parent, child and old child parent if it exists
  * @note if parent already is parent of child func do nothing
  */
-void ecs_manager_add_child(EcsManager* manager, Entity parent, Entity child);
+void ecs_manager_add_child(const EcsManager* manager, Entity parent, Entity child);
 
 /**
  * @brief add child to parent child pool
@@ -248,7 +233,7 @@ void ecs_manager_add_child(EcsManager* manager, Entity parent, Entity child);
  * @note add HierarchyDirty component to parent and child
  * @note if parent already isn't parent of child func do nothing
  */
-void ecs_manager_remove_child(EcsManager* manager, Entity parent, Entity child);
+void ecs_manager_remove_child(const EcsManager* manager, Entity parent, Entity child);
 
 /**
  * @brief return pointer to child pool of entity
@@ -260,7 +245,7 @@ void ecs_manager_remove_child(EcsManager* manager, Entity parent, Entity child);
  * @note func always override count value
  */
 const Entity* ecs_manager_get_children(const EcsManager* manager, Entity entity,
-                                       size_t* count);
+                                       int* count);
 
 /**
  * @brief move entity to recycle array
@@ -312,8 +297,8 @@ void ecs_manager_copy_entity(const EcsManager* manager, Entity dst, Entity src);
  * @note if manager hasn't ecs pool of this component, pool will be created and added to
  * manager
  */
-void ecs_manager_entity_add_component(const EcsManager* manager, Entity entity, int id,
-                                      void* data);
+void ecs_manager_entity_add_component(EcsManager* manager, Entity entity, int id,
+                                      const void* data);
 
 /**
  * @brief remove entity from ecs pool with this component id
@@ -324,8 +309,7 @@ void ecs_manager_entity_add_component(const EcsManager* manager, Entity entity, 
  *
  * @note if manager hasn't ecs pool of this component func do nothing
  */
-void ecs_manager_entity_remove_component(const EcsManager* manager, Entity entity,
-                                         int id);
+void ecs_manager_entity_remove_component(EcsManager* manager, Entity entity, int id);
 
 /**
  * @brief add pool to mager pools
@@ -333,7 +317,7 @@ void ecs_manager_entity_remove_component(const EcsManager* manager, Entity entit
  * @param manager manager that contains pools
  * @param pool pool that we're adding
  */
-void ecs_manager_add_pool(EcsManager* manager , EcsPool* pool);
+void ecs_manager_add_pool(EcsManager* manager, EcsPool* pool);
 
 /**
  * @brief return pool from manager with this id
@@ -344,7 +328,18 @@ void ecs_manager_add_pool(EcsManager* manager , EcsPool* pool);
  * @note if manager hasn't ecs pool of this component, pool will be created and added to
  * manager
  */
-EcsPool* ecs_manager_get_pool(const EcsManager* manager, int id);
+EcsPool* ecs_manager_get_pool_by_id(EcsManager* manager, int id);
+
+/**
+ * @brief return pool from manager with this name
+ *
+ * @param manager manager that contains pools
+ * @param name name of component type
+ *
+ * @note if manager hasn't ecs pool of this component, pool will be created and added to
+ * manager
+ */
+EcsPool* ecs_manager_get_pool_by_name(EcsManager* manager, const char* name);
 
 /**
  * @brief recalculate filter entities when entity was changed
@@ -368,6 +363,6 @@ void ecs_manager_free(EcsManager* manager);
  *
  * @note tool components: HierarchyDirty
  */
-void remove_tool_components(EcsManager* manager);
+void remove_tool_components(const EcsManager* manager);
 
 #endif

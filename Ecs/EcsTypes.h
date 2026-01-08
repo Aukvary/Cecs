@@ -1,7 +1,7 @@
 #ifndef ECS_TYPES_H
 #define ECS_TYPES_H
 
-#include <stdint.h>
+#include <stdlib.h>
 
 typedef int16_t Entity;
 
@@ -54,7 +54,7 @@ typedef void (*CopyItemHandler)(void* dst, const void* src, size_t size);
 /**
  * @brief container for system funcs
  *
- * @warning if system hasn't some func => they must be initialized by NULL
+ * @warning if system hasn't any func it must be initialized by NULL
  */
 typedef struct EcsSystem EcsSystem;
 

@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "../EcsTypes.h"
 #include "../Entity/Entity.h"
 
@@ -24,8 +25,9 @@ struct EcsPool {
 
     size_t count;
 
-    char* name;
-    int id;
+    const char* name;
+    int component_id;
+    int ecs_manager_id;
 
     void* data;
 
@@ -55,6 +57,15 @@ struct EcsPool {
  * @return new ecs pool
  */
 EcsPool* ecs_pool_new(const EcsManager* manager, const char* name, size_t size);
+
+/**
+ * @brief return new pool with this type id
+ *
+ * @param manager ecs manager that contains this pool
+ * @param id id of component type
+ * @return new ecs pool
+ */
+EcsPool* ecs_pool_new_by_id(const EcsManager* manager, int id);
 
 /**
  * @brief return new component pool
@@ -161,9 +172,9 @@ typedef struct ComponentAttribute {
  */
 typedef struct {
     char* name;
-    size_t component_size;
-
     int id;
+
+    size_t component_size;
 
     int attribute_count;
     ComponentAttribute* attributes;
@@ -173,13 +184,12 @@ typedef struct {
 /**
  * @brief register component in global pool
  *
- * @param id pointer to id field in component data struct
- * @param name name of component
+ * @param data pointer to generated data variable
  *
  * @note this func must be called by __attribute__((constructor)) func else may be
  * exceptions
  */
-void register_component_id(int* id, const char* name);
+void register_component(ComponentData* data);
 
 /**
  * @brief get component name by id
@@ -188,7 +198,7 @@ void register_component_id(int* id, const char* name);
  *
  * @note if global pool hasn't this id return NULL
  */
-const char* get_component_name_by_id(int id);
+ComponentData component_get_data_by_id(int id);
 
 /**
  * @brief get component id by name
@@ -197,7 +207,7 @@ const char* get_component_name_by_id(int id);
  *
  * @note if global pool hasn't this name return -1
  */
-int get_component_id_by_name(const char* name);
+ComponentData component_get_data_by_name(const char* name);
 
 /**
  * @brief register component in global pool
@@ -213,27 +223,35 @@ int get_component_id_by_name(const char* name);
     static ComponentAttribute component_name##_attrs[] = {__VA_ARGS__};                  \
     static int component_name##_attrs_count =                                            \
         sizeof(component_name##_attrs) / sizeof(component_name##_attrs[0]);              \
-    static ComponentData _##component_name##_data;                                       \
-    __attribute__((constructor)) static void component_name##_register_component(void) { \
-        _##component_name##_data = (ComponentData) {                                     \
+    static ComponentData local_##component_name##_data;                                  \
+    __attribute__((constructor)) static void component_name##_register(void) {           \
+        local_##component_name##_data = (ComponentData) {                                \
             .name = #component_name,                                                     \
+            .component_size = sizeof(component_name),                                    \
             .attributes = component_name##_attrs,                                        \
             .attribute_count = component_name##_attrs_count,                             \
         };                                                                               \
-        register_component_id(&_##component_name##_data.id, #component_name);            \
+        register_component(&local_##component_name##_data);                              \
+        printf("[DEBUD]%s component was registred with id %d\n", #component_name,        \
+               local_##component_name##_data.id);                                        \
     }                                                                                    \
-    inline ComponentData component_name##_data() { return _##component_name##_data; }
+    inline const ComponentData* component_name##_data() {                                \
+        return &local_##component_name##_data;                                           \
+    }
 
 /**
  * @brief data of serialized component field
  */
 typedef struct {
-    char* name;
+    char name[30];
     size_t type_size;
 
     int attribute_count;
     ComponentAttribute* attributes;
 } ComponentField;
+
+
+
 
 
 #endif

@@ -1,36 +1,44 @@
-#include "ECSPool.h"
+#include "EcsPool.h"
 #include "../EcsManager/EcsManager.h"
 
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static const char* component_names[100] = {NULL};
+#ifndef COMPONENT_TABLE_SIZE
+#define COMPONENT_TABLE_SIZE 107
+#endif
 
-EcsPool* ecs_pool_new(const EcsManager* manager, const char* name, size_t component_size) {
-    return component_size != 0
-               ? component_pool_new(manager, name, component_size, NULL, NULL)
-               : tag_pool_new(manager, name);
+static int id_counter = 0;
+static const ComponentData* component_data_by_id[COMPONENT_TABLE_SIZE] = {NULL};
+static const ComponentData* component_data_by_name[COMPONENT_TABLE_SIZE] = {NULL};
+
+static int component_get_hash(const char* name);
+
+EcsPool* ecs_pool_new(const EcsManager* manager, const char* name, const size_t size) {
+    return size != 0 ? component_pool_new(manager, name, size, NULL, NULL)
+                     : tag_pool_new(manager, name);
 }
 
-uint64_t ecs_pool_get_hash(const char* name) {
-    uint64_t hash = 14695981039346656037ULL;
-    while (*name) {
-        hash ^= (uint64_t) (*name++);
-        hash *= 1099511628211ULL;
-    }
-    return hash;
+EcsPool* ecs_pool_new_by_id(const EcsManager* manager, const int id) {
+    const ComponentData data = component_get_data_by_id(id);
+
+    return data.component_size != 0
+               ? component_pool_new(manager, data.name, data.component_size, NULL, NULL)
+               : tag_pool_new(manager, data.name);
 }
 
 void ecs_pool_add(EcsPool* pool, const Entity entity, const void* data) {
+    if (pool->has(pool->data, entity))
+        return;
+
     pool->count++;
     pool->add(pool->data, entity, data);
-    on_entity_change(pool->manager, entity, pool->info.id, 1);
-    printf("[DEBUG]\t entity \"%d\" was added to %s pool\n", entity, pool->info.name);
+    on_entity_change(pool->manager, entity, pool->ecs_manager_id, 1);
+    printf("[DEBUG]\t entity \"%d\" was added to %s pool\n", entity, pool->name);
 }
 
-inline void* ecs_pool_get(const EcsPool* pool, Entity entity) {
+inline void* ecs_pool_get(const EcsPool* pool, const Entity entity) {
     return pool->get(pool->data, entity);
 }
 
@@ -38,39 +46,79 @@ inline int ecs_pool_has(const EcsPool* pool, const Entity entity) {
     return pool->has(pool->data, entity);
 }
 
-inline void ecs_pool_remove(EcsPool* pool, Entity entity) {
+inline void ecs_pool_remove(EcsPool* pool, const Entity entity) {
+    if (!pool->has(pool->data, entity))
+        return;
+
     pool->count--;
-    on_entity_change(pool->manager, entity, pool->info.id, 0);
+    on_entity_change(pool->manager, entity, pool->ecs_manager_id, 0);
     pool->remove(pool->data, entity);
-    printf("[DEBUG]\t entity \"%d\" was removed from %s pool\n", entity, pool->info.name);
+    printf("[DEBUG]\t entity \"%d\" was removed from %s pool\n", entity, pool->name);
 }
 
-void ecs_pool_resize(EcsPool* pool, const size_t new_size) {
-    pool->resize(pool->data, new_size);
-}
+void ecs_pool_resize(EcsPool* pool, const size_t size) { pool->resize(pool->data, size); }
 
 void ecs_pool_free(EcsPool* pool) { pool->free(pool->data); }
 
 
-void register_component_id(int* id, const char* name) {
-    static int id_counter = 0;
-    *id = id_counter++;
-
-    component_names[*id] = name;
+static int component_get_hash(const char* name) {
+    int hash = 2147483647;
+    while (*name) {
+        hash ^= *name++;
+        hash *= 314159;
+    }
+    return hash;
 }
 
-const char* get_component_name_by_id(int id) {
-    return component_names[id];
-}
+void register_component(ComponentData* data) {
+    data->id = id_counter++;
 
-int get_component_id_by_name(const char* name) {
-    for (int i = 0; i < sizeof(component_names) / sizeof(component_names[0]); i++) {
-        if (component_names[i] == NULL) return -1;
+    component_data_by_id[data->id] = data;
 
-        if (strcmp(component_names[i], name) == 0) {
-            return i;
+    int idx = component_get_hash(data->name) % COMPONENT_TABLE_SIZE;
+    int start = idx;
+    while (component_data_by_name[idx] != NULL) {
+        idx = (idx + 1) % COMPONENT_TABLE_SIZE;
+        if (idx == start) {
+            printf("[DEBUG]component count out of range");
+            exit(1);
         }
     }
 
-    return -1;
+    component_data_by_name[idx] = data;
+}
+
+ComponentData component_get_data_by_id(const int id) {
+    if (id < 0 || id >= COMPONENT_TABLE_SIZE) {
+        printf("[DEBUG]component id out of range(id = %d)", id);
+        exit(1);
+    }
+
+    if (component_data_by_id[id] == NULL) {
+        printf("[DEBUG]component wasn't registered(id = %d)", id);
+        exit(1);
+    }
+
+    return *component_data_by_id[id];
+}
+
+ComponentData component_get_data_by_name(const char* name) {
+    int idx = component_get_hash(name) % COMPONENT_TABLE_SIZE;
+    const int start = idx;
+
+    while (component_data_by_name[idx] != NULL &&
+           strcmp(component_data_by_name[idx]->name, name) != 0) {
+        idx = (idx + 1) % COMPONENT_TABLE_SIZE;
+        if (idx == start) {
+            printf("[DEBUG]component wasn't registered(name = %s)", name);
+            exit(1);
+        }
+    }
+
+    if (component_data_by_name[idx] == NULL) {
+        printf("[DEBUG]component wasn't registered(name = %s)", name);
+        exit(1);
+    }
+
+    return *component_data_by_name[idx];
 }

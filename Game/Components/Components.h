@@ -4,14 +4,7 @@
 #include "../include/raylib.h"
 #include "../../Ecs/Pools/EcsPool.h"
 
-REGISTER_COMPONENT(Transform2D)
-REGISTER_COMPONENT(Sprite)
-REGISTER_COMPONENT(Collider)
-REGISTER_COMPONENT(Player)
-REGISTER_COMPONENT(Enemy)
-
-//
-// typedef struct {
+// struct Transform2D {
 //     Vector2 position;
 //     Vector2 local_position;
 //
@@ -22,7 +15,10 @@ REGISTER_COMPONENT(Enemy)
 //     float local_rotation;
 //
 //     int was_transformed;
-// } Transform2D;
+// };
+//
+// REGISTER_COMPONENT(Transform2D)
+
 //
 // typedef float Velocity;
 //

@@ -11,6 +11,155 @@ static int entity_container_next(void*);
 static void default_entity_item_reset(void* data, size_t);
 static void default_entity_item_copy(void* dst, const void* src, size_t);
 
+EntityInfo entity_info_new(const Entity id, const int component_count,
+                           const int children_size) {
+    return (EntityInfo) {
+        .id = id,
+
+        .components = calloc(component_count, sizeof(int)),
+        .component_size = component_count,
+        .component_count = 0,
+
+        .parent = NULL,
+
+        .children = NULL,
+        .children_size = children_size,
+        .base_children_size = children_size,
+        .children_count = 0,
+
+        .gen = 1,
+    };
+}
+
+void entity_info_reuse(EntityInfo* info) {
+    if (info->gen > 0)
+        return;
+
+    info->gen = -info->gen + 1;
+
+    info->component_count = info->component_count;
+    info->children_count = 0;
+}
+
+void entity_info_set_parent(EntityInfo* info, EntityInfo* parent) {
+    if (info->parent != NULL)
+        entity_info_remove_child(info->parent, info);
+
+    if (parent == NULL)
+        info->parent = NULL;
+    else
+        entity_info_add_child(parent, info);
+}
+
+void entity_info_add_child(EntityInfo* info, EntityInfo* child) {
+    if (info->children == NULL) {
+        info->children = calloc(info->base_children_size, sizeof(EntityInfo*));
+    }
+
+    for (int i = 0; i < info->children_count + 1; i++) {
+        if (info->children[i]->id == child->id)
+            return;
+        if (i == info->children_size) {
+            info->children_size *= 2;
+            void* tmp =
+                realloc(info->children, info->children_size * sizeof(EntityInfo*));
+
+            if (!tmp) {
+            }
+
+            info->children = tmp;
+        }
+
+        if (i == info->children_count) {
+            info->children[i] = child;
+            return;
+        }
+    }
+}
+
+void entity_info_remove_child(EntityInfo* info, EntityInfo* child) {
+    for (int i = 0; i < info->children_count; i++) {
+        if (info->children[i]->id != child->id)
+            continue;
+
+        info->children[i] = info->children[--info->children_count];
+        child->parent = NULL;
+    }
+}
+
+void entity_info_remove_all_children(EntityInfo* info) {
+    for (int i = 0; i < info->children_count; i++) {
+        info->children[i]->parent = NULL;
+    }
+
+    info->children_count = 0;
+}
+
+void entity_info_add_component(EntityInfo* info, int id) {
+    for (int i = 0; i < info->component_count + 1; i++) {
+        if (info->components[i] == id)
+            return;
+
+        if (i == info->component_size) {
+            info->component_size *= 2;
+            void* tmp = realloc(info->components, info->component_size * sizeof(int));
+
+            if (!tmp) {
+            }
+
+            info->components = tmp;
+        }
+
+        if (i == info->component_count) {
+            info->components[i] = id;
+            return;
+        }
+    }
+}
+
+void entity_info_remove_component(EntityInfo* info, int id) {
+    for (int i = 0; i < info->component_count; i++) {
+        if (info->components[i] != id)
+            continue;
+
+        info->components[i] = info->components[--info->component_count];
+    }
+}
+
+void entity_info_reset(EntityInfo* info) {
+    if (info->gen < 0) return;
+
+    entity_info_remove_all_children(info);
+    entity_info_set_parent(info, NULL);
+    info->component_count = 0;
+    info->gen++;
+}
+
+void entity_info_copy(EntityInfo* dst, EntityInfo* src) {
+    if (dst->gen < 0) return;
+    if (src->gen < 0) return;
+
+    if (dst->component_size < src->component_size) {
+        dst->component_size = src->component_size;
+
+        void* tmp = realloc(dst->components, dst->component_size * sizeof(int));
+
+        if (!tmp) { }
+
+        dst->components = tmp;
+    }
+
+    memcpy(dst->components, src->components, dst->component_size * sizeof(int));
+}
+
+void entity_info_kill(EntityInfo* info) {
+    if (info->gen < 0) return;
+
+    entity_info_remove_all_children(info);
+    entity_info_set_parent(info, NULL);
+    info->gen *= -1;
+}
+
 EntityContainer entity_container_new(const size_t item_size, const size_t dense_size,
                                      const size_t sparse_size, const size_t recycle_size,
                                      const ResetItemHandler auto_reset,
@@ -125,7 +274,8 @@ void entity_container_remove(EntityContainer* container, const Entity entity) {
     container->count--;
 
     if (container->recycle_ptr >= container->recycle_size) {
-        container->recycle_size *= 2;
+        container->recycle_size =
+            container->recycle_size ? 2 * container->recycle_size : 8;
         void* tmp = realloc(container->recycle_entities,
                             container->recycle_size * sizeof(Entity));
 
