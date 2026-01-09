@@ -2,14 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../EcsManager/EcsManager.h"
-#include "EcsPool.h"
-
+#include "DtEcs.h"
 typedef uint16_t TagBucket;
 #define BUCKET_SIZE (sizeof(TagBucket) * 8)
 
 static void tag_pool_add(void*, Entity, const void*);
-static int tag_pool_has(const void* pool, Entity entity);
+static bool tag_pool_has(const void* pool, Entity entity);
 static void tag_pool_remove(void*, Entity);
 static void tag_pool_resize(void*, size_t);
 static void tag_pool_free(void*);
@@ -21,13 +19,13 @@ typedef struct TagPool {
     size_t max_entities;
 } TagPool;
 
-EcsPool* tag_pool_new(const EcsManager* manager, const char* name) {
+EcsPool* tag_pool_new(const DtEcsManager* manager, const char* name) {
     TagPool* pool = malloc(sizeof(TagPool));
     if (!pool)
         return NULL;
 
     const size_t num_buckets = (manager->sparse_size + BUCKET_SIZE - 1) / BUCKET_SIZE;
-    const int id = component_get_data_by_name(name).id;
+    const int id = component_get_data_by_name(name)->id;
 
     *pool = (TagPool) {
         .pool =
@@ -63,7 +61,7 @@ static void tag_pool_add(void* pool, Entity entity, const void* data) {
     tag_pool->pool.count++;
 }
 
-static int tag_pool_has(const void* pool, Entity entity) {
+static bool tag_pool_has(const void* pool, Entity entity) {
     const TagPool* tag_pool = pool;
 
     if (entity >= tag_pool->max_entities) {

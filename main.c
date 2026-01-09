@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tgmath.h>
-#include "Game/Game.h"
-#include "include/raylib.h"
+#include "raylib.h"
 
 void func() {
     //
@@ -36,20 +34,10 @@ void func() {
     // CloseWindow();
 }
 
-
-
-static const SystemHandlerConfig systems_cfg = {
-    .init_size = 2,
-    .pre_update_size = 0,
-    .update_size = 2,
-    .post_update_size = 0,
-    .destroy_size = 0,
-};
-
-#include "Tests/EcsManagerTests.h"
+#include "Tests/TestEcs.h"
 
 int main() {
-    test_create_remove_entity();
-
+    test_parent_children_relations();
+    // test_create_remove_entity();
     return 0;
 }

@@ -1,7 +1,7 @@
 #ifndef ECS_MANAGER_TESTS_H
 #define ECS_MANAGER_TESTS_H
 
-#include <Ecs/EcsManager/EcsManager.h>
+#include "Ecs/DtEcs.h"
 
 struct TestEmptyComponent1 {};
 

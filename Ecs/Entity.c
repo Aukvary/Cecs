@@ -1,8 +1,7 @@
-#include "Entity.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../EcsTypes.h"
+#include "DtEcs.h"
 
 static void entity_container_start(void*);
 static void* entity_container_current(void*);
@@ -11,8 +10,8 @@ static int entity_container_next(void*);
 static void default_entity_item_reset(void* data, size_t);
 static void default_entity_item_copy(void* dst, const void* src, size_t);
 
-EntityInfo entity_info_new(const Entity id, const int component_count,
-                           const int children_size) {
+EntityInfo dt_entity_info_new(const Entity id, const u16 component_count,
+                           const Entity children_size) {
     return (EntityInfo) {
         .id = id,
 
@@ -31,7 +30,7 @@ EntityInfo entity_info_new(const Entity id, const int component_count,
     };
 }
 
-void entity_info_reuse(EntityInfo* info) {
+void dt_entity_info_reuse(EntityInfo* info) {
     if (info->gen > 0)
         return;
 
@@ -41,24 +40,22 @@ void entity_info_reuse(EntityInfo* info) {
     info->children_count = 0;
 }
 
-void entity_info_set_parent(EntityInfo* info, EntityInfo* parent) {
+void dt_entity_info_set_parent(EntityInfo* info, EntityInfo* parent) {
     if (info->parent != NULL)
-        entity_info_remove_child(info->parent, info);
+        dt_entity_info_remove_child(info->parent, info);
 
     if (parent == NULL)
         info->parent = NULL;
     else
-        entity_info_add_child(parent, info);
+        dt_entity_info_add_child(parent, info);
 }
 
-void entity_info_add_child(EntityInfo* info, EntityInfo* child) {
+void dt_entity_info_add_child(EntityInfo* info, EntityInfo* child) {
     if (info->children == NULL) {
         info->children = calloc(info->base_children_size, sizeof(EntityInfo*));
     }
 
     for (int i = 0; i < info->children_count + 1; i++) {
-        if (info->children[i]->id == child->id)
-            return;
         if (i == info->children_size) {
             info->children_size *= 2;
             void* tmp =
@@ -72,12 +69,16 @@ void entity_info_add_child(EntityInfo* info, EntityInfo* child) {
 
         if (i == info->children_count) {
             info->children[i] = child;
+            child->parent = info;
             return;
         }
+
+        if (info->children[i]->id == child->id)
+            return;
     }
 }
 
-void entity_info_remove_child(EntityInfo* info, EntityInfo* child) {
+void dt_entity_info_remove_child(EntityInfo* info, EntityInfo* child) {
     for (int i = 0; i < info->children_count; i++) {
         if (info->children[i]->id != child->id)
             continue;
@@ -87,7 +88,7 @@ void entity_info_remove_child(EntityInfo* info, EntityInfo* child) {
     }
 }
 
-void entity_info_remove_all_children(EntityInfo* info) {
+void dt_entity_info_remove_all_children(EntityInfo* info) {
     for (int i = 0; i < info->children_count; i++) {
         info->children[i]->parent = NULL;
     }
@@ -95,7 +96,7 @@ void entity_info_remove_all_children(EntityInfo* info) {
     info->children_count = 0;
 }
 
-void entity_info_add_component(EntityInfo* info, int id) {
+void dt_entity_info_add_component(EntityInfo* info, u16 id) {
     for (int i = 0; i < info->component_count + 1; i++) {
         if (info->components[i] == id)
             return;
@@ -117,7 +118,7 @@ void entity_info_add_component(EntityInfo* info, int id) {
     }
 }
 
-void entity_info_remove_component(EntityInfo* info, int id) {
+void dt_entity_info_remove_component(EntityInfo* info, u16 id) {
     for (int i = 0; i < info->component_count; i++) {
         if (info->components[i] != id)
             continue;
@@ -126,25 +127,29 @@ void entity_info_remove_component(EntityInfo* info, int id) {
     }
 }
 
-void entity_info_reset(EntityInfo* info) {
-    if (info->gen < 0) return;
+void dt_entity_info_reset(EntityInfo* info) {
+    if (info->gen < 0)
+        return;
 
-    entity_info_remove_all_children(info);
-    entity_info_set_parent(info, NULL);
+    dt_entity_info_remove_all_children(info);
+    dt_entity_info_set_parent(info, NULL);
     info->component_count = 0;
     info->gen++;
 }
 
-void entity_info_copy(EntityInfo* dst, EntityInfo* src) {
-    if (dst->gen < 0) return;
-    if (src->gen < 0) return;
+void dt_entity_info_copy(EntityInfo* dst, EntityInfo* src) {
+    if (dst->gen < 0)
+        return;
+    if (src->gen < 0)
+        return;
 
     if (dst->component_size < src->component_size) {
         dst->component_size = src->component_size;
 
         void* tmp = realloc(dst->components, dst->component_size * sizeof(int));
 
-        if (!tmp) { }
+        if (!tmp) {
+        }
 
         dst->components = tmp;
     }
@@ -152,16 +157,17 @@ void entity_info_copy(EntityInfo* dst, EntityInfo* src) {
     memcpy(dst->components, src->components, dst->component_size * sizeof(int));
 }
 
-void entity_info_kill(EntityInfo* info) {
-    if (info->gen < 0) return;
+void dt_entity_info_kill(EntityInfo* info) {
+    if (info->gen < 0)
+        return;
 
-    entity_info_remove_all_children(info);
-    entity_info_set_parent(info, NULL);
+    dt_entity_info_remove_all_children(info);
+    dt_entity_info_set_parent(info, NULL);
     info->gen *= -1;
 }
 
-EntityContainer entity_container_new(const size_t item_size, const size_t dense_size,
-                                     const size_t sparse_size, const size_t recycle_size,
+EntityContainer entity_container_new(u32 item_size, Entity dense_size, Entity sparse_size,
+                                     Entity recycle_size,
                                      const ResetItemHandler auto_reset,
                                      const CopyItemHandler auto_copy) {
     EntityContainer ec = {
@@ -307,7 +313,7 @@ void* entity_container_get(const EntityContainer* container, const Entity entity
            container->sparce_entities[entity] * container->item_size;
 }
 
-void entity_container_resize(EntityContainer* container, const size_t new_size) {
+void entity_container_resize(EntityContainer* container, u16 new_size) {
     void* tmp = realloc(container->sparce_entities, new_size);
 
     if (!tmp) {

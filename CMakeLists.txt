@@ -5,29 +5,35 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(LINUX TRUE)
+endif ()
+
 set(RAYLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(RAYLIB_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 set(RAYLIB_LIB_NAME "raylib")
-set(RAYLIB_LIB_FILE "${RAYLIB_LIB_DIR}/libraylib.a")
+
+if (WIN32)
+    set(RAYLIB_LIB_FILE "${RAYLIB_LIB_DIR}/windows/libraylib.a")
+endif ()
+
+if (LINUX)
+    set(RAYLIB_LIB_FILE "${RAYLIB_LIB_DIR}/linux/libraylib.a")
+endif ()
 
 add_executable(Double_Trouble
         main.c
         Collections/Collections.c
         Collections/Iterator.c
-        Ecs/EcsManager/EcsManager.c
-        Ecs/Entity/Entity.c
-        Ecs/Pools/EcsPool.c
-        Ecs/Systems/Systems.c
-        Ecs/Pools/TagPool.c
-        Ecs/Pools/ComponentPool.c
-        Game/Systems/GameSystems.c
-        Game/Game.c
-        Game/Components/Components.c
-        Tests/EcsManagerTests.c
-        serializing/pref.c
-        serializing/pref.h
-        serializing/SizeTypes.h
-        serializing/SerializedComponent.h
+        Ecs/DtEcsManager.c
+        Ecs/Entity.c
+        Ecs/EcsPool.c
+        Ecs/Systems.c
+        Ecs/TagPool.c
+        Ecs/ComponentPool.c
+        Tests/TestCreateRemoveEntity.c
+        Ecs/BaseComponents.h
+        Tests/TestParentChildrenRelations.c
 )
 
 # ============ Подключаем заголовки ============
@@ -36,7 +42,6 @@ target_include_directories(Double_Trouble PRIVATE
         ${RAYLIB_INCLUDE_DIR}
 )
 
-# ============ Линковка с Raylib ============
 if (EXISTS ${RAYLIB_LIB_FILE})
     message(STATUS "Linking with: ${RAYLIB_LIB_FILE}")
     target_link_libraries(Double_Trouble ${RAYLIB_LIB_FILE})
@@ -55,10 +60,18 @@ endif ()
 # ============ Системные библиотеки для Windows ============
 if (WIN32)
     target_link_libraries(Double_Trouble
-            opengl32   # OpenGL
-            gdi32      # GDI для рисования
-            winmm      # Windows Multimedia (таймеры, звук)
-            m          # Math library (может понадобиться)
+            opengl32 # OpenGL
+            gdi32 # GDI для рисования
+            winmm # Windows Multimedia (таймеры, звук)
+            m # Math library (может понадобиться)
     )
     # target_link_options(Double_Trouble PRIVATE -mwindows)
+endif ()
+
+if (LINUX)
+    target_link_libraries(Double_Trouble
+            raylib
+            GL X11 Xrandr Xi Xxf86vm Xcursor Xinerama
+            asound m pthread dl rt
+    )
 endif ()

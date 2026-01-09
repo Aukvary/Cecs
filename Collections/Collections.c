@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-void* vec_new(const size_t item_size, const size_t capacity) {
-    VecHeader* header = malloc(sizeof(VecHeader) + item_size * capacity);
+void* dt_vec_new(const size_t item_size, const size_t capacity) {
+    DtVecHeader* header = malloc(sizeof(DtVecHeader) + item_size * capacity);
     ;
 
-    *header = (VecHeader) {
+    *header = (DtVecHeader) {
         .element_size = item_size,
         .capacity = capacity,
         .count = 0,
@@ -16,9 +16,9 @@ void* vec_new(const size_t item_size, const size_t capacity) {
 
         .iterator =
             (Iterator) {
-                .start = vec_start,
-                .current = vec_current,
-                .next = vec_next,
+                .start = dt_vec_start,
+                .current = dt_vec_current,
+                .next = dt_vec_next,
             },
         .iter_locked = 0,
     };
@@ -26,17 +26,17 @@ void* vec_new(const size_t item_size, const size_t capacity) {
     return header->data;
 }
 
-inline VecHeader* vec_header(void* data) {
-    return (VecHeader*) ((uint8_t*) data - sizeof(VecHeader));
+inline DtVecHeader* dt_vec_header(void* data) {
+    return (DtVecHeader*) ((uint8_t*) data - sizeof(DtVecHeader));
 }
 
-void* vec_add(void* data, void* value) {
-    VecHeader* header = vec_header(data);
+void* dt_vec_add(void* data, void* value) {
+    DtVecHeader* header = dt_vec_header(data);
 
     if (header->count == header->capacity) {
         size_t new_capacity = header->capacity == 0 ? 1 : header->capacity * 2;
-        VecHeader* temp =
-            realloc(header, sizeof(VecHeader) + new_capacity * header->element_size);
+        DtVecHeader* temp =
+            realloc(header, sizeof(DtVecHeader) + new_capacity * header->element_size);
 
         if (temp == NULL) {
             printf("vector memory allocation exception\n");
@@ -59,8 +59,8 @@ void* vec_add(void* data, void* value) {
     return header->data;
 }
 
-void vec_pop(void* data, int idx) {
-    VecHeader* header = vec_header(data);
+void dt_vec_pop(void* data, int idx) {
+    DtVecHeader* header = dt_vec_header(data);
 
     if (header->iter_locked) {
         printf("cant change vector where it's locked\n");
@@ -77,8 +77,8 @@ void vec_pop(void* data, int idx) {
     header->count--;
 }
 
-void vec_remove(void* data, void* value) {
-    VecHeader* header = vec_header(data);
+void dt_vec_remove(void* data, void* value) {
+    DtVecHeader* header = dt_vec_header(data);
 
     if (header->iter_locked) {
         printf("cant change vector where it's locked\n");
@@ -102,13 +102,13 @@ void vec_remove(void* data, void* value) {
     }
 }
 
-void vec_start(void* data) {
-    VecHeader* header = data;
+void dt_vec_start(void* data) {
+    DtVecHeader* header = data;
     header->current = -1;
 }
 
-void* vec_current(void* data) {
-    VecHeader* header = data;
+void* dt_vec_current(void* data) {
+    DtVecHeader* header = data;
 
     if (header->current >= header->count) {
         return NULL;
@@ -118,12 +118,12 @@ void* vec_current(void* data) {
     return element;
 }
 
-int vec_next(void* data) {
-    VecHeader* header = data;
+int dt_vec_next(void* data) {
+    DtVecHeader* header = data;
 
     header->current++;
 
     return header->current < header->count;
 }
 
-inline void vec_free(void* data) { free(vec_header(data)); }
+inline void dt_vec_free(void* data) { free(dt_vec_header(data)); }

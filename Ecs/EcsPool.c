@@ -1,5 +1,4 @@
-#include "EcsPool.h"
-#include "../EcsManager/EcsManager.h"
+#include "DtEcs.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,17 +14,17 @@ static const ComponentData* component_data_by_name[COMPONENT_TABLE_SIZE] = {NULL
 
 static int component_get_hash(const char* name);
 
-EcsPool* ecs_pool_new(const EcsManager* manager, const char* name, const size_t size) {
+EcsPool* ecs_pool_new(const DtEcsManager* manager, const char* name, const u16 size) {
     return size != 0 ? component_pool_new(manager, name, size, NULL, NULL)
                      : tag_pool_new(manager, name);
 }
 
-EcsPool* ecs_pool_new_by_id(const EcsManager* manager, const int id) {
-    const ComponentData data = component_get_data_by_id(id);
+EcsPool* ecs_pool_new_by_id(const DtEcsManager* manager, const u16 id) {
+    const ComponentData* data = component_get_data_by_id(id);
 
-    return data.component_size != 0
-               ? component_pool_new(manager, data.name, data.component_size, NULL, NULL)
-               : tag_pool_new(manager, data.name);
+    return data->component_size != 0
+               ? component_pool_new(manager, data->name, data->component_size, NULL, NULL)
+               : tag_pool_new(manager, data->name);
 }
 
 void ecs_pool_add(EcsPool* pool, const Entity entity, const void* data) {
@@ -34,7 +33,7 @@ void ecs_pool_add(EcsPool* pool, const Entity entity, const void* data) {
 
     pool->count++;
     pool->add(pool->data, entity, data);
-    on_entity_change(pool->manager, entity, pool->ecs_manager_id, 1);
+    dt_on_entity_change(pool->manager, entity, pool->ecs_manager_id, 1);
     printf("[DEBUG]\t entity \"%d\" was added to %s pool\n", entity, pool->name);
 }
 
@@ -51,12 +50,12 @@ inline void ecs_pool_remove(EcsPool* pool, const Entity entity) {
         return;
 
     pool->count--;
-    on_entity_change(pool->manager, entity, pool->ecs_manager_id, 0);
+    dt_on_entity_change(pool->manager, entity, pool->ecs_manager_id, 0);
     pool->remove(pool->data, entity);
     printf("[DEBUG]\t entity \"%d\" was removed from %s pool\n", entity, pool->name);
 }
 
-void ecs_pool_resize(EcsPool* pool, const size_t size) { pool->resize(pool->data, size); }
+void ecs_pool_resize(EcsPool* pool, const u64 size) { pool->resize(pool->data, size); }
 
 void ecs_pool_free(EcsPool* pool) { pool->free(pool->data); }
 
@@ -71,12 +70,14 @@ static int component_get_hash(const char* name) {
 }
 
 void register_component(ComponentData* data) {
+    if (component_get_data_by_name(data->name) != NULL) return;
+
     data->id = id_counter++;
 
     component_data_by_id[data->id] = data;
 
     int idx = component_get_hash(data->name) % COMPONENT_TABLE_SIZE;
-    int start = idx;
+    const int start = idx;
     while (component_data_by_name[idx] != NULL) {
         idx = (idx + 1) % COMPONENT_TABLE_SIZE;
         if (idx == start) {
@@ -86,23 +87,22 @@ void register_component(ComponentData* data) {
     }
 
     component_data_by_name[idx] = data;
+    printf("[DEBUD]%s component was registred with id %d\n", data->name, data->id);
 }
 
-ComponentData component_get_data_by_id(const int id) {
+const ComponentData* component_get_data_by_id(const u16 id) {
     if (id < 0 || id >= COMPONENT_TABLE_SIZE) {
-        printf("[DEBUG]component id out of range(id = %d)", id);
-        exit(1);
+        return NULL;
     }
 
     if (component_data_by_id[id] == NULL) {
-        printf("[DEBUG]component wasn't registered(id = %d)", id);
-        exit(1);
+        return NULL;
     }
 
-    return *component_data_by_id[id];
+    return component_data_by_id[id];
 }
 
-ComponentData component_get_data_by_name(const char* name) {
+const ComponentData* component_get_data_by_name(const char* name) {
     int idx = component_get_hash(name) % COMPONENT_TABLE_SIZE;
     const int start = idx;
 
@@ -110,15 +110,13 @@ ComponentData component_get_data_by_name(const char* name) {
            strcmp(component_data_by_name[idx]->name, name) != 0) {
         idx = (idx + 1) % COMPONENT_TABLE_SIZE;
         if (idx == start) {
-            printf("[DEBUG]component wasn't registered(name = %s)", name);
-            exit(1);
+            return NULL;
         }
     }
 
     if (component_data_by_name[idx] == NULL) {
-        printf("[DEBUG]component wasn't registered(name = %s)", name);
-        exit(1);
+        return NULL;
     }
 
-    return *component_data_by_name[idx];
+    return component_data_by_name[idx];
 }

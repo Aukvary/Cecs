@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../EcsManager/EcsManager.h"
-#include "EcsPool.h"
+#include "DtEcs.h"
 
 static void component_pool_add(void* pool, Entity entity, const void* data);
 
 static void* component_pool_get_item(const void* pool, Entity entity);
 
-static int component_pool_has(const void* pool, Entity entity);
+static bool component_pool_has(const void* pool, Entity entity);
 
 static void component_pool_remove(void* pool, Entity entity);
 
@@ -20,12 +19,12 @@ struct ComponentPool {
     EntityContainer entities;
 };
 
-EcsPool* component_pool_new(const EcsManager* manager, const char* name,
-                            const size_t item_size, ResetItemHandler reset_handler,
+EcsPool* component_pool_new(const DtEcsManager* manager, const char* name, u16 item_size,
+                            ResetItemHandler reset_handler,
                             CopyItemHandler copy_handler) {
     ComponentPool* pool = malloc(sizeof(ComponentPool));
 
-    const int id = component_get_data_by_name(name).id;
+    const int id = component_get_data_by_name(name)->id;
 
     *pool = (ComponentPool) {
         .pool =
@@ -63,7 +62,7 @@ static void* component_pool_get_item(const void* pool, Entity entity) {
     return entity_container_get(&component_pool->entities, entity);
 }
 
-static int component_pool_has(const void* pool, const Entity entity) {
+static bool component_pool_has(const void* pool, const Entity entity) {
     const ComponentPool* component_pool = pool;
     return entity_container_has(&component_pool->entities, entity);
 }
