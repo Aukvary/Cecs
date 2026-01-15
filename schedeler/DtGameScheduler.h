@@ -54,9 +54,9 @@ const DtGameScene* dt_scenes_set_active_without_free(int idx);
 void dt_scenes_set_active_with_free(int idx);
 int dt_scenes_scene_is_load(int idx);
 
-void dt_serialize_prefab(EntityInfo* info, const char* path);
-EntityInfo dt_deserialize_entity_from_prefab(const char* path);
-void dt_serialize_game_object(EntityInfo* info, const char* path);
-EntityInfo dt_deserialize_entity_from_game_object(const char* path);
+void dt_serialize_prefab(DtEntityInfo* info, const char* path);
+DtEntityInfo dt_deserialize_entity_from_prefab(const char* path);
+void dt_serialize_game_object(DtEntityInfo* info, const char* path);
+DtEntityInfo dt_deserialize_entity_from_game_object(const char* path);
 
 #endif

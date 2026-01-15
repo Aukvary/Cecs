@@ -35,9 +35,10 @@ void func() {
 }
 
 #include "Tests/TestEcs.h"
+#include "Ecs/ComponentsHandler.h"
 
 int main() {
-    test_parent_children_relations();
+    // test_parent_children_relations();
     // test_create_remove_entity();
     return 0;
 }

@@ -18,7 +18,7 @@ EcsSystem* ecs_system_new(void (*init)(DtEcsManager*, void*), const Action pre_u
     return system;
 }
 
-SystemHandler* system_handler_new(DtEcsManager* manager, const SystemHandlerConfig* cfg) {
+SystemHandler* dt_system_handler_new(DtEcsManager* manager, const SystemHandlerConfig* cfg) {
     SystemHandler* system_handler = malloc(sizeof(SystemHandler));
 
     *system_handler = (SystemHandler) {
@@ -38,7 +38,7 @@ SystemHandler* system_handler_new(DtEcsManager* manager, const SystemHandlerConf
     return system_handler;
 }
 
-inline void system_handler_add(SystemHandler* handler, const EcsSystem* system) {
+inline void dt_system_handler_add(SystemHandler* handler, const EcsSystem* system) {
     if (system->init)
         DT_VEC_ADD(handler->inits, ((InitDataPair) {
                                     .data = system->data,
@@ -76,30 +76,30 @@ inline void system_handler_add(SystemHandler* handler, const EcsSystem* system) 
                                    }));
 }
 
-inline void system_handler_init(const SystemHandler* handler) {
+inline void dt_system_handler_init(const SystemHandler* handler) {
     FOREACH(InitDataPair, p, DT_VEC_ITERATOR(handler->inits),
             { p.init(handler->manager, p.data); });
 }
 
-inline void system_handler_pre_update(const SystemHandler* handler) {
+inline void dt_system_handler_pre_update(const SystemHandler* handler) {
     FOREACH(ActionDataPair, p, DT_VEC_ITERATOR(handler->pre_updates), { p.action(p.data); });
 }
 
-inline void system_handler_update(const SystemHandler* handler) {
+inline void dt_system_handler_update(const SystemHandler* handler) {
     FOREACH(ActionDataPair, p, DT_VEC_ITERATOR(handler->updates), { p.action(p.data); });
 }
 
-inline void system_handler_post_update(const SystemHandler* handler) {
+inline void dt_system_handler_post_update(const SystemHandler* handler) {
     FOREACH(ActionDataPair, p, DT_VEC_ITERATOR(handler->post_updates),
             { p.action(p.data); });
 }
 
-inline void system_handler_remove_tag(const SystemHandler* handler) {
+inline void dt_system_handler_remove_tag(const SystemHandler* handler) {
     FOREACH(ActionDataPair, p, DT_VEC_ITERATOR(handler->tag_removes), { p.action(p.data); });
 }
 
-inline void system_handler_destroy(const SystemHandler* handler) {
+inline void dt_system_handler_destroy(const SystemHandler* handler) {
     FOREACH(ActionDataPair, p, DT_VEC_ITERATOR(handler->destroys), { p.action(p.data); });
 }
 
-inline void system_handler_free(SystemHandler* handler) { free(handler); }
+inline void dt_system_handler_free(SystemHandler* handler) { free(handler); }

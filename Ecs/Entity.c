@@ -10,9 +10,9 @@ static int entity_container_next(void*);
 static void default_entity_item_reset(void* data, size_t);
 static void default_entity_item_copy(void* dst, const void* src, size_t);
 
-EntityInfo dt_entity_info_new(const Entity id, const u16 component_count,
-                           const Entity children_size) {
-    return (EntityInfo) {
+DtEntityInfo dt_entity_info_new(const DtEntity id, const u16 component_count,
+                           const DtEntity children_size) {
+    return (DtEntityInfo) {
         .id = id,
 
         .components = calloc(component_count, sizeof(int)),
@@ -30,7 +30,7 @@ EntityInfo dt_entity_info_new(const Entity id, const u16 component_count,
     };
 }
 
-void dt_entity_info_reuse(EntityInfo* info) {
+void dt_entity_info_reuse(DtEntityInfo* info) {
     if (info->gen > 0)
         return;
 
@@ -40,7 +40,7 @@ void dt_entity_info_reuse(EntityInfo* info) {
     info->children_count = 0;
 }
 
-void dt_entity_info_set_parent(EntityInfo* info, EntityInfo* parent) {
+void dt_entity_info_set_parent(DtEntityInfo* info, DtEntityInfo* parent) {
     if (info->parent != NULL)
         dt_entity_info_remove_child(info->parent, info);
 
@@ -50,16 +50,16 @@ void dt_entity_info_set_parent(EntityInfo* info, EntityInfo* parent) {
         dt_entity_info_add_child(parent, info);
 }
 
-void dt_entity_info_add_child(EntityInfo* info, EntityInfo* child) {
+void dt_entity_info_add_child(DtEntityInfo* info, DtEntityInfo* child) {
     if (info->children == NULL) {
-        info->children = calloc(info->base_children_size, sizeof(EntityInfo*));
+        info->children = calloc(info->base_children_size, sizeof(DtEntityInfo*));
     }
 
     for (int i = 0; i < info->children_count + 1; i++) {
         if (i == info->children_size) {
             info->children_size *= 2;
             void* tmp =
-                realloc(info->children, info->children_size * sizeof(EntityInfo*));
+                realloc(info->children, info->children_size * sizeof(DtEntityInfo*));
 
             if (!tmp) {
             }
@@ -78,7 +78,7 @@ void dt_entity_info_add_child(EntityInfo* info, EntityInfo* child) {
     }
 }
 
-void dt_entity_info_remove_child(EntityInfo* info, EntityInfo* child) {
+void dt_entity_info_remove_child(DtEntityInfo* info, DtEntityInfo* child) {
     for (int i = 0; i < info->children_count; i++) {
         if (info->children[i]->id != child->id)
             continue;
@@ -88,7 +88,7 @@ void dt_entity_info_remove_child(EntityInfo* info, EntityInfo* child) {
     }
 }
 
-void dt_entity_info_remove_all_children(EntityInfo* info) {
+void dt_entity_info_remove_all_children(DtEntityInfo* info) {
     for (int i = 0; i < info->children_count; i++) {
         info->children[i]->parent = NULL;
     }
@@ -96,7 +96,7 @@ void dt_entity_info_remove_all_children(EntityInfo* info) {
     info->children_count = 0;
 }
 
-void dt_entity_info_add_component(EntityInfo* info, u16 id) {
+void dt_entity_info_add_component(DtEntityInfo* info, u16 id) {
     for (int i = 0; i < info->component_count + 1; i++) {
         if (info->components[i] == id)
             return;
@@ -118,7 +118,7 @@ void dt_entity_info_add_component(EntityInfo* info, u16 id) {
     }
 }
 
-void dt_entity_info_remove_component(EntityInfo* info, u16 id) {
+void dt_entity_info_remove_component(DtEntityInfo* info, u16 id) {
     for (int i = 0; i < info->component_count; i++) {
         if (info->components[i] != id)
             continue;
@@ -127,7 +127,7 @@ void dt_entity_info_remove_component(EntityInfo* info, u16 id) {
     }
 }
 
-void dt_entity_info_reset(EntityInfo* info) {
+void dt_entity_info_reset(DtEntityInfo* info) {
     if (info->gen < 0)
         return;
 
@@ -137,7 +137,7 @@ void dt_entity_info_reset(EntityInfo* info) {
     info->gen++;
 }
 
-void dt_entity_info_copy(EntityInfo* dst, EntityInfo* src) {
+void dt_entity_info_copy(DtEntityInfo* dst, DtEntityInfo* src) {
     if (dst->gen < 0)
         return;
     if (src->gen < 0)
@@ -157,7 +157,7 @@ void dt_entity_info_copy(EntityInfo* dst, EntityInfo* src) {
     memcpy(dst->components, src->components, dst->component_size * sizeof(int));
 }
 
-void dt_entity_info_kill(EntityInfo* info) {
+void dt_entity_info_kill(DtEntityInfo* info) {
     if (info->gen < 0)
         return;
 
@@ -166,22 +166,22 @@ void dt_entity_info_kill(EntityInfo* info) {
     info->gen *= -1;
 }
 
-EntityContainer entity_container_new(u32 item_size, Entity dense_size, Entity sparse_size,
-                                     Entity recycle_size,
-                                     const ResetItemHandler auto_reset,
-                                     const CopyItemHandler auto_copy) {
-    EntityContainer ec = {
+DtEntityContainer dt_entity_container_new(u32 item_size, DtEntity dense_size, DtEntity sparse_size,
+                                     DtEntity recycle_size,
+                                     const DtResetItemHandler auto_reset,
+                                     const DtCopyItemHandler auto_copy) {
+    DtEntityContainer ec = {
         .dense_items = calloc(dense_size, item_size),
-        .dense_entities = calloc(dense_size, sizeof(Entity)),
+        .dense_entities = calloc(dense_size, sizeof(DtEntity)),
         .item_size = item_size,
         .dense_ptr = 0,
         .dense_size = dense_size,
         .count = 0,
 
-        .sparce_entities = calloc(sparse_size, sizeof(Entity)),
+        .sparce_entities = calloc(sparse_size, sizeof(DtEntity)),
         .sparse_size = sparse_size,
 
-        .recycle_entities = calloc(recycle_size, sizeof(Entity)),
+        .recycle_entities = calloc(recycle_size, sizeof(DtEntity)),
         .recycle_ptr = 0,
         .recycle_size = recycle_size,
 
@@ -197,20 +197,20 @@ EntityContainer entity_container_new(u32 item_size, Entity dense_size, Entity sp
     };
 
     for (size_t i = 0; i < sparse_size; i++) {
-        ec.sparce_entities[i] = ENTITY_NULL;
+        ec.sparce_entities[i] = DT_ENTITY_NULL;
     }
 
     return ec;
 }
 
-void entity_container_add(EntityContainer* container, const Entity entity,
+void dt_entity_container_add(DtEntityContainer* container, const DtEntity entity,
                           const void* data) {
     if (entity > container->sparse_size)
         return;
-    if (entity_container_has(container, entity))
+    if (dt_entity_container_has(container, entity))
         return;
 
-    Entity e;
+    DtEntity e;
 
     if (container->recycle_ptr) {
         e = container->recycle_entities[container->recycle_ptr--];
@@ -228,7 +228,7 @@ void entity_container_add(EntityContainer* container, const Entity entity,
             container->dense_items = tmp;
 
             tmp = realloc(container->dense_entities,
-                          container->dense_size * sizeof(Entity));
+                          container->dense_size * sizeof(DtEntity));
 
             if (!tmp) {
                 printf("[DEBUG] entity container realloc exception]\n");
@@ -254,17 +254,17 @@ void entity_container_add(EntityContainer* container, const Entity entity,
     container->count++;
 }
 
-void entity_container_remove(EntityContainer* container, const Entity entity) {
+void dt_entity_container_remove(DtEntityContainer* container, const DtEntity entity) {
     if (entity > container->sparse_size)
         return;
-    if (!entity_container_has(container, entity))
+    if (!dt_entity_container_has(container, entity))
         return;
 
-    Entity dense_index = container->sparce_entities[entity];
-    Entity last_index = (Entity) (container->dense_ptr - 1);
+    DtEntity dense_index = container->sparce_entities[entity];
+    DtEntity last_index = (DtEntity) (container->dense_ptr - 1);
 
     if (dense_index != last_index) {
-        Entity last_entity = container->dense_entities[last_index];
+        DtEntity last_entity = container->dense_entities[last_index];
 
         container->auto_copy(
             (char*) container->dense_items + dense_index * container->item_size,
@@ -275,7 +275,7 @@ void entity_container_remove(EntityContainer* container, const Entity entity) {
         container->sparce_entities[last_entity] = dense_index;
     }
 
-    container->sparce_entities[entity] = ENTITY_NULL;
+    container->sparce_entities[entity] = DT_ENTITY_NULL;
     container->dense_ptr--;
     container->count--;
 
@@ -283,7 +283,7 @@ void entity_container_remove(EntityContainer* container, const Entity entity) {
         container->recycle_size =
             container->recycle_size ? 2 * container->recycle_size : 8;
         void* tmp = realloc(container->recycle_entities,
-                            container->recycle_size * sizeof(Entity));
+                            container->recycle_size * sizeof(DtEntity));
 
         if (!tmp) {
             printf("[DEBUG] entity container realloc exception]\n");
@@ -296,16 +296,16 @@ void entity_container_remove(EntityContainer* container, const Entity entity) {
     container->recycle_entities[container->recycle_ptr++] = entity;
 }
 
-inline int entity_container_has(const EntityContainer* container, const Entity entity) {
+inline int dt_entity_container_has(const DtEntityContainer* container, const DtEntity entity) {
     return entity < container->sparse_size &&
-           container->sparce_entities[entity] != ENTITY_NULL;
+           container->sparce_entities[entity] != DT_ENTITY_NULL;
 }
 
-void* entity_container_get(const EntityContainer* container, const Entity entity) {
+void* dt_entity_container_get(const DtEntityContainer* container, const DtEntity entity) {
     if (entity > container->sparse_size)
         return NULL;
 
-    if (container->sparce_entities[entity] == ENTITY_NULL) {
+    if (container->sparce_entities[entity] == DT_ENTITY_NULL) {
         return NULL;
     }
 
@@ -313,7 +313,7 @@ void* entity_container_get(const EntityContainer* container, const Entity entity
            container->sparce_entities[entity] * container->item_size;
 }
 
-void entity_container_resize(EntityContainer* container, u16 new_size) {
+void dt_entity_container_resize(DtEntityContainer* container, u16 new_size) {
     void* tmp = realloc(container->sparce_entities, new_size);
 
     if (!tmp) {
@@ -326,7 +326,7 @@ void entity_container_resize(EntityContainer* container, u16 new_size) {
 
 static void default_entity_item_reset(void* data, size_t size) { memset(data, 0, size); }
 
-void entity_container_free(EntityContainer* container) {
+void dt_entity_container_free(DtEntityContainer* container) {
     free(container->dense_items);
     free(container->dense_entities);
     free(container->sparce_entities);
@@ -338,15 +338,15 @@ static void default_entity_item_copy(void* dst, const void* src, size_t size) {
 }
 
 static void entity_container_start(void* data) {
-    ((EntityContainer*) data)->iterator_ptr = 0;
+    ((DtEntityContainer*) data)->iterator_ptr = 0;
 }
 
 static void* entity_container_current(void* data) {
-    EntityContainer* container = data;
+    DtEntityContainer* container = data;
     return &container->dense_entities[container->iterator_ptr];
 }
 
 static int entity_container_next(void* data) {
-    EntityContainer* container = data;
+    DtEntityContainer* container = data;
     return container->iterator_ptr++ < container->count; // lil popA
 }

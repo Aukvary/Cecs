@@ -20,14 +20,14 @@ static const DtEcsManagerConfig cfg = {
     .filters_size = 0,
 };
 
-static Entity e1;
-static EntityInfo info1;
+static DtEntity e1;
+static DtEntityInfo info1;
 
-static Entity e2;
-static EntityInfo info2;
+static DtEntity e2;
+static DtEntityInfo info2;
 
-static Entity e3;
-static EntityInfo info2;
+static DtEntity e3;
+static DtEntityInfo info2;
 
 static void test_parent_children_relations_1();
 
@@ -44,17 +44,17 @@ void test_parent_children_relations(void) {
 static void test_parent_children_relations_1() {
     dt_ecs_manager_set_parent(manager, e2, e1);
     info1 = dt_ecs_manager_get_entity(manager, e1);
-    Entity children_count = info1.children_count;
+    DtEntity children_count = info1.children_count;
     info2 = dt_ecs_manager_get_entity(manager, e2);
 
-    Entity child = info1.children[0]->id;
-    Entity parent = dt_ecs_manager_get_parent(manager, e2);
+    DtEntity child = info1.children[0]->id;
+    DtEntity parent = dt_ecs_manager_get_parent(manager, e2);
 
     assert(children_count == 1);
     assert(child == e2);
     assert(parent == e1);
 
-    dt_ecs_manager_set_parent(manager, e2, ENTITY_NULL);
+    dt_ecs_manager_set_parent(manager, e2, DT_ENTITY_NULL);
     info1 = dt_ecs_manager_get_entity(manager, e1);
     info2 = dt_ecs_manager_get_entity(manager, e2);
 

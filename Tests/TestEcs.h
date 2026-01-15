@@ -1,24 +1,22 @@
 #ifndef ECS_MANAGER_TESTS_H
 #define ECS_MANAGER_TESTS_H
 
+#include "Ecs/ComponentsHandler.h"
 #include "Ecs/DtEcs.h"
 
-struct TestEmptyComponent1 {};
+#define TEST_EMPTY_COMPONENT(X, name)
 
-struct TestEmptyComponent2 {};
+DT_DEFINE_EMPTY_COMPONENT(TestEmptyComponent1, TEST_EMPTY_COMPONENT)
+DT_DEFINE_EMPTY_COMPONENT(TestEmptyComponent2, TEST_EMPTY_COMPONENT)
 
-struct TestDataComponent1 {
-    int data;
-};
+#define TEST_DATA_COMPONENT_1(X, name) X(int, data, name)
 
-struct TestDataComponent2 {
-    char* data;
-};
+DT_DEFINE_COMPONENT(TestDataComponent1, TEST_DATA_COMPONENT_1)
 
-REGISTER_COMPONENT(TestEmptyComponent1);
-REGISTER_COMPONENT(TestEmptyComponent2);
-REGISTER_COMPONENT(TestDataComponent1);
-REGISTER_COMPONENT(TestDataComponent2);
+#define TEST_DATA_COMPONENT_2(X, name) X(char*, data, name)
+
+DT_DEFINE_COMPONENT(TestDataComponent2, TEST_DATA_COMPONENT_2)
+
 
 void test_create_remove_entity(void);
 void test_parent_children_relations(void);

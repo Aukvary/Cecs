@@ -32,8 +32,12 @@ add_executable(Double_Trouble
         Ecs/TagPool.c
         Ecs/ComponentPool.c
         Tests/TestCreateRemoveEntity.c
-        Ecs/BaseComponents.h
         Tests/TestParentChildrenRelations.c
+        Ecs/ComponentRegister.c
+        DtNumericalTypes.h
+        Ecs/ComponentHandler.c
+        DtAllocators.h
+        Tests/TestComponentRegister.c
 )
 
 # ============ Подключаем заголовки ============
