@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "raylib.h"
+#include <cjson/cJSON.h>
+#include "Tests/TestEcs.h"
 
 void func() {
     //
@@ -34,11 +36,9 @@ void func() {
     // CloseWindow();
 }
 
-#include "Tests/TestEcs.h"
-#include "Ecs/ComponentsHandler.h"
-
 int main() {
-    // test_parent_children_relations();
+    test_parent_children_relations();
     // test_create_remove_entity();
+
     return 0;
 }

@@ -34,10 +34,9 @@ add_executable(Double_Trouble
         Tests/TestCreateRemoveEntity.c
         Tests/TestParentChildrenRelations.c
         Ecs/ComponentRegister.c
-        DtNumericalTypes.h
         Ecs/ComponentHandler.c
-        DtAllocators.h
         Tests/TestComponentRegister.c
+        Tests/TestFilter.c
 )
 
 # ============ Подключаем заголовки ============

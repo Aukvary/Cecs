@@ -11,7 +11,7 @@ static void default_entity_item_reset(void* data, size_t);
 static void default_entity_item_copy(void* dst, const void* src, size_t);
 
 DtEntityInfo dt_entity_info_new(const DtEntity id, const u16 component_count,
-                           const DtEntity children_size) {
+                                const DtEntity children_size) {
     return (DtEntityInfo) {
         .id = id,
 
@@ -57,11 +57,12 @@ void dt_entity_info_add_child(DtEntityInfo* info, DtEntityInfo* child) {
 
     for (int i = 0; i < info->children_count + 1; i++) {
         if (i == info->children_size) {
-            info->children_size *= 2;
+            info->children_size = info->children_size ? info->children_size * 2 : 10;
             void* tmp =
                 realloc(info->children, info->children_size * sizeof(DtEntityInfo*));
 
             if (!tmp) {
+                printf("[DEBUG] Memory allocation exception");
             }
 
             info->children = tmp;
@@ -70,6 +71,7 @@ void dt_entity_info_add_child(DtEntityInfo* info, DtEntityInfo* child) {
         if (i == info->children_count) {
             info->children[i] = child;
             child->parent = info;
+            info->children_count++;
             return;
         }
 
@@ -166,10 +168,10 @@ void dt_entity_info_kill(DtEntityInfo* info) {
     info->gen *= -1;
 }
 
-DtEntityContainer dt_entity_container_new(u32 item_size, DtEntity dense_size, DtEntity sparse_size,
-                                     DtEntity recycle_size,
-                                     const DtResetItemHandler auto_reset,
-                                     const DtCopyItemHandler auto_copy) {
+DtEntityContainer dt_entity_container_new(u32 item_size, DtEntity dense_size,
+                                          DtEntity sparse_size, DtEntity recycle_size,
+                                          const DtResetItemHandler auto_reset,
+                                          const DtCopyItemHandler auto_copy) {
     DtEntityContainer ec = {
         .dense_items = calloc(dense_size, item_size),
         .dense_entities = calloc(dense_size, sizeof(DtEntity)),
@@ -204,7 +206,7 @@ DtEntityContainer dt_entity_container_new(u32 item_size, DtEntity dense_size, Dt
 }
 
 void dt_entity_container_add(DtEntityContainer* container, const DtEntity entity,
-                          const void* data) {
+                             const void* data) {
     if (entity > container->sparse_size)
         return;
     if (dt_entity_container_has(container, entity))
@@ -296,7 +298,8 @@ void dt_entity_container_remove(DtEntityContainer* container, const DtEntity ent
     container->recycle_entities[container->recycle_ptr++] = entity;
 }
 
-inline int dt_entity_container_has(const DtEntityContainer* container, const DtEntity entity) {
+inline int dt_entity_container_has(const DtEntityContainer* container,
+                                   const DtEntity entity) {
     return entity < container->sparse_size &&
            container->sparce_entities[entity] != DT_ENTITY_NULL;
 }

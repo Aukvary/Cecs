@@ -3,6 +3,7 @@
 
 #include <DtNumericalTypes.h>
 #include <stddef.h>
+#include <stdio.h>
 
 /**
  * @brief metadata of component and components field
@@ -62,9 +63,9 @@ typedef struct DtComponentData {
         fields(DT_FIELD_OFFSET, component_name)};                                        \
     static int component_name##_attrs_count =                                            \
         sizeof(component_name##_attrs) / sizeof(component_name##_attrs[0]);              \
-    static DtComponentData _##component_name##_data;                                     \
+    static DtComponentData local_##component_name##_data;                                \
     static __attribute__((constructor)) void component_name##_register_component(void) { \
-        _##component_name##_data = (DtComponentData) {                                   \
+        local_##component_name##_data = (DtComponentData) {                              \
             .name = #component_name,                                                     \
             .attributes = component_name##_attrs,                                        \
             .attribute_count = component_name##_attrs_count,                             \
@@ -72,8 +73,9 @@ typedef struct DtComponentData {
             .field_names = component_name##_field_names,                                 \
             .field_offsets = component_name##_field_offsets,                             \
         };                                                                               \
+        dt_register_component(&local_##component_name##_data);                           \
     }                                                                                    \
-    DtComponentData component_name##_data() { return _##component_name##_data; }
+    DtComponentData component_name##_data() { return local_##component_name##_data; }
 
 /**
  * @brief register component in global pool
@@ -83,7 +85,7 @@ typedef struct DtComponentData {
  * @note this func must be called by __attribute__((constructor)) func else may be
  * exceptions
  */
-void register_component(DtComponentData* data);
+void dt_register_component(DtComponentData* data);
 
 /**
  * @brief get component name by id
@@ -92,7 +94,7 @@ void register_component(DtComponentData* data);
  *
  * @note if global pool hasn't this id return NULL
  */
-const DtComponentData* component_get_data_by_id(u16 id);
+const DtComponentData* dt_component_get_data_by_id(u16 id);
 
 /**
  * @brief get component id by name
@@ -101,6 +103,6 @@ const DtComponentData* component_get_data_by_id(u16 id);
  *
  * @note if global pool hasn't this name return -1
  */
-const DtComponentData* component_get_data_by_name(const char* name);
+const DtComponentData* dt_component_get_data_by_name(const char* name);
 
 #endif

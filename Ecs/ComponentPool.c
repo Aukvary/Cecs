@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "ComponentsHandler.h"
 #include "DtEcs.h"
 
 static void component_pool_add(void* pool, DtEntity entity, const void* data);
@@ -24,7 +26,7 @@ DtEcsPool* dt_component_pool_new(const DtEcsManager* manager, const char* name, 
                             DtCopyItemHandler copy_handler) {
     DtComponentPool* pool = malloc(sizeof(DtComponentPool));
 
-    const int id = component_get_data_by_name(name)->id;
+    const int id = dt_component_get_data_by_name(name)->id;
 
     *pool = (DtComponentPool) {
         .pool =

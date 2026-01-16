@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "ComponentsHandler.h"
 #include "DtEcs.h"
 typedef uint16_t TagBucket;
 #define BUCKET_SIZE (sizeof(TagBucket) * 8)
@@ -25,7 +27,7 @@ DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name) {
         return NULL;
 
     const size_t num_buckets = (manager->sparse_size + BUCKET_SIZE - 1) / BUCKET_SIZE;
-    const int id = component_get_data_by_name(name)->id;
+    const int id = dt_component_get_data_by_name(name)->id;
 
     *pool = (DtTagPool) {
         .pool =

@@ -270,7 +270,7 @@ void dt_ecs_manager_set_parent(const DtEcsManager* manager, const DtEntity child
     if (child < 0 || child > manager->entities_ptr)
         return;
 
-    if (parent < 0 || parent > manager->entities_ptr)
+    if (parent > manager->entities_ptr && parent != DT_ENTITY_NULL)
         return;
 
     if (parent == child)
@@ -481,7 +481,7 @@ DtEcsPool* dt_ecs_manager_get_pool_by_id(DtEcsManager* manager, u16 id) {
 }
 
 DtEcsPool* dt_ecs_manager_get_pool_by_name(DtEcsManager* manager, const char* name) {
-    return dt_ecs_manager_get_pool_by_id(manager, component_get_data_by_name(name)->id);
+    return dt_ecs_manager_get_pool_by_id(manager, dt_component_get_data_by_name(name)->id);
 }
 
 static int ecs_manager_get_pool_index_by_id(DtEcsManager* manager, const int id) {
@@ -505,7 +505,7 @@ static int ecs_manager_get_pool_index_by_id(DtEcsManager* manager, const int id)
 
 static int ecs_manager_get_pool_index_by_name(DtEcsManager* manager, const char* name) {
     return ecs_manager_get_pool_index_by_id(manager,
-                                            component_get_data_by_name(name)->id);
+                                            dt_component_get_data_by_name(name)->id);
 }
 
 static void ecs_manager_resize_pools(DtEcsManager* manager) {

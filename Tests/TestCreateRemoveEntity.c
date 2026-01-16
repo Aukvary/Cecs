@@ -61,7 +61,7 @@ void test_create_remove_entity(void) {
     assert(!dt_ecs_pool_has(data_1_pool, entity1) &&
            "Killed entity should be removed from data_1_pool");
 
-    assert(parent == ENTITY_NULL &&
+    assert(parent == DT_ENTITY_NULL &&
            "entity2 have parent yet");
 
     recycled = dt_ecs_manager_new_entity(manager);

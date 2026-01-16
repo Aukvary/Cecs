@@ -5,7 +5,7 @@
 #include <string.h>
 #include "ComponentsHandler.h"
 
-static int component_get_hash(const char* name);
+static int dt_component_get_hash(const char* name);
 
 DtEcsPool* dt_ecs_pool_new(const DtEcsManager* manager, const char* name, const u16 size) {
     return size != 0 ? dt_component_pool_new(manager, name, size, NULL, NULL)
@@ -13,7 +13,7 @@ DtEcsPool* dt_ecs_pool_new(const DtEcsManager* manager, const char* name, const 
 }
 
 DtEcsPool* dt_ecs_pool_new_by_id(const DtEcsManager* manager, const u16 id) {
-    const DtComponentData* data = component_get_data_by_id(id);
+    const DtComponentData* data = dt_component_get_data_by_id(id);
 
     return data->component_size != 0
                ? dt_component_pool_new(manager, data->name, data->component_size, NULL, NULL)

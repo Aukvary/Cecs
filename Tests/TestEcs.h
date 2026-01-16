@@ -20,5 +20,6 @@ DT_DEFINE_COMPONENT(TestDataComponent2, TEST_DATA_COMPONENT_2)
 
 void test_create_remove_entity(void);
 void test_parent_children_relations(void);
+void test_filter(void);
 
 #endif

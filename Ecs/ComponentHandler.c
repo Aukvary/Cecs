@@ -13,7 +13,7 @@ static int id_counter = 0;
 static const DtComponentData* component_data_by_id[COMPONENT_TABLE_SIZE] = {NULL};
 static const DtComponentData* component_data_by_name[COMPONENT_TABLE_SIZE] = {NULL};
 
-static int component_get_hash(const char* name) {
+static int dt_component_get_hash(const char* name) {
     int hash = 2147483647;
     while (*name) {
         hash ^= *name++;
@@ -22,16 +22,17 @@ static int component_get_hash(const char* name) {
     return hash;
 }
 
-void register_component(DtComponentData* data) {
-    if (component_get_data_by_name(data->name) != NULL) return;
-
+void dt_register_component(DtComponentData* data) {
     data->id = id_counter++;
 
     component_data_by_id[data->id] = data;
 
-    int idx = component_get_hash(data->name) % COMPONENT_TABLE_SIZE;
+    int idx = dt_component_get_hash(data->name) % COMPONENT_TABLE_SIZE;
     const int start = idx;
     while (component_data_by_name[idx] != NULL) {
+        if (strcmp(data->name, component_data_by_name[idx]->name) == 0)
+            return;
+
         idx = (idx + 1) % COMPONENT_TABLE_SIZE;
         if (idx == start) {
             printf("[DEBUG]component count out of range");
@@ -40,10 +41,10 @@ void register_component(DtComponentData* data) {
     }
 
     component_data_by_name[idx] = data;
-    printf("[DEBUD]%s component was registred with id %d\n", data->name, data->id);
+    printf("[DEBUD]%s component was registered with id %d\n", data->name, data->id);
 }
 
-const DtComponentData* component_get_data_by_id(const u16 id) {
+const DtComponentData* dt_component_get_data_by_id(const u16 id) {
     if (id < 0 || id >= COMPONENT_TABLE_SIZE) {
         return NULL;
     }
@@ -55,8 +56,8 @@ const DtComponentData* component_get_data_by_id(const u16 id) {
     return component_data_by_id[id];
 }
 
-const DtComponentData* component_get_data_by_name(const char* name) {
-    int idx = component_get_hash(name) % COMPONENT_TABLE_SIZE;
+const DtComponentData* dt_component_get_data_by_name(const char* name) {
+    int idx = dt_component_get_hash(name) % COMPONENT_TABLE_SIZE;
     const int start = idx;
 
     while (component_data_by_name[idx] != NULL &&
@@ -65,7 +66,7 @@ const DtComponentData* component_get_data_by_name(const char* name) {
         if (idx == start) {
             return NULL;
         }
-           }
+    }
 
     if (component_data_by_name[idx] == NULL) {
         return NULL;
