@@ -37,7 +37,8 @@ void func() {
 }
 
 int main() {
-    test_parent_children_relations();
+    test_filter();
+    // test_parent_children_relations();
     // test_create_remove_entity();
 
     return 0;

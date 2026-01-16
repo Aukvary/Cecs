@@ -10,9 +10,11 @@ static int entity_container_next(void*);
 static void default_entity_item_reset(void* data, size_t);
 static void default_entity_item_copy(void* dst, const void* src, size_t);
 
-DtEntityInfo dt_entity_info_new(const DtEntity id, const u16 component_count,
-                                const DtEntity children_size) {
+DtEntityInfo dt_entity_info_new(DtEcsManager* manager, const DtEntity id,
+                                const u16 component_count, const DtEntity children_size) {
     return (DtEntityInfo) {
+        .manager = manager,
+
         .id = id,
 
         .components = calloc(component_count, sizeof(int)),
@@ -108,6 +110,7 @@ void dt_entity_info_add_component(DtEntityInfo* info, u16 id) {
             void* tmp = realloc(info->components, info->component_size * sizeof(int));
 
             if (!tmp) {
+                printf("[DEBUG] entity info realloc exception]\n");
             }
 
             info->components = tmp;
@@ -133,13 +136,25 @@ void dt_entity_info_reset(DtEntityInfo* info) {
     if (info->gen < 0)
         return;
 
-    dt_entity_info_remove_all_children(info);
-    dt_entity_info_set_parent(info, NULL);
-    info->component_count = 0;
-    info->gen++;
+    for (int i = 0; i < info->component_count; i++) {
+        DtEcsPool* pool = info->manager->pools[info->components[i]];
+        dt_ecs_pool_reset(pool, info->id);
+    }
 }
 
-void dt_entity_info_copy(DtEntityInfo* dst, DtEntityInfo* src) {
+void dt_entity_info_clear(DtEntityInfo* info) {
+    if (info->gen < 0)
+        return;
+
+    for (int i = 0; i < info->component_count; i++) {
+        DtEcsPool* pool = info->manager->pools[info->components[i]];
+        dt_ecs_pool_remove(pool, info->id);
+    }
+
+    info->component_count = 0;
+}
+
+void dt_entity_info_copy(DtEntityInfo* dst, const DtEntityInfo* src) {
     if (dst->gen < 0)
         return;
     if (src->gen < 0)
@@ -151,12 +166,18 @@ void dt_entity_info_copy(DtEntityInfo* dst, DtEntityInfo* src) {
         void* tmp = realloc(dst->components, dst->component_size * sizeof(int));
 
         if (!tmp) {
+            printf("[DEBUG] entity info realloc exception]\n");
         }
 
         dst->components = tmp;
     }
 
     memcpy(dst->components, src->components, dst->component_size * sizeof(int));
+
+    for (int i = 0; i < dst->component_count; i++) {
+        DtEcsPool* pool = dst->manager->pools[dst->components[i]];
+        dt_ecs_pool_copy(pool, dst->id, src->id);
+    }
 }
 
 void dt_entity_info_kill(DtEntityInfo* info) {
@@ -316,6 +337,28 @@ void* dt_entity_container_get(const DtEntityContainer* container, const DtEntity
            container->sparce_entities[entity] * container->item_size;
 }
 
+void dt_entity_container_reset(DtEntityContainer* container, const DtEntity entity) {
+    if (!dt_entity_container_has(container, entity))
+        return;
+
+    container->auto_reset(&container->dense_items[container->sparce_entities[entity]],
+                          container->item_size);
+}
+
+void dt_entity_container_copy(DtEntityContainer* container, const DtEntity dst,
+                              const DtEntity src) {
+    if (!dt_entity_container_has(container, src))
+        return;
+
+    if (dt_entity_container_has(container, dst))
+        container->auto_copy(&container->dense_items[container->sparce_entities[dst]],
+                             &container->dense_items[container->sparce_entities[src]],
+                             container->item_size);
+    else
+        dt_entity_container_add(container, dst,
+                                &container->dense_items[container->sparce_entities[src]]);
+}
+
 void dt_entity_container_resize(DtEntityContainer* container, u16 new_size) {
     void* tmp = realloc(container->sparce_entities, new_size);
 
@@ -327,7 +370,9 @@ void dt_entity_container_resize(DtEntityContainer* container, u16 new_size) {
     container->sparce_entities = tmp;
 }
 
-static void default_entity_item_reset(void* data, size_t size) { memset(data, 0, size); }
+static void default_entity_item_reset(void* data, const size_t size) {
+    memset(data, 0, size);
+}
 
 void dt_entity_container_free(DtEntityContainer* container) {
     free(container->dense_items);
@@ -336,7 +381,7 @@ void dt_entity_container_free(DtEntityContainer* container) {
     free(container->recycle_entities);
 }
 
-static void default_entity_item_copy(void* dst, const void* src, size_t size) {
+static void default_entity_item_copy(void* dst, const void* src, const size_t size) {
     memcpy(dst, src, size);
 }
 
@@ -345,7 +390,7 @@ static void entity_container_start(void* data) {
 }
 
 static void* entity_container_current(void* data) {
-    DtEntityContainer* container = data;
+    const DtEntityContainer* container = data;
     return &container->dense_entities[container->iterator_ptr];
 }
 

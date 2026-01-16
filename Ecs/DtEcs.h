@@ -46,6 +46,8 @@ typedef struct DtEcsFilter DtEcsFilter;
  * @brief Информация о сущности
  */
 typedef struct DtEntityInfo {
+    DtEcsManager* manager;
+
     DtEntity id;
     int* components;
     int component_size;
@@ -67,14 +69,15 @@ typedef struct DtEntityInfo {
 /**
  * @brief Информация о сущности с NULL id
  */
-#define DT_ENTITY_INFO_NULL \
+#define DT_ENTITY_INFO_NULL                                                              \
     (DtEntityInfo) { .id = DT_ENTITY_NULL }
 
 /*=============================================================================
  *                          Функции для работы с EntityInfo
  *============================================================================*/
 
-DtEntityInfo dt_entity_info_new(DtEntity id, u16 component_count, DtEntity children_size);
+DtEntityInfo dt_entity_info_new(DtEcsManager* manager, DtEntity id, u16 component_count,
+                                DtEntity children_size);
 void dt_entity_info_reuse(DtEntityInfo* info);
 void dt_entity_info_set_parent(DtEntityInfo* info, DtEntityInfo* parent);
 void dt_entity_info_add_child(DtEntityInfo* info, DtEntityInfo* child);
@@ -85,7 +88,8 @@ void dt_entity_info_add_component(DtEntityInfo* info, u16 id);
 void dt_entity_info_remove_component(DtEntityInfo* info, u16 id);
 
 void dt_entity_info_reset(DtEntityInfo* info);
-void dt_entity_info_copy(DtEntityInfo* dst, DtEntityInfo* src);
+void dt_entity_info_clear(DtEntityInfo* info);
+void dt_entity_info_copy(DtEntityInfo* dst, const DtEntityInfo* src);
 void dt_entity_info_kill(DtEntityInfo* info);
 
 /*=============================================================================
@@ -118,12 +122,16 @@ typedef struct DtEntityContainer {
     DtCopyItemHandler auto_copy;
 } DtEntityContainer;
 
-DtEntityContainer dt_entity_container_new(u32 item_size, DtEntity dense_size, DtEntity sparse_size,
-                                     DtEntity recycle_size, DtResetItemHandler auto_reset,
-                                     DtCopyItemHandler auto_copy);
-void dt_entity_container_add(DtEntityContainer* container, DtEntity entity, const void* data);
+DtEntityContainer dt_entity_container_new(u32 item_size, DtEntity dense_size,
+                                          DtEntity sparse_size, DtEntity recycle_size,
+                                          DtResetItemHandler auto_reset,
+                                          DtCopyItemHandler auto_copy);
+void dt_entity_container_add(DtEntityContainer* container, DtEntity entity,
+                             const void* data);
 int dt_entity_container_has(const DtEntityContainer* container, DtEntity entity);
 void* dt_entity_container_get(const DtEntityContainer* container, DtEntity entity);
+void dt_entity_container_reset(DtEntityContainer* container, DtEntity entity);
+void dt_entity_container_copy(DtEntityContainer* container, DtEntity dst, DtEntity src);
 void dt_entity_container_remove(DtEntityContainer* container, DtEntity entity);
 void dt_entity_container_resize(DtEntityContainer* container, u16 size);
 void dt_entity_container_free(DtEntityContainer* container);
@@ -158,6 +166,8 @@ typedef struct DtEcsManagerConfig {
  *                               Пул компонентов (EcsPool)
  *============================================================================*/
 
+typedef enum { TAG_POOL, COMPONENT_POOL } PoolType;
+
 /**
  * @brief Пул компонентов с данными
  */
@@ -176,6 +186,8 @@ typedef struct DtEcsPool {
 
     u16 count;
 
+    PoolType type;
+
     const char* name;
     u16 component_id;
     u16 ecs_manager_id;
@@ -185,8 +197,10 @@ typedef struct DtEcsPool {
     void (*add)(void*, DtEntity, const void*);
     void* (*get)(const void*, DtEntity);
     bool (*has)(const void*, DtEntity);
+    void (*reset)(void*, DtEntity);
+    void (*copy)(void*, DtEntity, DtEntity);
     void (*remove)(void*, DtEntity);
-    void (*resize)(void*, size_t);
+    void (*resize)(void*, u16);
     void (*free)(void*);
 } DtEcsPool;
 
@@ -209,12 +223,15 @@ typedef struct DtEcsPool {
 DtEcsPool* dt_ecs_pool_new(const DtEcsManager* manager, const char* name, u16 size);
 DtEcsPool* dt_ecs_pool_new_by_id(const DtEcsManager* manager, u16 id);
 DtEcsPool* dt_component_pool_new(const DtEcsManager* manager, const char* name, u16 size,
-                            DtResetItemHandler reset_handler, DtCopyItemHandler copy_handler);
+                                 DtResetItemHandler reset_handler,
+                                 DtCopyItemHandler copy_handler);
 DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name);
 
 void dt_ecs_pool_add(DtEcsPool* pool, DtEntity entity, const void* data);
 void* dt_ecs_pool_get(const DtEcsPool* pool, DtEntity entity);
 int dt_ecs_pool_has(const DtEcsPool* pool, DtEntity entity);
+void dt_ecs_pool_reset(DtEcsPool* pool, DtEntity entity);
+void dt_ecs_pool_copy(DtEcsPool* pool, DtEntity dst, DtEntity src);
 void dt_ecs_pool_remove(DtEcsPool* pool, DtEntity entity);
 void dt_ecs_pool_resize(DtEcsPool* pool, u64 size);
 void dt_ecs_pool_free(DtEcsPool* pool);
@@ -303,16 +320,30 @@ struct DtEcsManager {
  * @param T Тип компонента
  * @note Если менеджер не имеет пула типа T, создается новый пул
  */
-#define DT_ECS_MANAGER_GET_POOL(manager, T) \
+#define DT_ECS_MANAGER_GET_POOL(manager, T)                                              \
     ({ dt_ecs_manager_get_pool_by_name((manager), #T); })
+
+#define DT_ECS_MANAGER_ADD_TO_POOL(manager, T, entity, data)                             \
+    ({                                                                                   \
+        T tmp;                                                                           \
+        DtEcsPool* pool = dt_ecs_manager_get_pool_by_name((manager), #T);                \
+        dt_ecs_pool_add(pool, entity, data);                                             \
+    })
+
+#define DT_ECS_MANAGER_REMOVE_FROM_POOL(manager, T, entity, data)                        \
+    ({                                                                                   \
+        T tmp;                                                                           \
+        DtEcsPool* pool = dt_ecs_manager_get_pool_by_name((manager), #T);                \
+        dt_ecs_pool_remove(pool, entity, data);                                          \
+    })
 
 /**
  * @brief Возвращает маску с типом T по умолчанию
  * @param manager Менеджер, содержащий маску
  * @param T Тип маски по умолчанию
  */
-#define DT_GET_MASK(manager, T) \
-    dt_mask_new(manager, manager->include_mask_count, manager->exclude_mask_count, \
+#define DT_GET_MASK(manager, T)                                                          \
+    dt_mask_new(manager, manager->include_mask_count, manager->exclude_mask_count,       \
                 (DT_ECS_MANAGER_GET_POOL(manager, T))->info)
 
 /**
@@ -320,7 +351,7 @@ struct DtEcsManager {
  * @param mask Маска, в которую включаем T
  * @param T Тип, который включаем
  */
-#define DT_MASK_INC(mask, T) \
+#define DT_MASK_INC(mask, T)                                                             \
     dt_mask_inc(&(mask), (DT_ECS_MANAGER_GET_POOL(manager, T))->ecs_manager_id)
 
 /**
@@ -328,7 +359,7 @@ struct DtEcsManager {
  * @param mask Маска, из которой исключаем T
  * @param T Тип, который исключаем
  */
-#define DT_MASK_EXC(mask, T) \
+#define DT_MASK_EXC(mask, T)                                                             \
     dt_mask_exc(&(mask), (DT_ECS_MANAGER_GET_POOL(manager, T))->ecs_manager_id)
 
 /*=============================================================================
@@ -339,24 +370,30 @@ DtEcsManager* dt_ecs_manager_new(const DtEcsManagerConfig* cfg);
 DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager);
 DtEntityInfo dt_ecs_manager_get_entity(const DtEcsManager* manager, DtEntity entity);
 DtEntity dt_ecs_manager_get_parent(const DtEcsManager* manager, DtEntity entity);
-void dt_ecs_manager_set_parent(const DtEcsManager* manager, DtEntity child, DtEntity parent);
-void dt_ecs_manager_add_child(const DtEcsManager* manager, DtEntity parent, DtEntity child);
+void dt_ecs_manager_set_parent(const DtEcsManager* manager, DtEntity child,
+                               DtEntity parent);
+void dt_ecs_manager_add_child(const DtEcsManager* manager, DtEntity parent,
+                              DtEntity child);
 void dt_ecs_manager_remove_child(const DtEcsManager* manager, DtEntity parent,
                                  DtEntity child);
 DtEntityInfo** dt_ecs_manager_get_children(const DtEcsManager* manager, DtEntity entity,
-                                         u16* count);
-void dt_ecs_manager_kill_entity(DtEcsManager* manager, DtEntity entity);
+                                           u16* count);
 size_t dt_ecs_manager_get_entity_components_count(const DtEcsManager* manager,
                                                   DtEntity entity);
 uint16_t dt_ecs_manager_get_entity_gen(const DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_copy_entity(const DtEcsManager* manager, DtEntity dst, DtEntity src);
+void dt_ecs_manager_reset_entity(const DtEcsManager* manager);
+void dt_ecs_manager_clear_entity(const DtEcsManager* manager);
 void dt_ecs_manager_entity_add_component(DtEcsManager* manager, DtEntity entity, u16 id,
                                          const void* data);
-void dt_ecs_manager_entity_remove_component(DtEcsManager* manager, DtEntity entity, u16 id);
+void dt_ecs_manager_entity_remove_component(DtEcsManager* manager, DtEntity entity,
+                                            u16 id);
+void dt_ecs_manager_kill_entity(DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_add_pool(DtEcsManager* manager, DtEcsPool* pool);
 DtEcsPool* dt_ecs_manager_get_pool_by_id(DtEcsManager* manager, u16 id);
 DtEcsPool* dt_ecs_manager_get_pool_by_name(DtEcsManager* manager, const char* name);
-void dt_on_entity_change(const DtEcsManager* manager, DtEntity entity, u16 id, bool added);
+void dt_on_entity_change(const DtEcsManager* manager, DtEntity entity, u16 id,
+                         bool added);
 void dt_ecs_manager_free(DtEcsManager* manager);
 void dt_remove_tool_components(const DtEcsManager* manager);
 
@@ -401,7 +438,8 @@ typedef struct SystemHandlerConfig {
 
 /**
  * @brief Контейнер для функций системы
- * @warning Если система не имеет какой-либо функции, она должна быть инициализирована NULL
+ * @warning Если система не имеет какой-либо функции, она должна быть инициализирована
+ * NULL
  */
 typedef struct EcsSystem {
     void* data;
@@ -435,7 +473,8 @@ typedef struct SystemHandler {
     DT_VEC(ActionDataPair) destroys;
 } SystemHandler;
 
-SystemHandler* dt_system_handler_new(DtEcsManager* manager, const SystemHandlerConfig* cfg);
+SystemHandler* dt_system_handler_new(DtEcsManager* manager,
+                                     const SystemHandlerConfig* cfg);
 void dt_system_handler_add(SystemHandler* handler, const EcsSystem* system);
 void dt_system_handler_init(const SystemHandler* handler);
 void dt_system_handler_pre_update(const SystemHandler* handler);

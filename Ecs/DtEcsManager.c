@@ -250,7 +250,8 @@ DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager) {
             }
         }
         manager->sparse_entities[entity] =
-            dt_entity_info_new(entity, manager->component_count, manager->children_size);
+            dt_entity_info_new(
+            manager, entity, manager->component_count, manager->children_size);
         printf("[DEBUG]\t new entity \"%d\" was created\n", entity);
     }
 
@@ -412,8 +413,12 @@ void dt_ecs_manager_copy_entity(const DtEcsManager* manager, const DtEntity dst,
     if (manager->sparse_entities[src].gen < 0)
         return;
 
-    const size_t count = manager->sparse_entities[src].component_count =
+    const u16 count = manager->sparse_entities[src].component_count =
         manager->sparse_entities[dst].component_count;
+
+    for (u16 i = 0; i < count; i++) {
+
+    }
 }
 
 void dt_ecs_manager_entity_add_component(DtEcsManager* manager, const DtEntity entity,
@@ -636,13 +641,18 @@ static void ecs_manager_resize_filters(DtEcsManager* manager) {
     manager->filters = filters;
 }
 
-void dt_on_entity_change(const DtEcsManager* manager, const DtEntity entity, u16 id,
-                         bool added) {
+void dt_on_entity_change(const DtEcsManager* manager, const DtEntity entity, const u16 id,
+                         const bool added) {
 
     manager->sparse_entities[entity].component_count += added ? 1 : -1;
 
     DT_VEC(DtEcsFilter*) include_list = manager->filter_by_include[id];
     DT_VEC(DtEcsFilter*) exclude_list = manager->filter_by_exclude[id];
+
+    if (added)
+        dt_entity_info_add_component(&manager->sparse_entities[entity], id);
+    else
+        dt_entity_info_remove_component(&manager->sparse_entities[entity], id);
 
 
     if (added) {
@@ -678,15 +688,15 @@ void dt_on_entity_change(const DtEcsManager* manager, const DtEntity entity, u16
     }
 }
 
-static int is_mask_compatible(const DtEcsManager* manager, const EcsMask filterMask,
+static int is_mask_compatible(const DtEcsManager* manager, const EcsMask mask,
                               const DtEntity entity) {
-    for (int i = 0; i < filterMask.include_count; i++) {
-        if (!dt_ecs_pool_has(manager->pools[filterMask.include_pools[i]], entity)) {
+    for (int i = 0; i < mask.include_count; i++) {
+        if (!dt_ecs_pool_has(manager->pools[mask.include_pools[i]], entity)) {
             return 0;
         }
     }
-    for (int i = 0; i < filterMask.exclude_count; i++) {
-        if (dt_ecs_pool_has(manager->pools[filterMask.exclude_pools[i]], entity)) {
+    for (int i = 0; i < mask.exclude_count; i++) {
+        if (dt_ecs_pool_has(manager->pools[mask.exclude_pools[i]], entity)) {
             return 0;
         }
     }
@@ -695,7 +705,7 @@ static int is_mask_compatible(const DtEcsManager* manager, const EcsMask filterM
 
 static int is_mask_compatible_without(const DtEcsManager* manager,
                                       const EcsMask filterMask, const DtEntity entity,
-                                      int id) {
+                                      const int id) {
     for (int i = 0; i < filterMask.include_count; i++) {
         size_t typeId = filterMask.include_pools[i];
         if (typeId == id || !dt_ecs_pool_has(manager->pools[typeId], entity)) {
