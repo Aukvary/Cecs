@@ -12,7 +12,7 @@ static void default_entity_item_copy(void* dst, const void* src, size_t);
 
 DtEntityInfo dt_entity_info_new(DtEcsManager* manager, const DtEntity id,
                                 const u16 component_count, const DtEntity children_size) {
-    return (DtEntityInfo) {
+    DtEntityInfo info = (DtEntityInfo) {
         .manager = manager,
 
         .id = id,
@@ -30,6 +30,8 @@ DtEntityInfo dt_entity_info_new(DtEcsManager* manager, const DtEntity id,
 
         .gen = 1,
     };
+
+    return info;
 }
 
 void dt_entity_info_reuse(DtEntityInfo* info) {
