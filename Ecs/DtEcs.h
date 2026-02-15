@@ -296,7 +296,6 @@ struct DtEcsManager {
     size_t pools_size;
     size_t pools_count;
 
-    DT_VEC(EcsMask) masks;
     size_t include_mask_count;
     size_t exclude_mask_count;
 

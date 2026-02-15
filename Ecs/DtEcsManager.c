@@ -201,7 +201,6 @@ DtEcsManager* dt_ecs_manager_new(const DtEcsManagerConfig* cfg) {
         .pools_size = cfg->pools_size,
         .pools_count = 0,
 
-        .masks = DT_VEC_NEW(EcsMask, cfg->masks_size),
         .include_mask_count = cfg->include_mask_count,
         .exclude_mask_count = cfg->exclude_mask_count,
 
@@ -538,6 +537,10 @@ static void ecs_manager_resize_pools(DtEcsManager* manager) {
     manager->pools_size = old_size ? old_size * 2 : 10;
 
     DtEcsPool** old_pools = DT_STACK_ALLOC(old_size * sizeof(DtEcsPool*));
+    DtEcsFilter*** old_filters_by_include =
+        DT_STACK_ALLOC(old_size * sizeof(DtEcsFilter**));
+    DtEcsFilter*** old_filters_by_exclude =
+        DT_STACK_ALLOC(old_size * sizeof(DtEcsFilter**));
 
     if (old_pools == NULL) {
         printf("Failed to allocate memory for old pools\n");
@@ -555,29 +558,10 @@ static void ecs_manager_resize_pools(DtEcsManager* manager) {
 
     manager->pools = tmp;
 
-    for (int i = 0; i < manager->pools_count; i++) {
-        size_t idx = old_pools[i]->component_id % manager->pools_size;
-
-        while (old_pools[idx] != NULL) {
-            idx = (idx + 1) % manager->pools_size;
-        }
-
-        manager->pools[idx] = manager->pools[i];
-        manager->pools[idx]->ecs_manager_id = (int) idx;
-    }
-
-
-    tmp = DT_REALLOC(manager->filter_by_include,
-                     manager->pools_size * sizeof(DtEcsFilter*));
-
-    if (!tmp) {
-        printf("[DEBUG]\t Failed to allocate memory for filters by include\n");
-        exit(1);
-    }
-
     manager->filter_by_include = tmp;
 
-    tmp = realloc(manager->filter_by_exclude, manager->pools_size * sizeof(DtEcsFilter*));
+    tmp = DT_REALLOC(manager->filter_by_exclude,
+                     manager->pools_size * sizeof(DtEcsFilter*));
 
     if (!tmp) {
         printf("[DEBUG]\t Failed to allocate memory for filters by exclude\n]");
@@ -586,30 +570,19 @@ static void ecs_manager_resize_pools(DtEcsManager* manager) {
 
     manager->filter_by_exclude = tmp;
 
+    for (int i = 0; i < manager->pools_count; i++) {
+        size_t idx = old_pools[i]->component_id % manager->pools_size;
 
-    FOREACH(EcsMask, mask, )
-    for (int i = 0; i < mask.include_count; i++) {
-        DT_VEC(DtEcsFilter*) list = manager->filter_by_include[mask.include_pools[i]];
+        DtEcsFilter** include_filters = old_filters_by_include[idx];
+        DtEcsFilter** exclude_filters = old_filters_by_exclude[idx];
 
-        if (!list) {
-            list = DT_VEC_NEW(DtEcsFilter*, mask.include_count);
-            manager->filter_by_include[mask.include_pools[i]] = list;
+        while (old_pools[idx] != NULL) {
+            idx = (idx + 1) % manager->pools_size;
         }
 
-        DT_VEC_ADD(list, filter);
+        manager->pools[idx] = manager->pools[i];
+        manager->pools[idx]->ecs_manager_id = (int) idx;
     }
-
-    for (int i = 0; i < mask.exclude_count; i++) {
-        DT_VEC(DtEcsFilter*) list = manager->filter_by_exclude[mask.exclude_pools[i]];
-
-        if (!list) {
-            list = DT_VEC_NEW(DtEcsFilter*, mask.exclude_count);
-            manager->filter_by_exclude[mask.include_pools[i]] = list;
-        }
-
-        DT_VEC_ADD(list, filter);
-    }
-
 }
 
 static DtEcsFilter* get_filter(DtEcsManager* manager, const EcsMask mask) {
@@ -792,12 +765,7 @@ void dt_ecs_manager_free(DtEcsManager* manager) {
         dt_vec_free(manager->filter_by_exclude[i]);
     }
 
-    FOREACH(EcsMask, m, DT_VEC_ITERATOR(manager->masks), {
-        free(m.include_pools);
-        free(m.exclude_pools);
-    });
-
-    dt_vec_free(manager->masks);
+    // TODO: освобождение массивов в масках
 
     for (int i = 0; i < manager->filters_size; i++) {
         if (manager->filters[i] != NULL)
