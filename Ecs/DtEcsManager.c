@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ComponentsHandler.h"
+#include "DtAllocators.h"
 #include "DtEcs.h"
 
 /**
@@ -214,6 +215,7 @@ DtEcsManager* dt_ecs_manager_new(const DtEcsManagerConfig* cfg) {
 
     manager->hierarchy_dirty_pool = DT_ECS_MANAGER_GET_POOL(manager, HierarchyDirty);
 
+
     return manager;
 }
 
@@ -251,6 +253,9 @@ DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager) {
         }
         manager->sparse_entities[entity] = dt_entity_info_new(
             manager, entity, manager->component_count, manager->children_size);
+
+        DtEntityInfo en = manager->sparse_entities[entity];
+
         printf("[DEBUG]\t new entity \"%d\" was created\n", entity);
     }
 
@@ -421,14 +426,28 @@ void dt_ecs_manager_copy_entity(const DtEcsManager* manager, const DtEntity dst,
     }
 }
 
-void dt_ecs_manager_entity_add_component(DtEcsManager* manager, const DtEntity entity,
-                                         u16 id, const void* data) {
+void dt_ecs_manager_entity_add_component_by_id(DtEcsManager* manager,
+                                               const DtEntity entity, u16 id,
+                                               const void* data) {
     if (manager->entities_ptr < entity || entity < 0)
         return;
     if (manager->sparse_entities[entity].gen < 0)
         return;
 
     DtEcsPool* pool = dt_ecs_manager_get_pool_by_id(manager, id);
+
+    dt_ecs_pool_add(pool, entity, data);
+}
+
+void dt_ecs_manager_entity_add_component_by_name(DtEcsManager* manager,
+                                                 const DtEntity entity, const char* name,
+                                                 const void* data) {
+    if (manager->entities_ptr < entity || entity < 0)
+        return;
+    if (manager->sparse_entities[entity].gen < 0)
+        return;
+
+    DtEcsPool* pool = dt_ecs_manager_get_pool_by_name(manager, name);
 
     dt_ecs_pool_add(pool, entity, data);
 }
@@ -515,19 +534,44 @@ static int ecs_manager_get_pool_index_by_name(DtEcsManager* manager, const char*
 }
 
 static void ecs_manager_resize_pools(DtEcsManager* manager) {
-    manager->pools_size *= 2;
-    DtEcsPool** pools = calloc(manager->pools_size, sizeof(DtEcsPool*));
+    const size_t old_size = manager->pools_size;
+    manager->pools_size = old_size ? old_size * 2 : 10;
 
-    if (pools == NULL) {
-        printf("Failed to allocate memory for pools\n");
+    DtEcsPool** old_pools = DT_STACK_ALLOC(old_size * sizeof(DtEcsPool*));
+
+    if (old_pools == NULL) {
+        printf("Failed to allocate memory for old pools\n");
         exit(1);
     }
 
-    void* tmp =
-        realloc(manager->filter_by_include, manager->pools_size * sizeof(DtEcsFilter*));
+    memcpy(old_pools, manager->pools, old_size * sizeof(DtEcsPool*));
+
+    void* tmp = DT_REALLOC(manager->pools, sizeof(DtEcsPool*) * manager->pools_size);
 
     if (!tmp) {
-        printf("[DEBUG]\t Failed to allocate memory for filters by include\n]");
+        printf("Failed to allocate memory for new pools\n");
+        exit(1);
+    }
+
+    manager->pools = tmp;
+
+    for (int i = 0; i < manager->pools_count; i++) {
+        size_t idx = old_pools[i]->component_id % manager->pools_size;
+
+        while (old_pools[idx] != NULL) {
+            idx = (idx + 1) % manager->pools_size;
+        }
+
+        manager->pools[idx] = manager->pools[i];
+        manager->pools[idx]->ecs_manager_id = (int) idx;
+    }
+
+
+    tmp = DT_REALLOC(manager->filter_by_include,
+                     manager->pools_size * sizeof(DtEcsFilter*));
+
+    if (!tmp) {
+        printf("[DEBUG]\t Failed to allocate memory for filters by include\n");
         exit(1);
     }
 
@@ -542,19 +586,30 @@ static void ecs_manager_resize_pools(DtEcsManager* manager) {
 
     manager->filter_by_exclude = tmp;
 
-    for (int i = 0; i < manager->pools_count; i++) {
-        size_t idx = manager->pools[i]->component_id % manager->pools_size;
 
-        while (manager->pools[idx] != NULL) {
-            idx = (idx + 1) % manager->pools_size;
+    FOREACH(EcsMask, mask, )
+    for (int i = 0; i < mask.include_count; i++) {
+        DT_VEC(DtEcsFilter*) list = manager->filter_by_include[mask.include_pools[i]];
+
+        if (!list) {
+            list = DT_VEC_NEW(DtEcsFilter*, mask.include_count);
+            manager->filter_by_include[mask.include_pools[i]] = list;
         }
 
-        pools[idx] = manager->pools[i];
-        pools[idx]->ecs_manager_id = (int) idx;
+        DT_VEC_ADD(list, filter);
     }
 
-    free(manager->pools);
-    manager->pools = pools;
+    for (int i = 0; i < mask.exclude_count; i++) {
+        DT_VEC(DtEcsFilter*) list = manager->filter_by_exclude[mask.exclude_pools[i]];
+
+        if (!list) {
+            list = DT_VEC_NEW(DtEcsFilter*, mask.exclude_count);
+            manager->filter_by_exclude[mask.include_pools[i]] = list;
+        }
+
+        DT_VEC_ADD(list, filter);
+    }
+
 }
 
 static DtEcsFilter* get_filter(DtEcsManager* manager, const EcsMask mask) {
@@ -644,16 +699,18 @@ static void ecs_manager_resize_filters(DtEcsManager* manager) {
 
 void dt_on_entity_change(const DtEcsManager* manager, const DtEntity entity, const u16 id,
                          const bool added) {
-
-    manager->sparse_entities[entity].component_count += added ? 1 : -1;
-
     DT_VEC(DtEcsFilter*) include_list = manager->filter_by_include[id];
     DT_VEC(DtEcsFilter*) exclude_list = manager->filter_by_exclude[id];
 
-    if (added)
-        dt_entity_info_add_component(&manager->sparse_entities[entity], id);
-    else
-        dt_entity_info_remove_component(&manager->sparse_entities[entity], id);
+    DtEntityInfo* info = &manager->sparse_entities[entity];
+
+    if (added) {
+        info->component_count++;
+        dt_entity_info_add_component(info, id);
+    } else {
+        info->component_count--;
+        dt_entity_info_remove_component(info, id);
+    }
 
 
     if (added) {

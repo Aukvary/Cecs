@@ -107,12 +107,15 @@ void dt_entity_info_add_component(DtEntityInfo* info, u16 id) {
         if (info->components[i] == id)
             return;
 
+        DtEntityInfo inf = *info;
+
+
         if (i == info->component_size) {
-            info->component_size *= 2;
+            info->component_size = info->component_size ? info->component_size * 2 : 10;
             void* tmp = realloc(info->components, info->component_size * sizeof(int));
 
             if (!tmp) {
-                printf("[DEBUG] entity info realloc exception]\n");
+                printf("[DEBUG] entity info realloc exception\n");
             }
 
             info->components = tmp;
