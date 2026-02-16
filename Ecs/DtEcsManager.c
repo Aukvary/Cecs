@@ -548,6 +548,10 @@ static void ecs_manager_resize_pools(DtEcsManager* manager) {
     }
 
     memcpy(old_pools, manager->pools, old_size * sizeof(DtEcsPool*));
+    memcpy(old_filters_by_include, manager->filter_by_include,
+           old_size * sizeof(DtEcsFilter**));
+    memcpy(old_filters_by_exclude, manager->filter_by_exclude,
+           old_size * sizeof(DtEcsFilter**));
 
     void* tmp = DT_REALLOC(manager->pools, sizeof(DtEcsPool*) * manager->pools_size);
 
@@ -573,8 +577,12 @@ static void ecs_manager_resize_pools(DtEcsManager* manager) {
     for (int i = 0; i < manager->pools_count; i++) {
         size_t idx = old_pools[i]->component_id % manager->pools_size;
 
-        DtEcsFilter** include_filters = old_filters_by_include[idx];
-        DtEcsFilter** exclude_filters = old_filters_by_exclude[idx];
+        DT_VEC(DtEcsFilter*) include_filters =
+            old_filters_by_include[old_pools[i]->ecs_manager_id];
+        DT_VEC(DtEcsFilter*) exclude_filters =
+            old_filters_by_exclude[old_pools[i]->ecs_manager_id];
+
+        FOREACH(DtEcsFilter*, filter, )
 
         while (old_pools[idx] != NULL) {
             idx = (idx + 1) % manager->pools_size;
