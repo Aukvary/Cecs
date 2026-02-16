@@ -135,14 +135,14 @@ DtVecHeader* dt_vec_header(void* data);
  *
  * @param data pointer to data array
  */
-inline size_t dt_vec_capacity(void* data) { return dt_vec_header(data)->capacity; }
+static size_t dt_vec_capacity(void* data) { return dt_vec_header(data)->capacity; }
 
 /**
  * @brief return count of data array
  *
  * @param data pointer to data array
  */
-inline size_t dt_vec_count(void* data) { return dt_vec_header(data)->count; }
+static size_t dt_vec_count(void* data) { return dt_vec_header(data)->count; }
 
 /**
  * @brief add value to vector data array

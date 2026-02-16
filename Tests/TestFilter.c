@@ -32,7 +32,7 @@ void test_filter(void) {
 
     test_filter_1();
 
-    dt_ecs_manager_free(manager);
+    // dt_ecs_manager_free(manager);
 }
 
 static void test_filter_1(void) {
@@ -47,4 +47,6 @@ static void test_filter_1(void) {
     DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent2, e3, NULL);
     DT_ECS_MANAGER_ADD_TO_POOL(manager, TestDataComponent1, e3, NULL);
     DT_ECS_MANAGER_ADD_TO_POOL(manager, TestDataComponent2, e3, NULL);
+
+    DtEcsMask mask = dt_mask_new(manager, 1, 1);
 }

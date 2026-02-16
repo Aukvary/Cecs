@@ -142,7 +142,7 @@ void dt_entity_info_reset(DtEntityInfo* info) {
         return;
 
     for (int i = 0; i < info->component_count; i++) {
-        DtEcsPool* pool = info->manager->pools[info->components[i]];
+        DtEcsPool* pool = info->manager->pools_table[info->components[i]];
         dt_ecs_pool_reset(pool, info->id);
     }
 }
@@ -152,7 +152,7 @@ void dt_entity_info_clear(DtEntityInfo* info) {
         return;
 
     for (int i = 0; i < info->component_count; i++) {
-        DtEcsPool* pool = info->manager->pools[info->components[i]];
+        DtEcsPool* pool = info->manager->pools_table[info->components[i]];
         dt_ecs_pool_remove(pool, info->id);
     }
 
@@ -180,7 +180,7 @@ void dt_entity_info_copy(DtEntityInfo* dst, const DtEntityInfo* src) {
     memcpy(dst->components, src->components, dst->component_size * sizeof(int));
 
     for (int i = 0; i < dst->component_count; i++) {
-        DtEcsPool* pool = dst->manager->pools[dst->components[i]];
+        DtEcsPool* pool = dst->manager->pools_table[dst->components[i]];
         dt_ecs_pool_copy(pool, dst->id, src->id);
     }
 }

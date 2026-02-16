@@ -254,12 +254,12 @@ typedef struct DtEcsMask {
     u16 exclude_size;
     u16 exclude_count;
     u64 hash;
-} EcsMask;
+} DtEcsMask;
 
-EcsMask dt_mask_new(DtEcsManager* manager, u16 inc_size, u16 exc_size);
-void dt_mask_inc(EcsMask* mask, u16 id);
-void dt_mask_exc(EcsMask* mask, u16 id);
-DtEcsFilter* dt_mask_end(EcsMask mask);
+DtEcsMask dt_mask_new(DtEcsManager* manager, u16 inc_size, u16 exc_size);
+void dt_mask_inc(DtEcsMask* mask, u16 ecs_manager_component_id);
+void dt_mask_exc(DtEcsMask* mask, u16 ecs_manager_component_id);
+DtEcsFilter* dt_mask_end(DtEcsMask mask);
 
 /*=============================================================================
  *                              Фильтр ECS (DtEcsFilter)
@@ -270,7 +270,7 @@ DtEcsFilter* dt_mask_end(EcsMask mask);
  */
 struct DtEcsFilter {
     DtEcsManager* manager;
-    EcsMask mask;
+    DtEcsMask mask;
     DtEntityContainer entities;
 };
 
@@ -292,9 +292,9 @@ struct DtEcsManager {
     DtEntity recycled_size;
     DtEntity recycled_ptr;
 
-    DtEcsPool** pools;
-    size_t pools_size;
-    size_t pools_count;
+    DT_VEC(DtEcsPool*) pools;
+    DtEcsPool** pools_table;
+    size_t pools_table_size;
 
     size_t include_mask_count;
     size_t exclude_mask_count;
@@ -383,16 +383,16 @@ void dt_ecs_manager_copy_entity(const DtEcsManager* manager, DtEntity dst, DtEnt
 void dt_ecs_manager_reset_entity(const DtEcsManager* manager);
 void dt_ecs_manager_clear_entity(const DtEcsManager* manager);
 void dt_ecs_manager_entity_add_component_by_id(DtEcsManager* manager, DtEntity entity,
-                                               u16 id, const void* data);
+                                               u16 component_id, const void* data);
 void dt_ecs_manager_entity_add_component_by_name(DtEcsManager* manager, DtEntity entity,
                                                  const char* name, const void* data);
 void dt_ecs_manager_entity_remove_component(DtEcsManager* manager, DtEntity entity,
-                                            u16 id);
+                                            u16 component_id);
 void dt_ecs_manager_kill_entity(DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_add_pool(DtEcsManager* manager, DtEcsPool* pool);
-DtEcsPool* dt_ecs_manager_get_pool_by_id(DtEcsManager* manager, u16 id);
+DtEcsPool* dt_ecs_manager_get_pool_by_id(DtEcsManager* manager, u16 component_id);
 DtEcsPool* dt_ecs_manager_get_pool_by_name(DtEcsManager* manager, const char* name);
-void dt_on_entity_change(const DtEcsManager* manager, DtEntity entity, u16 id,
+void dt_on_entity_change(const DtEcsManager* manager, DtEntity entity, u16 ecs_manager_component_id,
                          bool added);
 void dt_ecs_manager_free(DtEcsManager* manager);
 void dt_remove_tool_components(const DtEcsManager* manager);

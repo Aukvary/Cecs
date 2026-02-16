@@ -90,7 +90,7 @@ static void test_create_remove_entity_add_to_pools(DtEntity* entity, DtEntityInf
     dt_ecs_pool_add(empty_pool, *entity, NULL);
     dt_ecs_pool_add(data_pool, *entity, &(TestDataComponent1) {10});
 
-    EcsMask mask = dt_mask_new(manager, 1, 0);
+    DtEcsMask mask = dt_mask_new(manager, 1, 0);
     DT_MASK_INC(mask, TestEmptyComponent1);
     const DtEcsFilter* filter = dt_mask_end(mask);
 
