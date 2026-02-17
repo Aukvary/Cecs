@@ -26,6 +26,7 @@ void dt_ecs_pool_add(DtEcsPool* pool, const DtEntity entity, const void* data) {
 
     pool->count++;
     pool->add(pool->data, entity, data);
+
     dt_on_entity_change(pool->manager, entity, pool->ecs_manager_id, true);
     printf("[DEBUG]\t entity \"%d\" was added to %s pool\n", entity, pool->name);
 }

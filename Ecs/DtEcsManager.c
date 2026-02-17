@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -548,47 +549,46 @@ static void ecs_manager_resize_pools(DtEcsManager* manager) {
     DtEcsPool** old_pools = DT_STACK_ALLOC(old_size * sizeof(DtEcsPool*));
     memcpy(old_pools, manager->pools_table, old_size * sizeof(DtEcsPool*));
 
-    if (old_pools == NULL) {
-        printf("Failed to allocate memory for old pools\n");
-        exit(1);
-    }
-
-    void* tmp =
+    void* tmp_pools =
         DT_REALLOC(manager->pools_table, sizeof(DtEcsPool*) * manager->pools_table_size);
 
-    if (!tmp) {
-        printf("Failed to allocate memory for new pools\n");
+    if (!tmp_pools) {
+        printf("[DEBUG]\t Failed to allocate memory for new pools\n");
         exit(1);
     }
 
-    manager->pools_table = tmp;
+    manager->pools_table = tmp_pools;
     memset(manager->pools_table, 0, manager->pools_table_size * sizeof(DtEcsPool*));
 
-    tmp = DT_REALLOC(manager->filter_by_include,
-                     manager->pools_table_size * sizeof(DtEcsFilter*));
+    void* tmp_inc_filter = DT_REALLOC(manager->filter_by_include,
+                                      manager->pools_table_size * sizeof(DtEcsFilter*));
 
-    if (!tmp) {
+    if (!tmp_inc_filter) {
         printf("[DEBUG]\t Failed to allocate memory for filters by include\n");
         exit(1);
     }
 
-    manager->filter_by_include = tmp;
+    manager->filter_by_include = tmp_inc_filter;
     memset(manager->filter_by_include + old_size, 0,
            (manager->pools_table_size - old_size) * sizeof(DtEcsFilter*));
-    printf("before pools resize: %p\n", manager->filter_by_include[0]);
 
 
-    tmp = DT_REALLOC(manager->filter_by_exclude,
-                     manager->pools_table_size * sizeof(DT_VEC(DtEcsFilter*)));
+    void* tmp_exc_filters =
+        DT_REALLOC(manager->filter_by_exclude,
+                   manager->pools_table_size * sizeof(DT_VEC(DtEcsFilter*)));
 
-    printf("after pools resize: %p\n", manager->filter_by_include[0]);
+    if (!tmp_exc_filters) {
+        printf("[DEBUG]\t Failed to allocate memory for filters by exclude\n");
+        exit(1);
+    }
 
-    manager->filter_by_exclude = tmp;
+    manager->filter_by_exclude = tmp_exc_filters;
     memset(manager->filter_by_exclude + old_size, 0,
            (manager->pools_table_size - old_size) * sizeof(DT_VEC(DtEcsFilter*)));
 
+
     for (int i = 0; i < old_size; i++) {
-        u16 idx = old_pools[i]->component_id;
+        u16 idx = old_pools[i]->component_id % manager->pools_table_size;
 
         while (manager->pools_table[idx] != NULL) {
             idx = (1 + idx) % manager->pools_table_size;
@@ -596,16 +596,7 @@ static void ecs_manager_resize_pools(DtEcsManager* manager) {
 
         manager->pools_table[idx] = old_pools[i];
     }
-}
 
-static void dt_ecs_manager_add_filter(DtEcsManager* manager, DtEcsFilter* filter) {
-    u16 idx = filter->mask.hash % manager->filters_size;
-
-    while (manager->filters[idx] != NULL) {
-        if (filter->mask.hash == manager->filters[idx]->mask.hash) {
-            return;
-        }
-    }
 }
 
 static DtEcsFilter* get_filter(DtEcsManager* manager, const DtEcsMask mask) {
