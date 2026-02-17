@@ -6,7 +6,7 @@
 
 
 #ifndef COMPONENT_TABLE_SIZE
-#define COMPONENT_TABLE_SIZE 107
+#define COMPONENT_TABLE_SIZE 107ULL
 #endif
 
 static int id_counter = 0;
@@ -57,8 +57,8 @@ const DtComponentData* dt_component_get_data_by_id(const u16 id) {
 }
 
 const DtComponentData* dt_component_get_data_by_name(const char* name) {
-    int idx = dt_component_get_hash(name) % COMPONENT_TABLE_SIZE;
-    const int start = idx;
+    u64 idx = dt_component_get_hash(name) % COMPONENT_TABLE_SIZE;
+    const u64 start = idx;
 
     while (component_data_by_name[idx] != NULL &&
            strcmp(component_data_by_name[idx]->name, name) != 0) {
