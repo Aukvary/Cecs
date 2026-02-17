@@ -13,7 +13,9 @@ typedef struct {
     void (*start)(void*);
     void* (*current)(void*);
     int (*next)(void*);
-} Iterator;
+
+    void* data;
+} DtIterator;
 
 /**
  * @brief iterate for collection
@@ -25,13 +27,12 @@ typedef struct {
  *
  * @note use {}-block in loop body
  */
-#define FOREACH(T, var, container, block_code)                                           \
+#define FOREACH(T, var, iter, block_code)                                                \
     ({                                                                                   \
-        Iterator iter = (container)->iterator;                                           \
-        iter.start(container);                                                           \
+        (iter)->start((iter)->data);                                                     \
         T var;                                                                           \
-        while (iter.next(container)) {                                                   \
-            var = *(T*) iter.current(container);                                         \
+        while ((iter)->next((iter)->data)) {                                             \
+            var = *(T*) (iter)->current((iter)->data);                                   \
             block_code                                                                   \
         }                                                                                \
     })
@@ -40,16 +41,19 @@ typedef struct {
  * @brief struct for
  */
 typedef struct {
-    Iterator iterator;
+    DtIterator iterator;
     int64_t current;
 
     int64_t start;
     int64_t end;
     int64_t step;
-} Range;
+} DtRange;
 
-#define RANGE(_start, _end, ...)                                                         \
-    &(Range) { .start = _start, .end = _end, __VA_ARGS__ }
+#define RANGE(_start, _end, ...) ({\
+    range&(Range) { .start = _start, .end = _end, __VA_ARGS__ };\
+    Iterator iter = \
+    })
+
 
 void range_start(void*);
 void* range_current(void*);
@@ -64,7 +68,7 @@ typedef struct {
 
     size_t element_size;
 
-    Iterator iterator;
+    DtIterator iterator;
     int iter_locked;
     size_t current;
 
@@ -92,7 +96,7 @@ typedef struct {
 #define DT_VEC_ADD(data, value)                                                          \
     ({                                                                                   \
         typeof(value) tmp_var = (value);                                                 \
-        data = dt_vec_add(data, &tmp_var);                                                  \
+        data = dt_vec_add(data, &tmp_var);                                               \
     })
 
 /**
@@ -103,7 +107,7 @@ typedef struct {
 #define DT_VEC_REMOVE(data, el)                                                          \
     {                                                                                    \
         typeof(el) e = el;                                                               \
-        dt_vec_remove(data, &e);                                                            \
+        dt_vec_remove(data, &e);                                                         \
     }
 
 /**
@@ -111,7 +115,7 @@ typedef struct {
  *
  * @param data pointer to data array
  */
-#define DT_VEC_ITERATOR(data) dt_vec_header(data)
+#define DT_VEC_ITERATOR(data) &dt_vec_header(data)->iterator
 
 /**
  * @brief return pointer to vector data array

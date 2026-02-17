@@ -115,7 +115,7 @@ typedef struct DtEntityContainer {
     DtEntity recycle_ptr;
     DtEntity recycle_size;
 
-    Iterator iterator;
+    DtIterator iterator;
     DtEntity iterator_ptr;
 
     DtResetItemHandler auto_reset;

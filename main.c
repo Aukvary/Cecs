@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include <cjson/cJSON.h>
 #include "Tests/TestEcs.h"
+#include "Collections/Collections.h"
 
 void func() {
     //

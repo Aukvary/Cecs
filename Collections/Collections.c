@@ -5,7 +5,6 @@
 
 void* dt_vec_new(const size_t item_size, const size_t capacity) {
     DtVecHeader* header = malloc(sizeof(DtVecHeader) + item_size * capacity);
-    ;
 
     *header = (DtVecHeader) {
         .element_size = item_size,
@@ -15,10 +14,11 @@ void* dt_vec_new(const size_t item_size, const size_t capacity) {
         .data = header + 1,
 
         .iterator =
-            (Iterator) {
+            (DtIterator) {
                 .start = dt_vec_start,
                 .current = dt_vec_current,
                 .next = dt_vec_next,
+                .data = header
             },
         .iter_locked = 0,
     };
@@ -34,7 +34,7 @@ void* dt_vec_add(void* data, void* value) {
     DtVecHeader* header = dt_vec_header(data);
 
     if (header->count == header->capacity) {
-        size_t new_capacity = header->capacity == 0 ? 1 : header->capacity * 2;
+        size_t new_capacity = header->capacity == 0 ? 10 : header->capacity * 2;
         DtVecHeader* temp =
             realloc(header, sizeof(DtVecHeader) + new_capacity * header->element_size);
 

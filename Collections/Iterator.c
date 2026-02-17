@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include "Collections.h"
 
-Range range(int64_t start, int64_t end, int64_t step) {
-    return (Range) {
-        .iterator = (Iterator) {
+DtRange range(int64_t start, int64_t end, int64_t step) {
+    return (DtRange) {
+        .iterator = (DtIterator) {
             .start = range_start,
             .current = range_current,
             .next = range_next
@@ -16,17 +16,17 @@ Range range(int64_t start, int64_t end, int64_t step) {
 }
 
 void range_start(void* ptr) {
-    Range* rng = (Range*)ptr;
+    DtRange* rng = (DtRange*)ptr;
 
     rng->current = rng->start - rng->step;
 }
 
 void* range_current(void* ptr) {
-    Range* rng = (Range*)ptr;
+    DtRange* rng = (DtRange*)ptr;
     return &rng->current;
 }
 int range_next(void* ptr) {
-    Range* rng = (Range*)ptr;
+    DtRange* rng = (DtRange*)ptr;
 
     rng->current += rng->step;
 

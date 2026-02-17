@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "TestEcs.h"
 
 static DtEcsManager* manager;
@@ -37,16 +38,26 @@ void test_filter(void) {
 
 static void test_filter_1(void) {
     DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e1, NULL);
-    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent2, e1, NULL);
-    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestDataComponent1, e1, NULL);
+    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent2, e1, NULL);
+    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestDataComponent1, e1, NULL);
+    //
+    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e2, NULL);
+    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent2, e2, NULL);
+    //
+    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e3, NULL);
+    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent2, e3, NULL);
+    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestDataComponent1, e3, NULL);
+    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestDataComponent2, e3, NULL);
 
-    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e2, NULL);
-    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent2, e2, NULL);
+    // DtEcsMask mask = dt_mask_new(manager, 1, 1);
+    // DT_MASK_INC(mask, TestEmptyComponent1);
+    // DT_MASK_INC(mask, TestEmptyComponent2);
+    // DT_MASK_INC(mask, TestDataComponent1);
 
-    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e3, NULL);
-    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent2, e3, NULL);
-    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestDataComponent1, e3, NULL);
-    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestDataComponent2, e3, NULL);
+    // DtEcsFilter* filter = dt_mask_end(mask);
 
-    DtEcsMask mask = dt_mask_new(manager, 1, 1);
+    // FOREACH(DtEntity, e, &filter->entities.iterator, {
+    //     // assert(e == e1);
+    //         printf("%d", e);
+    // });
 }

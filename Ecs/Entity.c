@@ -217,7 +217,7 @@ DtEntityContainer dt_entity_container_new(u32 item_size, DtEntity dense_size,
         .auto_copy = auto_copy ? auto_copy : default_entity_item_copy,
 
         .iterator =
-            (Iterator) {
+            (DtIterator) {
                 .start = entity_container_start,
                 .current = entity_container_current,
                 .next = entity_container_next,
