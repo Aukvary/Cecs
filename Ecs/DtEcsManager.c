@@ -158,7 +158,7 @@ static DtEcsFilter* filter_new(DtEcsManager* manager, DtEcsMask const mask) {
         .mask = mask,
     };
 
-    new_filter->entities.iterator.data = &new_filter->entities;
+    new_filter->entities.iterator.enumerable = &new_filter->entities;
 
     return new_filter;
 }

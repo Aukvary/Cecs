@@ -33,7 +33,7 @@ void test_filter(void) {
 
     test_filter_1();
 
-    // dt_ecs_manager_free(manager);
+    dt_ecs_manager_free(manager);
 }
 
 static void test_filter_1(void) {

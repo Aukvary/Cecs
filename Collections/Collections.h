@@ -14,7 +14,7 @@ typedef struct {
     void* (*current)(void*);
     int (*next)(void*);
 
-    void* data;
+    void* enumerable;
 } DtIterator;
 
 /**
@@ -27,14 +27,14 @@ typedef struct {
  *
  * @note use {}-block in loop body
  */
-#define FOREACH(T, var, iter, block_code)                                                \
-    ({                                                                                   \
-        (iter)->start((iter)->data);                                                     \
-        T var;                                                                           \
-        while ((iter)->next((iter)->data)) {                                             \
-            var = *(T*) (iter)->current((iter)->data);                                   \
-            block_code                                                                   \
-        }                                                                                \
+#define FOREACH(T, var, iter, block_code)                                                          \
+    ({                                                                                             \
+        (iter)->start((iter)->enumerable);                                                         \
+        T var;                                                                                     \
+        while ((iter)->next((iter)->enumerable)) {                                                 \
+            var = *(T*) (iter)->current((iter)->enumerable);                                       \
+            block_code                                                                             \
+        }                                                                                          \
     })
 
 /**
@@ -49,9 +49,10 @@ typedef struct {
     int64_t step;
 } DtRange;
 
-#define RANGE(_start, _end, ...) ({\
-    range&(Range) { .start = _start, .end = _end, __VA_ARGS__ };\
-    Iterator iter = \
+#define RANGE(_start, _end, ...)                                                                   \
+    ({                                                                                             \
+        range&(Range) {.start = _start, .end = _end, __VA_ARGS__};                                 \
+        Iterator iter =                                                                            \
     })
 
 
@@ -93,10 +94,10 @@ typedef struct {
  *
  * @param data pointer to data array
  */
-#define DT_VEC_ADD(data, value)                                                          \
-    ({                                                                                   \
-        typeof(value) tmp_var = (value);                                                 \
-        data = dt_vec_add(data, &tmp_var);                                               \
+#define DT_VEC_ADD(data, value)                                                                    \
+    ({                                                                                             \
+        typeof(value) tmp_var = (value);                                                           \
+        data = dt_vec_add(data, &tmp_var);                                                         \
     })
 
 /**
@@ -104,10 +105,10 @@ typedef struct {
  *
  * @param data pointer to data array
  */
-#define DT_VEC_REMOVE(data, el)                                                          \
-    {                                                                                    \
-        typeof(el) e = el;                                                               \
-        dt_vec_remove(data, &e);                                                         \
+#define DT_VEC_REMOVE(data, el)                                                                    \
+    {                                                                                              \
+        typeof(el) e = el;                                                                         \
+        dt_vec_remove(data, &e);                                                                   \
     }
 
 /**
@@ -132,8 +133,9 @@ void* dt_vec_new(size_t item_size, size_t capacity);
  *
  * @param data pointer to data array
  */
-DtVecHeader* dt_vec_header(void* data);
-
+static DtVecHeader* dt_vec_header(void* data) {
+    return &((DtVecHeader*)data)[-1];
+}
 /**
  * @brief return capacity of data array
  *

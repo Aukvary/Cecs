@@ -18,16 +18,12 @@ void* dt_vec_new(const size_t item_size, const size_t capacity) {
                 .start = dt_vec_start,
                 .current = dt_vec_current,
                 .next = dt_vec_next,
-                .data = header
+                .enumerable = header
             },
         .iter_locked = 0,
     };
 
     return header->data;
-}
-
-inline DtVecHeader* dt_vec_header(void* data) {
-    return (DtVecHeader*) ((uint8_t*) data - sizeof(DtVecHeader));
 }
 
 void* dt_vec_add(void* data, void* value) {
@@ -46,6 +42,7 @@ void* dt_vec_add(void* data, void* value) {
         header = temp;
         header->data = header + 1;
         header->capacity = new_capacity;
+        header->iterator.enumerable = header;
 
         data = header->data;
     }
