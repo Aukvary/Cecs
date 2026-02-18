@@ -108,7 +108,7 @@ void dt_mask_inc(DtEcsMask* mask, const u16 ecs_manager_component_id) {
 
         mask->include_pools = tmp;
     }
-
+    //TODO: почему-то не добавляется кореекмтно, испсправи ёпта
     mask->include_pools[mask->include_count++] = ecs_manager_component_id;
 }
 
