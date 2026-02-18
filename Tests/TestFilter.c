@@ -23,6 +23,9 @@ static DtEntity e2;
 static DtEntity e3;
 
 static void test_filter_1(void);
+static void test_filter_2(void);
+
+static DtEcsFilter* filter_test_1;
 
 void test_filter(void) {
     manager = dt_ecs_manager_new(&cfg);
@@ -32,6 +35,9 @@ void test_filter(void) {
     e3 = dt_ecs_manager_new_entity(manager);
 
     test_filter_1();
+
+
+    test_filter_2();
 
     dt_ecs_manager_free(manager);
 }
@@ -55,7 +61,31 @@ static void test_filter_1(void) {
     DT_MASK_INC(mask, TestDataComponent1);
     DT_MASK_EXC(mask, TestDataComponent2);
 
+    filter_test_1 = dt_mask_end(mask);
+
+    FOREACH(DtEntity, e, &filter_test_1->entities.iterator, { assert(e == e1); });
+}
+
+static void test_filter_2(void) {
+    DT_ECS_MANAGER_REMOVE_FROM_POOL(manager, TestEmptyComponent1, e1);
+    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e2, NULL);
+    DT_ECS_MANAGER_REMOVE_FROM_POOL(manager, TestDataComponent2, e3);
+
+    DtEcsMask mask = dt_mask_new(manager, 4, 1);
+    DT_MASK_INC(mask, TestEmptyComponent1);
+    DT_MASK_INC(mask, TestEmptyComponent2);
+    DT_MASK_INC(mask, TestDataComponent1);
+    DT_MASK_EXC(mask, TestDataComponent2);
+
     DtEcsFilter* filter = dt_mask_end(mask);
 
-    FOREACH(DtEntity, e, &filter->entities.iterator, { assert(e == e1); });
+    assert(filter == filter_test_1);
+
+    printf("%d\n", dt_entity_container_has(&filter->entities, e2));
+
+
+    FOREACH(DtEntity, e, &filter->entities.iterator, {
+        //assert(e == e2 || e == e3);
+        printf("%d", e);
+    });
 }

@@ -51,8 +51,8 @@ void test_create_remove_entity(void) {
     test_create_remove_entity_set_parent(entity1, entity2);
 
     dt_ecs_manager_kill_entity(manager, entity1);
-    info1 = dt_ecs_manager_get_entity(manager, entity1);
-    DtEntity parent = dt_ecs_manager_get_parent(manager, entity2);
+    info1 = *dt_ecs_manager_get_entity(manager, entity1);
+    DtEntity parent = dt_ecs_manager_get_parent(manager, entity2)->id;
 
     assert(info1.gen == -1 && "Killed entity should have gen < 0");
     assert(info1.component_count == 0 && "Killed entity should have no components");
@@ -65,7 +65,7 @@ void test_create_remove_entity(void) {
            "entity2 have parent yet");
 
     recycled = dt_ecs_manager_new_entity(manager);
-    recycled_info = dt_ecs_manager_get_entity(manager, recycled);
+    recycled_info = *dt_ecs_manager_get_entity(manager, recycled);
 
     assert(recycled == 0 && "Recycled entity should reuse id 0");
     assert(recycled_info.gen == 2 &&
@@ -77,7 +77,7 @@ void test_create_remove_entity(void) {
 
 static void test_create_remove_entity_1(DtEntity* entity, DtEntityInfo* info) {
     *entity = dt_ecs_manager_new_entity(manager);
-    *info = dt_ecs_manager_get_entity(manager, *entity);
+    info = dt_ecs_manager_get_entity(manager, *entity);
 
     assert(info->id == 0 && "First entity should have id 0");
     assert(info->gen == 1 && "Generation should start from 1");
@@ -94,7 +94,7 @@ static void test_create_remove_entity_add_to_pools(DtEntity* entity, DtEntityInf
     DT_MASK_INC(mask, TestEmptyComponent1);
     const DtEcsFilter* filter = dt_mask_end(mask);
 
-    *info = dt_ecs_manager_get_entity(manager, *entity);
+    info = dt_ecs_manager_get_entity(manager, *entity);
     assert(info->component_count == 2 && "Entity should have 2 components after adding");
     assert(dt_ecs_pool_has(empty_pool, *entity) &&
            "Killed entity should add to empty_1_pool");
@@ -106,7 +106,7 @@ static void test_create_remove_entity_add_to_pools(DtEntity* entity, DtEntityInf
 static void test_create_remove_entity_2(DtEntity* entity1, DtEntityInfo* info1,
                                         DtEntity* entity2, DtEntityInfo* info2) {
     *entity2 = dt_ecs_manager_new_entity(manager);
-    *info2 = dt_ecs_manager_get_entity(manager, *entity2);
+    info2 = dt_ecs_manager_get_entity(manager, *entity2);
 
     assert(info2->id == 1 && "Second entity should have id 1");
     assert(*entity1 != *entity2 && "Entities should have different ids");
@@ -114,5 +114,5 @@ static void test_create_remove_entity_2(DtEntity* entity1, DtEntityInfo* info1,
 
 static void test_create_remove_entity_set_parent(DtEntity entity1, DtEntity entity2) {
     dt_ecs_manager_set_parent(manager, entity1, entity2);
-    DtEntity parent = dt_ecs_manager_get_parent(manager, entity2);
+    DtEntity parent = dt_ecs_manager_get_parent(manager, entity2)->id;
 }
