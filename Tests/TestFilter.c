@@ -67,6 +67,7 @@ static void test_filter_1(void) {
 }
 
 static void test_filter_2(void) {
+
     DT_ECS_MANAGER_REMOVE_FROM_POOL(manager, TestEmptyComponent1, e1);
     DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e2, NULL);
     DT_ECS_MANAGER_REMOVE_FROM_POOL(manager, TestDataComponent2, e3);
@@ -81,11 +82,13 @@ static void test_filter_2(void) {
 
     assert(filter == filter_test_1);
 
-    printf("%d\n", dt_entity_container_has(&filter->entities, e2));
+    printf("has e1: %d\n", dt_entity_container_has(&filter->entities, e1));
+    printf("has e2: %d\n", dt_entity_container_has(&filter->entities, e2));
+    printf("has e3: %d\n", dt_entity_container_has(&filter->entities, e3));
 
 
     FOREACH(DtEntity, e, &filter->entities.iterator, {
         //assert(e == e2 || e == e3);
-        printf("%d", e);
+        printf("entity in filter: %d", e);
     });
 }

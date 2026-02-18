@@ -133,6 +133,10 @@ static int cmp_pools(const void* id1, const void* id2) {
 }
 
 DtEcsFilter* dt_mask_end(DtEcsMask mask) {
+    qsort(mask.include_pools, mask.include_count, sizeof(int), cmp_pools);
+    qsort(mask.exclude_pools, mask.include_count, sizeof(int), cmp_pools);
+
+
     mask.hash = 314519;
     for (int i = 0; i < mask.include_count; i++) {
         mask.hash += mask.include_pools[i];
