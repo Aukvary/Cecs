@@ -40,7 +40,7 @@ DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name) {
                 .component_id = id,
                 .data = pool,
 
-                .type = COMPONENT_POOL,
+                .type = TAG_POOL,
 
                 .add = tag_pool_add,
                 .get = NULL,

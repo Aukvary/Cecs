@@ -25,56 +25,54 @@ typedef struct DtComponentData {
     char** field_names;
     int* field_offsets;
 
-    unsigned long long component_size;
+    u64 component_size;
 
     unsigned long long attribute_count;
     DtComponentAttribute* attributes;
 } DtComponentData;
 
 #define DT_FIELD_DECL(type, name, struct_name, ...) type name;
-#define DT_FIELD_ENUM_DECL(type, name, struct_name, ...)                                 \
-    DT_COMPONENT_FIELD_##struct_name##_##name,
+#define DT_FIELD_ENUM_DECL(type, name, struct_name, ...) DT_COMPONENT_FIELD_##struct_name##_##name,
 #define DT_FIELD_COUNT(type, name, struct_name, ...) +1
 #define DT_FIELD_NAME(type, name, struct_name, ...) #name,
 #define DT_FIELD_OFFSET(type, name, struct_name, ...) offsetof(struct_name, name),
 #define DT_FIELD_TYPE(type, name, struct_name, ...) #type,
 #define DT_FIELD_SIZE(type, name, struct_name, ...) sizeof(type),
 
-#define DT_DEFINE_COMPONENT(component_name, fields)                                      \
-    typedef struct component_name {                                                      \
-        fields(DT_FIELD_DECL, component_name)                                            \
-    } component_name;                                                                    \
-    typedef struct component_name##Fields {                                              \
-        enum { fields(DT_FIELD_ENUM_DECL, component_name) };                             \
-    } component_name##_Fields;                                                           \
+#define DT_DEFINE_COMPONENT(component_name, fields)                                                \
+    typedef struct component_name {                                                                \
+        fields(DT_FIELD_DECL, component_name)                                                      \
+    } component_name;                                                                              \
+    typedef struct component_name##Fields {                                                        \
+        enum { fields(DT_FIELD_ENUM_DECL, component_name) };                                       \
+    } component_name##_Fields;                                                                     \
     DtComponentData component_name##_data();
 
-#define DT_DEFINE_EMPTY_COMPONENT(component_name, fields)                                \
-    typedef struct component_name {                                                      \
-        fields(DT_FIELD_DECL, component_name)                                            \
-    } component_name;                                                                    \
+#define DT_DEFINE_EMPTY_COMPONENT(component_name, fields)                                          \
+    typedef struct component_name {                                                                \
+        fields(DT_FIELD_DECL, component_name)                                                      \
+    } component_name;                                                                              \
     DtComponentData component_name##_data();
 
-#define DT_REGISTER_COMPONENT(component_name, fields, ...)                               \
-    static DtComponentAttribute component_name##_attrs[] = {__VA_ARGS__};                \
-    static char* component_name##_field_names[] = {                                      \
-        fields(DT_FIELD_NAME, component_name)};                                          \
-    static int component_name##_field_offsets[] = {                                      \
-        fields(DT_FIELD_OFFSET, component_name)};                                        \
-    static int component_name##_attrs_count =                                            \
-        sizeof(component_name##_attrs) / sizeof(component_name##_attrs[0]);              \
-    static DtComponentData local_##component_name##_data;                                \
-    static __attribute__((constructor)) void component_name##_register_component(void) { \
-        local_##component_name##_data = (DtComponentData) {                              \
-            .name = #component_name,                                                     \
-            .attributes = component_name##_attrs,                                        \
-            .attribute_count = component_name##_attrs_count,                             \
-            .field_count = 0 fields(DT_FIELD_COUNT, component_name),                     \
-            .field_names = component_name##_field_names,                                 \
-            .field_offsets = component_name##_field_offsets,                             \
-        };                                                                               \
-        dt_register_component(&local_##component_name##_data);                           \
-    }                                                                                    \
+#define DT_REGISTER_COMPONENT(component_name, fields, ...)                                         \
+    static DtComponentAttribute component_name##_attrs[] = {__VA_ARGS__};                          \
+    static char* component_name##_field_names[] = {fields(DT_FIELD_NAME, component_name)};         \
+    static int component_name##_field_offsets[] = {fields(DT_FIELD_OFFSET, component_name)};       \
+    static int component_name##_attrs_count =                                                      \
+        sizeof(component_name##_attrs) / sizeof(component_name##_attrs[0]);                        \
+    static DtComponentData local_##component_name##_data;                                          \
+    static __attribute__((constructor)) void component_name##_register_component(void) {           \
+        local_##component_name##_data = (DtComponentData) {                                        \
+            .name = #component_name,                                                               \
+            .attributes = component_name##_attrs,                                                  \
+            .attribute_count = component_name##_attrs_count,                                       \
+            .field_count = 0 fields(DT_FIELD_COUNT, component_name),                               \
+            .field_names = component_name##_field_names,                                           \
+            .field_offsets = component_name##_field_offsets,                                       \
+            .component_size = sizeof(component_name),                                              \
+        };                                                                                         \
+        dt_register_component(&local_##component_name##_data);                                     \
+    }                                                                                              \
     DtComponentData component_name##_data() { return local_##component_name##_data; }
 
 /**

@@ -295,8 +295,8 @@ void dt_entity_container_remove(DtEntityContainer* container, const DtEntity ent
         DtEntity last_entity = container->dense_entities[last_index];
 
         container->auto_copy(
-            (char*) container->dense_items + dense_index * container->item_size,
-            (char*) container->dense_items + last_index * container->item_size,
+            (u8*) container->dense_items + dense_index * container->item_size,
+            (u8*) container->dense_items + last_index * container->item_size,
             container->item_size);
 
         container->dense_entities[dense_index] = last_entity;

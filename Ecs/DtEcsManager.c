@@ -134,7 +134,7 @@ static int cmp_pools(const void* id1, const void* id2) {
 
 DtEcsFilter* dt_mask_end(DtEcsMask mask) {
     qsort(mask.include_pools, mask.include_count, sizeof(int), cmp_pools);
-    qsort(mask.exclude_pools, mask.include_count, sizeof(int), cmp_pools);
+    qsort(mask.exclude_pools, mask.exclude_count, sizeof(int), cmp_pools);
 
 
     mask.hash = 314519;
@@ -768,6 +768,7 @@ void dt_on_entity_change(const DtEcsManager* manager, const DtEntity entity,
 static int is_mask_compatible(const DtEcsManager* manager, const DtEcsMask mask,
                               const DtEntity entity) {
     for (int i = 0; i < mask.include_count; i++) {
+        DtEcsPool* pool = manager->pools[mask.include_pools[i]];
         if (!dt_ecs_pool_has(manager->pools[mask.include_pools[i]], entity)) {
             return 0;
         }

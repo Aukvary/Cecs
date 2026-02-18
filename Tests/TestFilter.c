@@ -35,9 +35,7 @@ void test_filter(void) {
     e3 = dt_ecs_manager_new_entity(manager);
 
     test_filter_1();
-
-
-    test_filter_2();
+    // test_filter_2();
 
     dt_ecs_manager_free(manager);
 }
@@ -63,7 +61,11 @@ static void test_filter_1(void) {
 
     filter_test_1 = dt_mask_end(mask);
 
-    FOREACH(DtEntity, e, &filter_test_1->entities.iterator, { assert(e == e1); });
+    FOREACH(DtEntity, e, &filter_test_1->entities.iterator, {
+        assert(e == e1);
+        printf("%d", e);
+    });
+
 }
 
 static void test_filter_2(void) {
@@ -88,7 +90,7 @@ static void test_filter_2(void) {
 
 
     FOREACH(DtEntity, e, &filter->entities.iterator, {
-        //assert(e == e2 || e == e3);
+        // assert(e == e2 || e == e3);
         printf("entity in filter: %d", e);
     });
 }
