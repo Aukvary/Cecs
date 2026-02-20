@@ -100,11 +100,10 @@ void dt_entity_info_kill(DtEntityInfo* info);
  * @brief Контейнер для хранения данных сущностей
  * @note Используйте dense_items/dense_entities и count для итерации
  */
-typedef struct DtEntityContainer {
+typedef struct {
+    DtEntity* entities;
     void* dense_items;
-    DtEntity* dense_entities;
     u32 item_size;
-    DtEntity dense_ptr;
     DtEntity dense_size;
     DtEntity count;
 
@@ -115,8 +114,11 @@ typedef struct DtEntityContainer {
     DtEntity recycle_ptr;
     DtEntity recycle_size;
 
-    DtIterator iterator;
-    DtEntity iterator_ptr;
+    DtIterator items_iterator;
+    DtEntity items_iterator_ptr;
+
+    DtIterator entities_iterator;
+    DtEntity entities_iterator_ptr;
 
     DtResetItemHandler auto_reset;
     DtCopyItemHandler auto_copy;
@@ -225,6 +227,7 @@ DtEcsPool* dt_component_pool_new(const DtEcsManager* manager, const char* name, 
 DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name);
 
 void dt_ecs_pool_add(DtEcsPool* pool, DtEntity entity, const void* data);
+DtComponentPool* dt_ecs_pool_cast_to_component_pool(DtEcsPool* pool); //TODO: реализовать
 void* dt_ecs_pool_get(const DtEcsPool* pool, DtEntity entity);
 int dt_ecs_pool_has(const DtEcsPool* pool, DtEntity entity);
 void dt_ecs_pool_reset(DtEcsPool* pool, DtEntity entity);

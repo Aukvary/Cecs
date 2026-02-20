@@ -1,10 +1,10 @@
+#include <cjson/cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../Collections/Collections.h"
+#include "../Tests/TestEcs.h"
 #include "raylib.h"
-#include <cjson/cJSON.h>
-#include "Tests/TestEcs.h"
-#include "Collections/Collections.h"
 
 void func() {
     //
@@ -38,9 +38,6 @@ void func() {
 }
 
 int main() {
-    test_filter();
-    // test_parent_children_relations();
-    // test_create_remove_entity();
 
     return 0;
 }

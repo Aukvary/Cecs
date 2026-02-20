@@ -27,7 +27,7 @@
 
 #ifndef DT_CALLOC
 #include <malloc.h>
-#define DT_CALLOC(ptr, size) calloc((ptr), (size))
+#define DT_CALLOC(count, size) calloc((count), (size))
 #endif
 
 #endif

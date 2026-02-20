@@ -108,13 +108,13 @@ void dt_mask_inc(DtEcsMask* mask, const u16 ecs_manager_component_id) {
 
         mask->include_pools = tmp;
     }
-    //TODO: почему-то не добавляется кореекмтно, испсправи ёпта
+
     mask->include_pools[mask->include_count++] = ecs_manager_component_id;
 }
 
 void dt_mask_exc(DtEcsMask* mask, const u16 ecs_manager_component_id) {
     if (mask->exclude_count == mask->exclude_size) {
-        mask->exclude_size *= mask->exclude_size ? mask->exclude_size * 2 : 4;
+        mask->exclude_size = mask->exclude_size ? mask->exclude_size * 2 : 4;
         void* tmp = DT_REALLOC(mask->exclude_pools, mask->exclude_size * sizeof(int));
 
         if (!tmp) {
@@ -122,7 +122,7 @@ void dt_mask_exc(DtEcsMask* mask, const u16 ecs_manager_component_id) {
             exit(1);
         }
 
-        mask->include_pools = tmp;
+        mask->exclude_pools = tmp;
     }
 
     mask->exclude_pools[mask->exclude_count++] = ecs_manager_component_id;
@@ -133,8 +133,8 @@ static int cmp_pools(const void* id1, const void* id2) {
 }
 
 DtEcsFilter* dt_mask_end(DtEcsMask mask) {
-    qsort(mask.include_pools, mask.include_count, sizeof(int), cmp_pools);
-    qsort(mask.exclude_pools, mask.exclude_count, sizeof(int), cmp_pools);
+    qsort(mask.include_pools, mask.include_count, sizeof(u16), cmp_pools);
+    qsort(mask.exclude_pools, mask.exclude_count, sizeof(u16), cmp_pools);
 
 
     mask.hash = 314519;
@@ -162,7 +162,8 @@ static DtEcsFilter* filter_new(DtEcsManager* manager, DtEcsMask const mask) {
         .mask = mask,
     };
 
-    new_filter->entities.iterator.enumerable = &new_filter->entities;
+    new_filter->entities.entities_iterator.enumerable = &new_filter->entities;
+    new_filter->entities.items_iterator.enumerable = &new_filter->entities;
 
     return new_filter;
 }
@@ -177,7 +178,8 @@ static void filter_remove_entity(DtEcsFilter* filter, const DtEntity entity) {
 
 static void filter_resize(DtEcsFilter* filter, const size_t new_size) {
     dt_entity_container_resize(&filter->entities, new_size);
-    filter->entities.iterator.enumerable = &filter->entities;
+    filter->entities.entities_iterator.enumerable = &filter->entities;
+    filter->entities.items_iterator.enumerable = &filter->entities;
 }
 
 static void filter_free(DtEcsFilter* filter) {
@@ -708,7 +710,11 @@ static void ecs_manager_resize_filters(DtEcsManager* manager) {
         }
 
         manager->filters[idx] = old_filters[i];
-        manager->filters[idx]->entities.iterator.enumerable = &manager->filters[idx]->entities;
+
+        manager->filters[idx]->entities.entities_iterator.enumerable =
+            &manager->filters[idx]->entities;
+        manager->filters[idx]->entities.items_iterator.enumerable =
+            &manager->filters[idx]->entities;
     }
 }
 
@@ -763,7 +769,6 @@ void dt_on_entity_change(const DtEcsManager* manager, const DtEntity entity,
 static int is_mask_compatible(const DtEcsManager* manager, const DtEcsMask mask,
                               const DtEntity entity) {
     for (int i = 0; i < mask.include_count; i++) {
-        DtEcsPool* pool = manager->pools[mask.include_pools[i]];
         if (!dt_ecs_pool_has(manager->pools[mask.include_pools[i]], entity)) {
             return 0;
         }

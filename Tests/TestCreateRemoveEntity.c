@@ -28,7 +28,7 @@ static void test_create_remove_entity_2(DtEntity* entity1, DtEntityInfo* info1,
 static void test_create_remove_entity_set_parent(DtEntity entity1, DtEntity entity2);
 
 void test_create_remove_entity(void) {
-    printf("\n==test_create_remove_entity===\n");
+    printf("\n\t\t===test_create_remove_entity===\n");
 
     manager = dt_ecs_manager_new(&cfg);
     assert(manager != NULL && "Manager should be created");
@@ -72,7 +72,7 @@ void test_create_remove_entity(void) {
            "Recycled entity should have incremented generation (2)");
 
     dt_ecs_manager_free(manager);
-    printf("===SUCCESS===\n\n");
+    printf("\t\t===SUCCESS===\n\n");
 }
 
 static void test_create_remove_entity_1(DtEntity* entity, DtEntityInfo* info) {

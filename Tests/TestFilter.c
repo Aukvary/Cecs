@@ -29,6 +29,8 @@ static void test_filter_3(void);
 static DtEcsFilter* filter_test_1;
 
 void test_filter(void) {
+    printf("\n\t\t===test_filter===\n");
+
     manager = dt_ecs_manager_new(&cfg);
 
     e1 = dt_ecs_manager_new_entity(manager);
@@ -40,6 +42,7 @@ void test_filter(void) {
     test_filter_3();
 
     dt_ecs_manager_free(manager);
+    printf("\t\t===SUCCESS===\n\n");
 }
 
 static void test_filter_1(void) {
@@ -64,7 +67,7 @@ static void test_filter_1(void) {
     filter_test_1 = dt_mask_end(mask);
 
     assert(filter_test_1->entities.count == 1);
-    FOREACH(DtEntity, e, &filter_test_1->entities.iterator, { assert(e == e1); });
+    FOREACH(DtEntity, e, &filter_test_1->entities.entities_iterator, { assert(e == e1); });
 }
 
 static void test_filter_2(void) {
@@ -83,7 +86,7 @@ static void test_filter_2(void) {
     assert(filter == filter_test_1);
     assert(filter->entities.count == 2);
 
-    FOREACH(DtEntity, e, &filter->entities.iterator, {
+    FOREACH(DtEntity, e, &filter->entities.entities_iterator, {
         assert(e == e2 || e == e3);
     });
 }
@@ -93,18 +96,20 @@ static void test_filter_3(void) {
     dt_ecs_manager_clear_entity(manager, e2);
     dt_ecs_manager_clear_entity(manager, e3);
 
-    DtEcsMask mask = dt_mask_new(manager, 1, 1);
-    DT_MASK_INC(mask, TestEmptyComponent1);
+    DtEcsMask mask = dt_mask_new(manager, 0, 0);
+    DT_MASK_EXC(mask, TestEmptyComponent1);
     DtEcsFilter* filter = dt_mask_end(mask);
 
     assert(filter != filter_test_1);
 
     DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e1, NULL);
-    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e2, NULL);
-    //
-    // assert(filter->entities.count == 1);
-    //
-    // FOREACH(DtEntity, e, &filter->entities.iterator, {
-    //     assert(e == e3);
-    // });
+
+
+    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e2, NULL);
+
+    assert(filter->entities.count == 1);
+
+    FOREACH(DtEntity, e, &filter->entities.entities_iterator, {
+        assert(e == e3);
+    });
 }
