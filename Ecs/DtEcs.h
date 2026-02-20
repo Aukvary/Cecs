@@ -49,7 +49,7 @@ typedef struct DtEntityInfo {
     DtEcsManager* manager;
 
     DtEntity id;
-    int* components;
+    u16* components;
     int component_size;
     int component_count;
 

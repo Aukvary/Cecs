@@ -24,6 +24,7 @@ static DtEntity e3;
 
 static void test_filter_1(void);
 static void test_filter_2(void);
+static void test_filter_3(void);
 
 static DtEcsFilter* filter_test_1;
 
@@ -35,9 +36,8 @@ void test_filter(void) {
     e3 = dt_ecs_manager_new_entity(manager);
 
     test_filter_1();
-
-
     test_filter_2();
+    test_filter_3();
 
     dt_ecs_manager_free(manager);
 }
@@ -63,12 +63,13 @@ static void test_filter_1(void) {
 
     filter_test_1 = dt_mask_end(mask);
 
+    assert(filter_test_1->entities.count == 1);
     FOREACH(DtEntity, e, &filter_test_1->entities.iterator, { assert(e == e1); });
 }
 
 static void test_filter_2(void) {
     DT_ECS_MANAGER_REMOVE_FROM_POOL(manager, TestEmptyComponent1, e1);
-    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e2, NULL);
+    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestDataComponent1, e2, NULL);
     DT_ECS_MANAGER_REMOVE_FROM_POOL(manager, TestDataComponent2, e3);
 
     DtEcsMask mask = dt_mask_new(manager, 4, 1);
@@ -80,12 +81,30 @@ static void test_filter_2(void) {
     DtEcsFilter* filter = dt_mask_end(mask);
 
     assert(filter == filter_test_1);
-
-    printf("%d\n", dt_entity_container_has(&filter->entities, e2));
-
+    assert(filter->entities.count == 2);
 
     FOREACH(DtEntity, e, &filter->entities.iterator, {
-        //assert(e == e2 || e == e3);
-        printf("%d", e);
+        assert(e == e2 || e == e3);
     });
+}
+
+static void test_filter_3(void) {
+    dt_ecs_manager_clear_entity(manager, e1);
+    dt_ecs_manager_clear_entity(manager, e2);
+    dt_ecs_manager_clear_entity(manager, e3);
+
+    DtEcsMask mask = dt_mask_new(manager, 1, 1);
+    DT_MASK_INC(mask, TestEmptyComponent1);
+    DtEcsFilter* filter = dt_mask_end(mask);
+
+    assert(filter != filter_test_1);
+
+    DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e1, NULL);
+    // DT_ECS_MANAGER_ADD_TO_POOL(manager, TestEmptyComponent1, e2, NULL);
+    //
+    // assert(filter->entities.count == 1);
+    //
+    // FOREACH(DtEntity, e, &filter->entities.iterator, {
+    //     assert(e == e3);
+    // });
 }

@@ -715,15 +715,10 @@ void dt_on_entity_change(const DtEcsManager* manager, const DtEntity entity,
     DT_VEC(DtEcsFilter*)
     exclude_list = manager->filter_by_exclude[ecs_manager_component_id];
 
-    DtEntityInfo* info = &manager->sparse_entities[entity];
+    void (*func)(DtEntityInfo*, u16) =
+        added ? dt_entity_info_add_component : dt_entity_info_remove_component;
 
-    if (added) {
-        info->component_count++;
-        dt_entity_info_add_component(info, ecs_manager_component_id);
-    } else {
-        info->component_count--;
-        dt_entity_info_remove_component(info, ecs_manager_component_id);
-    }
+    func(&manager->sparse_entities[entity], ecs_manager_component_id);
 
 
     if (added) {
