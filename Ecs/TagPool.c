@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ComponentsHandler.h"
+#include "DtAllocators.h"
 #include "DtEcs.h"
 
 static bool has = true;
@@ -16,11 +17,12 @@ static void tag_pool_remove(void*, DtEntity);
 static void tag_pool_resize(void*, u16);
 static void tag_pool_start(void*);
 static void* tag_pool_current(void*);
-static bool tag_pool_next(void*);
+static bool tag_pool_has_current(void*);
+static void tag_pool_next(void*);
 static void tag_pool_free(void*);
 
 DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name) {
-    DtTagPool* pool = malloc(sizeof(DtTagPool));
+    DtTagPool* pool = DT_MALLOC(sizeof(DtTagPool));
     if (!pool)
         return NULL;
 
@@ -46,12 +48,14 @@ DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name) {
                 .remove = tag_pool_remove,
                 .resize = tag_pool_resize,
                 .free = tag_pool_free,
-                .iterator = (DtIterator) {
-                    .start = tag_pool_start,
-                    .current = tag_pool_current,
-                    .next = tag_pool_next,
-                    .enumerable = pool,
-                }
+                .iterator =
+                    (DtIterator) {
+                        .start = tag_pool_start,
+                        .current = tag_pool_current,
+                        .has_current = tag_pool_has_current,
+                        .next = tag_pool_next,
+                        .enumerable = pool,
+                    },
             },
         .buckets = calloc(num_buckets, sizeof(TagBucket)),
         .size = num_buckets,
@@ -88,13 +92,13 @@ static bool tag_pool_has(const void* pool, const DtEntity entity) {
     return (tag_pool->buckets[bucket_idx] & 1 << bit_offset) != 0;
 }
 
-static void tag_pool_reset(void* pool, DtEntity entity) {
-
-}
+static void tag_pool_reset(void* pool, DtEntity entity) {}
 
 static void tag_pool_copy(void* pool, const DtEntity dst, DtEntity src) {
-    if (tag_pool_has(pool, src)) tag_pool_add(pool, dst, NULL);
-    else tag_pool_remove(pool, dst);
+    if (tag_pool_has(pool, src))
+        tag_pool_add(pool, dst, NULL);
+    else
+        tag_pool_remove(pool, dst);
 }
 
 static void tag_pool_remove(void* pool, const DtEntity entity) {
@@ -118,7 +122,7 @@ static void tag_pool_resize(void* pool, const u16 new_max_entities) {
 
     TagBucket* new_buckets = realloc(tag_pool->buckets, new_size);
     if (!new_buckets) {
-        printf("[ERROR] Failed to resize tag pool to %d entities\n", new_max_entities);
+        printf("[DEBUG] Failed to resize tag pool to %d entities\n", new_max_entities);
         return;
     }
 
@@ -135,18 +139,37 @@ static void tag_pool_resize(void* pool, const u16 new_max_entities) {
 static void tag_pool_start(void* data) {
     DtTagPool* tag_pool = data;
 
+    tag_pool->iterator_bucket = tag_pool->buckets[0];
     tag_pool->iterator_entity = 0;
     tag_pool->iterator_ptr = 0;
 }
 
 static void* tag_pool_current(void* data) {
     DtTagPool* tag_pool = data;
+    tag_pool->iterator_entity =
+        __builtin_ctz(tag_pool->iterator_bucket) + sizeof(TagBucket) * tag_pool->iterator_ptr;
 
+
+    return &tag_pool->iterator_entity;
 }
 
-static bool tag_pool_next(void* data) {
+static bool tag_pool_has_current(void* data) {
     DtTagPool* tag_pool = data;
 
+    return tag_pool->iterator_ptr < tag_pool->size;
+}
+
+static void tag_pool_next(void* data) {
+    DtTagPool* tag_pool = data;
+
+    tag_pool->iterator_bucket &= tag_pool->iterator_bucket - 1;
+
+    while (tag_pool->iterator_bucket == 0) {
+        tag_pool->iterator_ptr++;
+        if (tag_pool->iterator_ptr == tag_pool->size)
+            return;
+        tag_pool->iterator_bucket = tag_pool->buckets[tag_pool->iterator_ptr];
+    }
 }
 
 void tag_pool_free(void* pool) {

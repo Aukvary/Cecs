@@ -6,15 +6,18 @@
 
 static void entity_info_children_start(void* data);
 static void* entity_info_children_current(void* data);
-static bool entity_info_children_next(void* data);
+static bool entity_info_children_has_current(void* data);
+static void entity_info_children_next(void* data);
 
 static void entity_container_items_start(void* data);
 static void* entity_container_items_current(void* data);
-static bool entity_container_items_next(void* data);
+static bool entity_container_items_has_current(void* data);
+static void entity_container_items_next(void* data);
 
 static void entity_container_entities_start(void* data);
 static void* entity_container_entities_current(void* data);
-static bool entity_container_entities_next(void* data);
+static bool entity_container_entities_has_current(void* data);
+static void entity_container_entities_next(void* data);
 
 static void default_entity_item_reset(void* data, size_t);
 static void default_entity_item_copy(void* dst, const void* src, size_t);
@@ -42,6 +45,7 @@ DtEntityInfo dt_entity_info_new(DtEcsManager* manager, const DtEntity id, u16 co
             (DtIterator) {
                 .start = entity_info_children_start,
                 .current = entity_info_children_current,
+                .has_current = entity_info_children_has_current,
                 .next = entity_info_children_next,
             },
 
@@ -109,7 +113,7 @@ void dt_entity_info_remove_child(DtEntityInfo* info, DtEntityInfo* child) {
 
         info->children[i] = info->children[--info->children_count];
         printf("[DEBUG]\t entity \"%d\" ceased to be child of entity \"%d\"\n", child->id,
-                   info->id);
+               info->id);
     }
 }
 
@@ -224,12 +228,15 @@ static void* entity_info_children_current(void* data) {
     return info->children + info->children_iterator_ptr;
 }
 
-static bool entity_info_children_next(void* data) {
+static bool entity_info_children_has_current(void* data) {
+    DtEntityInfo* info = data;
+    return info->children_iterator_ptr < info->children_count;
+}
+
+static void entity_info_children_next(void* data) {
     DtEntityInfo* info = data;
 
     info->children_iterator_ptr++;
-
-    return info->children_iterator_ptr < info->children_count;
 }
 
 DtEntityContainer dt_entity_container_new(const u32 item_size, const DtEntity dense_size,
@@ -257,12 +264,14 @@ DtEntityContainer dt_entity_container_new(const u32 item_size, const DtEntity de
             (DtIterator) {
                 .start = entity_container_items_start,
                 .current = entity_container_items_current,
+                .has_current = entity_container_items_has_current,
                 .next = entity_container_items_next,
             },
         .entities_iterator =
             (DtIterator) {
                 .start = entity_container_entities_start,
                 .current = entity_container_entities_current,
+                .has_current = entity_container_entities_has_current,
                 .next = entity_container_entities_next,
             },
     };
@@ -397,9 +406,10 @@ void dt_entity_container_copy(DtEntityContainer* container, const DtEntity dst,
         return;
 
     if (dt_entity_container_has(container, dst))
-        container->auto_copy(&container->dense_items[container->sparce_entities[dst]],
-                             &container->dense_items[container->sparce_entities[src]],
-                             container->item_size);
+        container->auto_copy(
+            (u8*)container->dense_items + container->sparce_entities[dst] * container->item_size,
+            (u8*)container->dense_items + container->sparce_entities[src] * container->item_size,
+            container->item_size);
     else
         dt_entity_container_add(container, dst,
                                 &container->dense_items[container->sparce_entities[src]]);
@@ -430,7 +440,7 @@ static void default_entity_item_copy(void* dst, const void* src, const size_t si
 }
 
 static void entity_container_items_start(void* data) {
-    ((DtEntityContainer*) data)->items_iterator_ptr = -1;
+    ((DtEntityContainer*) data)->items_iterator_ptr = 0;
 }
 
 static void* entity_container_items_current(void* data) {
@@ -438,14 +448,18 @@ static void* entity_container_items_current(void* data) {
     return container->dense_items + container->items_iterator_ptr * container->item_size;
 }
 
-static bool entity_container_items_next(void* data) {
+static bool entity_container_items_has_current(void* data) {
     DtEntityContainer* container = data;
-    container->items_iterator_ptr++;
     return container->count > container->items_iterator_ptr; // lil popA
 }
 
+static void entity_container_items_next(void* data) {
+    DtEntityContainer* container = data;
+    container->items_iterator_ptr++;
+}
+
 static void entity_container_entities_start(void* data) {
-    ((DtEntityContainer*) data)->entities_iterator_ptr = -1;
+    ((DtEntityContainer*) data)->entities_iterator_ptr = 0;
 }
 
 static void* entity_container_entities_current(void* data) {
@@ -453,8 +467,12 @@ static void* entity_container_entities_current(void* data) {
     return &container->entities[container->items_iterator_ptr];
 }
 
-static bool entity_container_entities_next(void* data) {
+static bool entity_container_entities_has_current(void* data) {
+    DtEntityContainer* container = data;
+    return container->count > container->entities_iterator_ptr;
+}
+
+static void entity_container_entities_next(void* data) {
     DtEntityContainer* container = data;
     container->entities_iterator_ptr++;
-    return container->count > container->entities_iterator_ptr;
 }

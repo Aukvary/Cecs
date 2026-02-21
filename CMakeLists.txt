@@ -39,6 +39,7 @@ set(TEST_SOURCES
         Tests/TestCreateRemoveEntity.c
         Tests/TestParentChildrenRelations.c
         Tests/TestFilter.c
+        Tests/TestPools.c
 )
 
 set(MAIN_TESTS mains/main_tests.c)

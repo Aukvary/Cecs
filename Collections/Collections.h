@@ -1,9 +1,8 @@
 #ifndef COLLECTIONS_H
 #define COLLECTIONS_H
 
-#include <stdint.h>
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 /**
  * @brief struct for handle iteration with FOREACH macros
@@ -13,7 +12,8 @@
 typedef struct {
     void (*start)(void*);
     void* (*current)(void*);
-    bool (*next)(void*);
+    bool (*has_current)(void*);
+    void (*next)(void*);
 
     void* enumerable;
 } DtIterator;
@@ -32,35 +32,12 @@ typedef struct {
     ({                                                                                             \
         (iter)->start((iter)->enumerable);                                                         \
         T var;                                                                                     \
-        while ((iter)->next((iter)->enumerable)) {                                                 \
+        while ((iter)->has_current((iter)->enumerable)) {                                          \
             var = *(T*) (iter)->current((iter)->enumerable);                                       \
-            block_code                                                                             \
+            block_code;                                                                            \
+            (iter)->next((iter)->enumerable);                                                      \
         }                                                                                          \
     })
-
-/**
- * @brief struct for
- */
-typedef struct {
-    DtIterator iterator;
-    int64_t current;
-
-    int64_t start;
-    int64_t end;
-    int64_t step;
-} DtRange;
-
-#define RANGE(_start, _end, ...)                                                                   \
-    ({                                                                                             \
-        range&(Range) {.start = _start, .end = _end, __VA_ARGS__};                                 \
-        Iterator iter =                                                                            \
-    })
-
-
-void range_start(void*);
-void* range_current(void*);
-bool range_next(void*);
-
 /**
  * @brief vector data
  */
@@ -134,9 +111,7 @@ void* dt_vec_new(size_t item_size, size_t capacity);
  *
  * @param data pointer to data array
  */
-static DtVecHeader* dt_vec_header(void* data) {
-    return &((DtVecHeader*)data)[-1];
-}
+static DtVecHeader* dt_vec_header(void* data) { return &((DtVecHeader*) data)[-1]; }
 /**
  * @brief return capacity of data array
  *
@@ -187,33 +162,6 @@ void dt_vec_remove(void* data, void* value);
  * @warning use VEC_ITERATOR macros-wrapper
  */
 DtVecHeader* dt_vec_iterator(void* data);
-
-/**
- * @brief set interator pointer to start
- *
- * @param data pointer to vector header
- *
- * @warning func must be called by FOREACH macros else it can throw exceptions
- */
-void dt_vec_start(void* data);
-
-/**
- * @brief return pointer to value
- *
- * @param data pointer to vector header
- *
- * @warning func must be called by FOREACH macros else it can throw exceptions
- */
-void* dt_vec_current(void* data);
-
-/**
- * @brief move iterator pointer and return 1 if current != NULL else 0
- *
- * @param data pointer to vector header
- *
- * @warning func must be called by FOREACH macros else it can throw exceptions
- */
-bool dt_vec_next(void* data);
 
 /**
  * @brief free vector memory

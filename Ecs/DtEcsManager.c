@@ -768,7 +768,9 @@ void dt_on_entity_change(const DtEcsManager* manager, const DtEntity entity,
         }
     } else {
         if (include_list != NULL) {
-            FOREACH(DtEcsFilter*, filter, DT_VEC_ITERATOR(include_list), {
+            DtVecHeader* header = dt_vec_header(include_list);
+            DtIterator* iterator = DT_VEC_ITERATOR(include_list);
+            FOREACH(DtEcsFilter*, filter, iterator, {
                 if (is_mask_compatible(manager, filter->mask, entity)) {
                     filter_remove_entity(filter, entity);
                 }

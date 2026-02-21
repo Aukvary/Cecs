@@ -218,6 +218,7 @@ typedef struct {
     size_t size;
     size_t max_entities;
 
+    TagBucket iterator_bucket;
     DtEntity iterator_entity;
     DtEntity iterator_ptr;
 } DtTagPool;
@@ -233,6 +234,8 @@ typedef struct {
  * @return Новый пул ECS
  */
 #define DT_ECS_POOL_NEW(T, manager) ecs_pool_new(manager, #T, sizeof(T))
+#define DT_COMPONENT_POOL_NEW(T, manager, reset, copy)                                             \
+    dt_component_pool_new(manager, #T, sizeof(T), reset, copy)
 
 /*=============================================================================
  *                         Функции для работы с пулами
@@ -245,7 +248,7 @@ DtEcsPool* dt_component_pool_new(const DtEcsManager* manager, const char* name, 
 DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name);
 
 void dt_ecs_pool_add(DtEcsPool* pool, DtEntity entity, const void* data);
-DtComponentPool* dt_ecs_pool_cast_to_component_pool(DtEcsPool* pool); //TODO: реализовать
+DtComponentPool* dt_ecs_pool_cast_to_component_pool(DtEcsPool* pool); // TODO: реализовать
 void* dt_ecs_pool_get(const DtEcsPool* pool, DtEntity entity);
 int dt_ecs_pool_has(const DtEcsPool* pool, DtEntity entity);
 void dt_ecs_pool_reset(DtEcsPool* pool, DtEntity entity);
@@ -276,7 +279,7 @@ typedef struct DtEcsMask {
 
 DtEcsMask dt_mask_new(DtEcsManager* manager, u16 inc_size, u16 exc_size);
 void dt_mask_inc(DtEcsMask* mask, u16 ecs_manager_component_id);
-void  dt_mask_exc(DtEcsMask* mask, u16 ecs_manager_component_id);
+void dt_mask_exc(DtEcsMask* mask, u16 ecs_manager_component_id);
 DtEcsFilter* dt_mask_end(DtEcsMask mask);
 
 /*=============================================================================
@@ -418,31 +421,10 @@ typedef void (*Action)(void*);
 typedef void (*Init)(DtEcsManager*, void*);
 
 /**
- * @brief Пара данных системы и функции инициализации
- */
-typedef struct InitDataPair {
-    void* data;
-    Init init;
-} InitDataPair;
-
-/**
- * @brief Пара данных системы и функции действия
- */
-typedef struct ActionDataPair {
-    void* data;
-    Action action;
-} ActionDataPair;
-
-/**
  * @brief Конфигурация обработчика системы
  */
 typedef struct SystemHandlerConfig {
-    size_t init_size;
-    size_t pre_update_size;
-    size_t update_size;
-    size_t post_update_size;
-    size_t tag_remove_size;
-    size_t destroy_size;
+    u16 updater_count;
 } SystemHandlerConfig;
 
 /*=============================================================================
@@ -458,15 +440,13 @@ typedef struct EcsSystem {
     void* data;
 
     Init init;
-    Action pre_update;
     Action update;
-    Action post_update;
-    Action tag_remove;
     Action destroy;
+
+    i16 priority;
 } EcsSystem;
 
-EcsSystem* ecs_system_new(Init init, Action pre_update, Action update, Action post_update,
-                          Action tag_remove, Action destroy);
+EcsSystem ecs_system_new(Init init, Action update, Action destroy, i16 priority);
 
 /*=============================================================================
  *                         Обработчик систем (SystemHandler)
@@ -478,21 +458,13 @@ EcsSystem* ecs_system_new(Init init, Action pre_update, Action update, Action po
 typedef struct SystemHandler {
     DtEcsManager* manager;
 
-    DT_VEC(InitDataPair) inits;
-    DT_VEC(ActionDataPair) pre_updates;
-    DT_VEC(ActionDataPair) updates;
-    DT_VEC(ActionDataPair) post_updates;
-    DT_VEC(ActionDataPair) tag_removes;
-    DT_VEC(ActionDataPair) destroys;
+    DT_VEC(EcsSystem) ecs_systems;
 } SystemHandler;
 
-SystemHandler* dt_system_handler_new(DtEcsManager* manager, const SystemHandlerConfig* cfg);
-void dt_system_handler_add(SystemHandler* handler, const EcsSystem* system);
+SystemHandler* dt_system_handler_new(DtEcsManager* manager, u16 updater_count);
+void dt_system_handler_add(SystemHandler* handler, const EcsSystem system);
 void dt_system_handler_init(const SystemHandler* handler);
-void dt_system_handler_pre_update(const SystemHandler* handler);
 void dt_system_handler_update(const SystemHandler* handler);
-void dt_system_handler_post_update(const SystemHandler* handler);
-void dt_system_handler_remove_tag(const SystemHandler* handler);
 void dt_system_handler_destroy(const SystemHandler* handler);
 void dt_system_handler_free(SystemHandler* handler);
 
@@ -501,32 +473,18 @@ void dt_system_handler_free(SystemHandler* handler);
  *============================================================================*/
 
 typedef struct {
-    int bg_far_count;
-    int bg_near_count;
-    int world_back_count;
-    int world_count;
-    int world_front_count;
-    int particles_count;
-    int ui_count;
+    u16 drawers_count;
+    void (*begin_draw)(void);
+    void (*end_draw)(void);
+    i16 priority;
 } DrawHandlerConfig;
-
-typedef enum : char {
-    LAYER_BG_FAR = 0,
-    LAYER_BG_NEAR,
-    LAYER_WORLD_BACK,
-    LAYER_WORLD,
-    LAYER_WORLD_FRONT,
-    LAYER_PARTICLES,
-    LAYER_UI,
-    LAYER_DEBUG,
-} DrawLayer;
 
 typedef struct {
     void* data;
     Init init;
     Action draw;
     Action destroy;
-    DrawLayer layer;
+    i16 priority;
 } DrawSystem;
 
 /*=============================================================================
@@ -540,8 +498,7 @@ typedef struct DrawHandler {
     void (*begin_draw)(void);
     void (*end_draw)(void);
 
-    DrawSystem* systems;
-    u16 system_count;
+    DT_VEC(DrawSystem) systems;
 } DrawHandler;
 
 DrawHandler* dt_draw_handler_new(DtEcsManager* manager, const DrawHandlerConfig* cfg);

@@ -48,6 +48,7 @@ DtEcsPool* dt_component_pool_new(const DtEcsManager* manager, const char* name,
     };
 
     pool->pool.iterator = pool->entities.entities_iterator;
+    pool->pool.iterator.enumerable = &pool->entities;
 
     return &pool->pool;
 }
@@ -75,7 +76,6 @@ static void component_pool_reset(void* pool, const DtEntity entity) {
 
 static void component_pool_copy(void* pool, const DtEntity dst, const DtEntity src) {
     DtComponentPool* component_pool = pool;
-
     dt_entity_container_copy(&component_pool->entities, dst, src);
 }
 

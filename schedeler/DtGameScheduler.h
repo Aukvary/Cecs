@@ -5,45 +5,11 @@
 #include "Ecs/DtEcs.h"
 
 typedef struct DtGameScene {
-    DtEcsManager* ecs_manager;
+    DtEcsManager* manager;
     SystemHandler* system_handler;
     DrawHandler* draw_handler;
     unsigned short id;
 } DtGameScene;
-
-#pragma pack(push, 1)
-typedef struct {
-    u32 magic;
-    u16 size;
-    u8 name_size;
-} FieldHeader;
-
-typedef struct {
-    u32 magic;
-    u8 name_size;
-    u8 field_count;
-} ComponentHeader;
-
-typedef struct {
-    u32 magic;
-    u16 component_count;
-} PrefabHeader;
-
-typedef struct {
-    u32 magic;
-    u16 component_count;
-    Entity parent;
-    u16 children_count;
-} SceneObjectHeader;
-
-typedef struct {
-    u32 magic;
-    u16 id;
-    DtEcsManagerConfig manager_config;
-    SystemHandlerConfig system_handler_config;
-    u16 scene_object_count;
-} SceneHeader;
-#pragma pack(pop)
 
 void dt_game_initialize(void);
 bool dt_game_was_closed(void);
