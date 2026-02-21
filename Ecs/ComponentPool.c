@@ -13,11 +13,6 @@ static void component_pool_remove(void* pool, DtEntity entity);
 static void component_pool_resize(void* pool, u16 new_size);
 static void component_pool_free(void* pool);
 
-struct DtComponentPool {
-    DtEcsPool pool;
-    DtEntityContainer entities;
-};
-
 DtEcsPool* dt_component_pool_new(const DtEcsManager* manager, const char* name,
                                  u16 item_size, const DtResetItemHandler reset_handler,
                                  const DtCopyItemHandler copy_handler) {
@@ -51,6 +46,8 @@ DtEcsPool* dt_component_pool_new(const DtEcsManager* manager, const char* name,
                                             manager->sparse_size, manager->recycled_size,
                                             reset_handler, copy_handler),
     };
+
+    pool->pool.iterator = pool->entities.entities_iterator;
 
     return &pool->pool;
 }
@@ -90,6 +87,7 @@ static void component_pool_remove(void* pool, const DtEntity entity) {
 static void component_pool_resize(void* pool, const u16 new_size) {
     DtComponentPool* component_pool = pool;
     dt_entity_container_resize(&component_pool->entities, new_size);
+    component_pool->pool.iterator = component_pool->entities.entities_iterator;
 }
 
 static void component_pool_free(void* pool) {

@@ -255,9 +255,17 @@ DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager) {
                 if (manager->filters[i])
                     filter_resize(manager->filters[i], manager->sparse_size);
             }
+
+            for (DtEntity i = 0; i < manager->entities_ptr; i++) {
+                manager->sparse_entities[i].children_iterator.enumerable =
+                    &manager->sparse_entities[i];
+            }
         }
         manager->sparse_entities[entity] =
             dt_entity_info_new(manager, entity, manager->component_count, manager->children_size);
+
+        manager->sparse_entities[entity].children_iterator.enumerable =
+            &manager->sparse_entities[entity];
 
         printf("[DEBUG]\t new entity \"%d\" was created\n", entity);
     }
@@ -265,71 +273,109 @@ DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager) {
     return entity;
 }
 
-DtEntityInfo* dt_ecs_manager_get_parent(const DtEcsManager* manager, const DtEntity entity) {
+DtEntityInfo dt_ecs_manager_get_entity(const DtEcsManager* manager, const DtEntity entity) {
+    if (manager->entities_ptr <= entity || entity < 0)
+        return DT_ENTITY_INFO_NULL;
+
+    return manager->sparse_entities[entity];
+}
+
+DtEntityInfo dt_ecs_manager_get_parent(const DtEcsManager* manager, const DtEntity entity) {
     if (entity < 0 || entity > manager->entities_ptr)
-        return NULL;
-    if (manager->sparse_entities[entity].parent == NULL)
-        return NULL;
-    return manager->sparse_entities[entity].parent;
+        return DT_ENTITY_INFO_NULL;
+    if (manager->sparse_entities[entity].parent == DT_ENTITY_NULL)
+        return DT_ENTITY_INFO_NULL;
+    return manager->sparse_entities[manager->sparse_entities[entity].parent];
 }
 
 void dt_ecs_manager_set_parent(const DtEcsManager* manager, const DtEntity child,
                                const DtEntity parent) {
-    if (child < 0 || child > manager->entities_ptr)
+    if (child > manager->entities_ptr || child == DT_ENTITY_NULL)
         return;
-
     if (parent > manager->entities_ptr && parent != DT_ENTITY_NULL)
         return;
 
     if (parent == child)
         return;
 
-    if (manager->sparse_entities[child].parent != NULL &&
-        manager->sparse_entities[child].parent->id == parent)
+    if (manager->sparse_entities[child].parent != DT_ENTITY_NULL &&
+        manager->sparse_entities[child].parent == parent)
         return;
+
+    if (parent != DT_ENTITY_NULL && manager->sparse_entities[parent].parent == child) {
+        dt_entity_info_set_parent(&manager->sparse_entities[parent], NULL);
+        dt_entity_info_remove_child(&manager->sparse_entities[child],
+                                    &manager->sparse_entities[parent]);
+    }
+
+    if (manager->sparse_entities[child].parent != DT_ENTITY_NULL) {
+        dt_entity_info_remove_child(
+            &manager->sparse_entities[manager->sparse_entities[child].parent],
+            &manager->sparse_entities[child]);
+    }
 
     DtEntityInfo* parent_ptr = parent == DT_ENTITY_NULL ? NULL : &manager->sparse_entities[parent];
 
     dt_entity_info_set_parent(&manager->sparse_entities[child], parent_ptr);
+    if (parent_ptr)
+        dt_entity_info_add_child(&manager->sparse_entities[parent],
+                                 &manager->sparse_entities[child]);
 }
 
 void dt_ecs_manager_add_child(const DtEcsManager* manager, const DtEntity parent,
                               const DtEntity child) {
-    if (child < 0 && child > manager->entities_ptr)
+    if (child > manager->entities_ptr || child == DT_ENTITY_NULL)
         return;
-    if (parent < 0 && parent > manager->entities_ptr)
+    if (parent > manager->entities_ptr || parent == DT_ENTITY_NULL)
         return;
 
     if (parent == child)
         return;
 
-    if (manager->sparse_entities[child].parent != NULL &&
-        manager->sparse_entities[child].parent->id == parent)
+    if (manager->sparse_entities[child].parent != DT_ENTITY_NULL &&
+        manager->sparse_entities[child].parent == parent)
         return;
 
+    if (manager->sparse_entities[parent].parent == child) {
+        dt_entity_info_set_parent(&manager->sparse_entities[parent], NULL);
+        dt_entity_info_remove_child(&manager->sparse_entities[child],
+                                    &manager->sparse_entities[parent]);
+    }
+
+    if (manager->sparse_entities[child].parent != DT_ENTITY_NULL) {
+        dt_entity_info_remove_child(
+            &manager->sparse_entities[manager->sparse_entities[child].parent],
+            &manager->sparse_entities[child]);
+    }
+
+    DtEntityInfo* parent_ptr = parent == DT_ENTITY_NULL ? NULL : &manager->sparse_entities[parent];
+
+    dt_entity_info_set_parent(&manager->sparse_entities[child], parent_ptr);
     dt_entity_info_add_child(&manager->sparse_entities[parent], &manager->sparse_entities[child]);
 }
 
 void dt_ecs_manager_remove_child(const DtEcsManager* manager, const DtEntity parent,
                                  const DtEntity child) {
-    if (child < 0 && child > manager->entities_ptr)
+    if (child > manager->entities_ptr || child == DT_ENTITY_NULL)
         return;
-    if (parent < 0 && parent > manager->entities_ptr)
+    if (parent > manager->entities_ptr || parent == DT_ENTITY_NULL)
         return;
 
     if (parent == child)
         return;
 
-    if (manager->sparse_entities[child].parent != NULL &&
-        manager->sparse_entities[child].parent->id == parent)
+    if (manager->sparse_entities[child].parent != DT_ENTITY_NULL &&
+        manager->sparse_entities[child].parent != parent)
         return;
+
+    dt_entity_info_set_parent(&manager->sparse_entities[child], NULL);
 
     dt_entity_info_remove_child(&manager->sparse_entities[parent],
                                 &manager->sparse_entities[child]);
 }
 
-DtEntityInfo** dt_ecs_manager_get_children(const DtEcsManager* manager, const DtEntity entity,
-                                           u16* count) {
+DtEntity* dt_ecs_manager_get_children(const DtEcsManager* manager, const DtEntity entity,
+                                      u16* count) {
     *count = manager->sparse_entities[entity].children_count;
 
     return manager->sparse_entities[entity].children;
@@ -357,34 +403,11 @@ void dt_ecs_manager_kill_entity(DtEcsManager* manager, const DtEntity entity) {
     }
 
     manager->recycled_entities[manager->recycled_ptr++] = entity;
-    manager->sparse_entities[entity].gen *= -1;
 
     dt_entity_info_kill(&manager->sparse_entities[entity]);
-
-    for (int i = 0; i < manager->pools_table_size; i++) {
-        if (manager->pools_table[i] == NULL)
-            continue;
-
-        if (dt_ecs_pool_has(manager->pools_table[i], entity))
-            dt_ecs_pool_remove(manager->pools_table[i], entity);
-    }
-
-    for (int i = 0; i < manager->filters_size; i++) {
-        if (manager->filters[i] == NULL)
-            continue;
-
-        if (dt_entity_container_has(&manager->filters[i]->entities, entity))
-            filter_remove_entity(manager->filters[i], entity);
-    }
+    dt_entity_info_clear(&manager->sparse_entities[entity]);
 
     printf("[DEBUG]\t entity \"%d\" was killed\n", entity);
-}
-
-DtEntityInfo* dt_ecs_manager_get_entity(const DtEcsManager* manager, const DtEntity entity) {
-    if (manager->entities_ptr <= entity || entity < 0)
-        return NULL;
-
-    return &manager->sparse_entities[entity];
 }
 
 size_t dt_ecs_manager_get_entity_components_count(const DtEcsManager* manager,
@@ -418,11 +441,7 @@ void dt_ecs_manager_copy_entity(const DtEcsManager* manager, const DtEntity dst,
     if (manager->sparse_entities[src].gen < 0)
         return;
 
-    const u16 count = manager->sparse_entities[src].component_count =
-        manager->sparse_entities[dst].component_count;
-
-    for (u16 i = 0; i < count; i++) {
-    }
+    dt_entity_info_copy(&manager->sparse_entities[dst], &manager->sparse_entities[src]);
 }
 void dt_ecs_manager_reset_entity(const DtEcsManager* manager, const DtEntity entity) {
     if (manager->entities_ptr < entity || entity < 0)

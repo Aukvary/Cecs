@@ -53,11 +53,13 @@ typedef struct DtEntityInfo {
     int component_size;
     int component_count;
 
-    struct DtEntityInfo* parent;
-    struct DtEntityInfo** children;
+    DtEntity parent;
+    DtEntity* children;
     int children_size;
     int base_children_size;
     int children_count;
+    DtIterator children_iterator;
+    u16 children_iterator_ptr;
 
     int gen;
 } DtEntityInfo;
@@ -169,19 +171,9 @@ typedef struct DtEcsManagerConfig {
 typedef enum { TAG_POOL, COMPONENT_POOL } PoolType;
 
 /**
- * @brief Пул компонентов с данными
- */
-typedef struct DtComponentPool DtComponentPool;
-
-/**
- * @brief Пул компонентов без данных (теги)
- */
-typedef struct DtTagPool DtTagPool;
-
-/**
  * @brief Пул данных компонентов ECS
  */
-typedef struct DtEcsPool {
+typedef struct {
     const DtEcsManager* manager;
 
     u16 count;
@@ -202,7 +194,33 @@ typedef struct DtEcsPool {
     void (*remove)(void*, DtEntity);
     void (*resize)(void*, u16);
     void (*free)(void*);
+
+    DtIterator iterator;
 } DtEcsPool;
+
+/**
+ * @brief Пул компонентов с данными
+ */
+typedef struct {
+    DtEcsPool pool;
+    DtEntityContainer entities;
+} DtComponentPool;
+
+
+typedef u16 TagBucket;
+#define BUCKET_SIZE (sizeof(TagBucket) * 8)
+/**
+ * @brief Пул компонентов без данных (теги)
+ */
+typedef struct {
+    DtEcsPool pool;
+    TagBucket* buckets;
+    size_t size;
+    size_t max_entities;
+
+    DtEntity iterator_entity;
+    DtEntity iterator_ptr;
+} DtTagPool;
 
 /*=============================================================================
  *                          Макросы для создания пулов
@@ -258,7 +276,7 @@ typedef struct DtEcsMask {
 
 DtEcsMask dt_mask_new(DtEcsManager* manager, u16 inc_size, u16 exc_size);
 void dt_mask_inc(DtEcsMask* mask, u16 ecs_manager_component_id);
-void dt_mask_exc(DtEcsMask* mask, u16 ecs_manager_component_id);
+void  dt_mask_exc(DtEcsMask* mask, u16 ecs_manager_component_id);
 DtEcsFilter* dt_mask_end(DtEcsMask mask);
 
 /*=============================================================================
@@ -364,13 +382,12 @@ struct DtEcsManager {
 
 DtEcsManager* dt_ecs_manager_new(const DtEcsManagerConfig* cfg);
 DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager);
-DtEntityInfo* dt_ecs_manager_get_entity(const DtEcsManager* manager, DtEntity entity);
-DtEntityInfo* dt_ecs_manager_get_parent(const DtEcsManager* manager, DtEntity entity);
+DtEntityInfo dt_ecs_manager_get_entity(const DtEcsManager* manager, DtEntity entity);
+DtEntityInfo dt_ecs_manager_get_parent(const DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_set_parent(const DtEcsManager* manager, DtEntity child, DtEntity parent);
 void dt_ecs_manager_add_child(const DtEcsManager* manager, DtEntity parent, DtEntity child);
 void dt_ecs_manager_remove_child(const DtEcsManager* manager, DtEntity parent, DtEntity child);
-DtEntityInfo** dt_ecs_manager_get_children(const DtEcsManager* manager, DtEntity entity,
-                                           u16* count);
+DtEntity* dt_ecs_manager_get_children(const DtEcsManager* manager, DtEntity entity, u16* count);
 size_t dt_ecs_manager_get_entity_components_count(const DtEcsManager* manager, DtEntity entity);
 uint16_t dt_ecs_manager_get_entity_gen(const DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_copy_entity(const DtEcsManager* manager, DtEntity dst, DtEntity src);

@@ -1,17 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "DtAllocators.h"
 #include "DtEcs.h"
 
-static void entity_container_items_start(void*);
-static void* entity_container_items_current(void*);
-static int entity_container_items_next(void*);
+static void entity_info_children_start(void* data);
+static void* entity_info_children_current(void* data);
+static bool entity_info_children_next(void* data);
 
-static void entity_container_entities_start(void*);
-static void* entity_container_entities_current(void*);
-static int entity_container_entities_next(void*);
+static void entity_container_items_start(void* data);
+static void* entity_container_items_current(void* data);
+static bool entity_container_items_next(void* data);
+
+static void entity_container_entities_start(void* data);
+static void* entity_container_entities_current(void* data);
+static bool entity_container_entities_next(void* data);
 
 static void default_entity_item_reset(void* data, size_t);
 static void default_entity_item_copy(void* dst, const void* src, size_t);
@@ -20,7 +23,7 @@ DtEntityInfo dt_entity_info_new(DtEcsManager* manager, const DtEntity id, u16 co
                                 const DtEntity children_size) {
     component_count = component_count ? component_count : 10;
 
-    DtEntityInfo info = (DtEntityInfo) {
+    return (DtEntityInfo) {
         .manager = manager,
 
         .id = id,
@@ -29,17 +32,21 @@ DtEntityInfo dt_entity_info_new(DtEcsManager* manager, const DtEntity id, u16 co
         .component_size = component_count,
         .component_count = 0,
 
-        .parent = NULL,
+        .parent = DT_ENTITY_NULL,
 
         .children = NULL,
         .children_size = children_size,
         .base_children_size = children_size,
         .children_count = 0,
+        .children_iterator =
+            (DtIterator) {
+                .start = entity_info_children_start,
+                .current = entity_info_children_current,
+                .next = entity_info_children_next,
+            },
 
         .gen = 1,
     };
-
-    return info;
 }
 
 void dt_entity_info_reuse(DtEntityInfo* info) {
@@ -53,57 +60,62 @@ void dt_entity_info_reuse(DtEntityInfo* info) {
 }
 
 void dt_entity_info_set_parent(DtEntityInfo* info, DtEntityInfo* parent) {
-    if (info->parent != NULL)
-        dt_entity_info_remove_child(info->parent, info);
-
-    if (parent == NULL)
-        info->parent = NULL;
-    else
-        dt_entity_info_add_child(parent, info);
+    if (parent) {
+        info->parent = parent->id;
+        printf("[DEBUG]\t entity \"%d\" has become parent of entity \"%d\"\n", parent->id,
+               info->id);
+    } else {
+        info->parent = DT_ENTITY_NULL;
+        printf("[DEBUG]\t entity \"DT_ENTITY_NULL\" has become parent of entity \"%d\"\n",
+               info->id);
+    }
 }
 
 void dt_entity_info_add_child(DtEntityInfo* info, DtEntityInfo* child) {
     if (info->children == NULL) {
-        info->children = calloc(info->base_children_size, sizeof(DtEntityInfo*));
+        info->children_size = info->children_size ? info->children_size * 2 : 10;
+        info->children = DT_CALLOC(info->base_children_size, sizeof(DtEntityInfo*));
     }
 
     for (int i = 0; i < info->children_count + 1; i++) {
         if (i == info->children_size) {
             info->children_size = info->children_size ? info->children_size * 2 : 10;
-            void* tmp = realloc(info->children, info->children_size * sizeof(DtEntityInfo*));
+            void* tmp = DT_REALLOC(info->children, info->children_size * sizeof(DtEntityInfo*));
 
             if (!tmp) {
-                printf("[DEBUG] Memory allocation exception");
+                printf("[DEBUG]\t Memory allocation exception\n");
             }
 
             info->children = tmp;
         }
 
         if (i == info->children_count) {
-            info->children[i] = child;
-            child->parent = info;
+            info->children[i] = child->id;
             info->children_count++;
+            printf("[DEBUG]\t entity \"%d\" has become child of entity \"%d\"\n", child->id,
+                   info->id);
             return;
         }
 
-        if (info->children[i]->id == child->id)
+        if (info->children[i] == child->id)
             return;
     }
 }
 
 void dt_entity_info_remove_child(DtEntityInfo* info, DtEntityInfo* child) {
     for (int i = 0; i < info->children_count; i++) {
-        if (info->children[i]->id != child->id)
+        if (info->children[i] != child->id)
             continue;
 
         info->children[i] = info->children[--info->children_count];
-        child->parent = NULL;
+        printf("[DEBUG]\t entity \"%d\" ceased to be child of entity \"%d\"\n", child->id,
+                   info->id);
     }
 }
 
 void dt_entity_info_remove_all_children(DtEntityInfo* info) {
     for (int i = 0; i < info->children_count; i++) {
-        info->children[i]->parent = NULL;
+        dt_ecs_manager_set_parent(info->manager, info->children[i], DT_ENTITY_NULL);
     }
 
     info->children_count = 0;
@@ -116,7 +128,7 @@ void dt_entity_info_add_component(DtEntityInfo* info, const u16 id) {
 
         if (i == info->component_size) {
             info->component_size = info->component_size ? info->component_size * 2 : 10;
-            void* tmp = realloc(info->components, info->component_size * sizeof(int));
+            void* tmp = DT_REALLOC(info->components, info->component_size * sizeof(int));
 
             if (!tmp) {
                 printf("[DEBUG] entity info realloc exception\n");
@@ -147,18 +159,25 @@ void dt_entity_info_reset(DtEntityInfo* info) {
         return;
 
     for (int i = 0; i < info->component_count; i++) {
-        DtEcsPool* pool = info->manager->pools_table[info->components[i]];
+        DtEcsPool* pool = info->manager->pools[info->components[i]];
         dt_ecs_pool_reset(pool, info->id);
     }
+
+    printf("[DEBUG]\t entity \"%d\" has reseted\n", info->id);
 }
 
 void dt_entity_info_clear(DtEntityInfo* info) {
-    for (int i = 0; i < info->component_count; i++) {
+    if (info->gen < 0)
+        return;
+
+    for (int i = info->component_count - 1; i > -1; i--) {
         DtEcsPool* pool = info->manager->pools[info->components[i]];
         dt_ecs_pool_remove(pool, info->id);
     }
 
     info->component_count = 0;
+
+    printf("[DEBUG]\t entity \"%d\" has cleared\n", info->id);
 }
 
 void dt_entity_info_copy(DtEntityInfo* dst, const DtEntityInfo* src) {
@@ -181,8 +200,8 @@ void dt_entity_info_copy(DtEntityInfo* dst, const DtEntityInfo* src) {
 
     memcpy(dst->components, src->components, dst->component_size * sizeof(int));
 
-    for (int i = 0; i < dst->component_count; i++) {
-        DtEcsPool* pool = dst->manager->pools_table[dst->components[i]];
+    for (int i = 0; i < src->component_count; i++) {
+        DtEcsPool* pool = dst->manager->pools[dst->components[i]];
         dt_ecs_pool_copy(pool, dst->id, src->id);
     }
 }
@@ -192,8 +211,25 @@ void dt_entity_info_kill(DtEntityInfo* info) {
         return;
 
     dt_entity_info_remove_all_children(info);
-    dt_entity_info_set_parent(info, NULL);
+    dt_ecs_manager_remove_child(info->manager, info->parent, info->id);
     info->gen *= -1;
+}
+
+static void entity_info_children_start(void* data) {
+    ((DtEntityInfo*) data)->children_iterator_ptr = -1;
+}
+
+static void* entity_info_children_current(void* data) {
+    DtEntityInfo* info = data;
+    return info->children + info->children_iterator_ptr;
+}
+
+static bool entity_info_children_next(void* data) {
+    DtEntityInfo* info = data;
+
+    info->children_iterator_ptr++;
+
+    return info->children_iterator_ptr < info->children_count;
 }
 
 DtEntityContainer dt_entity_container_new(const u32 item_size, const DtEntity dense_size,
@@ -402,7 +438,7 @@ static void* entity_container_items_current(void* data) {
     return container->dense_items + container->items_iterator_ptr * container->item_size;
 }
 
-static int entity_container_items_next(void* data) {
+static bool entity_container_items_next(void* data) {
     DtEntityContainer* container = data;
     container->items_iterator_ptr++;
     return container->count > container->items_iterator_ptr; // lil popA
@@ -417,7 +453,7 @@ static void* entity_container_entities_current(void* data) {
     return &container->entities[container->items_iterator_ptr];
 }
 
-static int entity_container_entities_next(void* data) {
+static bool entity_container_entities_next(void* data) {
     DtEntityContainer* container = data;
     container->entities_iterator_ptr++;
     return container->count > container->entities_iterator_ptr;

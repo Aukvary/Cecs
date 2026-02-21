@@ -5,23 +5,19 @@
 #include "ComponentsHandler.h"
 #include "DtEcs.h"
 
-typedef u16 TagBucket;
-#define BUCKET_SIZE (sizeof(TagBucket) * 8)
+static bool has = true;
 
 static void tag_pool_add(void*, DtEntity, const void*);
+static void* tag_pool_get(const void*, DtEntity);
 static bool tag_pool_has(const void* pool, DtEntity entity);
 static void tag_pool_reset(void* pool, DtEntity entity);
 static void tag_pool_copy(void* pool, DtEntity dst, DtEntity src);
 static void tag_pool_remove(void*, DtEntity);
 static void tag_pool_resize(void*, u16);
+static void tag_pool_start(void*);
+static void* tag_pool_current(void*);
+static bool tag_pool_next(void*);
 static void tag_pool_free(void*);
-
-typedef struct DtTagPool {
-    DtEcsPool pool;
-    TagBucket* buckets;
-    size_t size;
-    size_t max_entities;
-} DtTagPool;
 
 DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name) {
     DtTagPool* pool = malloc(sizeof(DtTagPool));
@@ -43,13 +39,19 @@ DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name) {
                 .type = TAG_POOL,
 
                 .add = tag_pool_add,
-                .get = NULL,
+                .get = tag_pool_get,
                 .has = tag_pool_has,
                 .reset = tag_pool_reset,
                 .copy = tag_pool_copy,
                 .remove = tag_pool_remove,
                 .resize = tag_pool_resize,
                 .free = tag_pool_free,
+                .iterator = (DtIterator) {
+                    .start = tag_pool_start,
+                    .current = tag_pool_current,
+                    .next = tag_pool_next,
+                    .enumerable = pool,
+                }
             },
         .buckets = calloc(num_buckets, sizeof(TagBucket)),
         .size = num_buckets,
@@ -65,8 +67,12 @@ static void tag_pool_add(void* pool, DtEntity entity, const void* data) {
     const size_t bucket_idx = entity / BUCKET_SIZE;
     const size_t bit_offset = entity % BUCKET_SIZE;
 
-    tag_pool->buckets[bucket_idx] |= (1 << bit_offset);
+    tag_pool->buckets[bucket_idx] |= 1 << bit_offset;
     tag_pool->pool.count++;
+}
+
+static void* tag_pool_get(const void* data, DtEntity entity) {
+    return tag_pool_has(data, entity) ? &has : NULL;
 }
 
 static bool tag_pool_has(const void* pool, const DtEntity entity) {
@@ -124,6 +130,23 @@ static void tag_pool_resize(void* pool, const u16 new_max_entities) {
     tag_pool->buckets = new_buckets;
     tag_pool->size = new_capacity;
     tag_pool->max_entities = new_capacity * BUCKET_SIZE;
+}
+
+static void tag_pool_start(void* data) {
+    DtTagPool* tag_pool = data;
+
+    tag_pool->iterator_entity = 0;
+    tag_pool->iterator_ptr = 0;
+}
+
+static void* tag_pool_current(void* data) {
+    DtTagPool* tag_pool = data;
+
+}
+
+static bool tag_pool_next(void* data) {
+    DtTagPool* tag_pool = data;
+
 }
 
 void tag_pool_free(void* pool) {

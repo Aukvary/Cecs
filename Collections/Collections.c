@@ -115,7 +115,7 @@ void* dt_vec_current(void* data) {
     return element;
 }
 
-int dt_vec_next(void* data) {
+bool dt_vec_next(void* data) {
     DtVecHeader* header = data;
 
     header->current++;

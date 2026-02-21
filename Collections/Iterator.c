@@ -25,7 +25,7 @@ void* range_current(void* ptr) {
     DtRange* rng = (DtRange*)ptr;
     return &rng->current;
 }
-int range_next(void* ptr) {
+bool range_next(void* ptr) {
     DtRange* rng = (DtRange*)ptr;
 
     rng->current += rng->step;

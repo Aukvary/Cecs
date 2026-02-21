@@ -1,8 +1,6 @@
 #include <assert.h>
 #include "TestEcs.h"
 
-static DtEcsManager* manager;
-
 static const DtEcsManagerConfig cfg = {
     .dense_size = 3,
     .sparce_size = 3,
@@ -18,70 +16,82 @@ static const DtEcsManagerConfig cfg = {
     .filters_size = 0,
 };
 
+static DtEcsManager* manager;
+static DtEntity e1;
+static DtEntity e2;
+static DtEntity e3;
+
+static void test_parent_children_relations_1(void);
+static void test_parent_children_relations_2(void);
+static void test_parent_children_relations_3(void);
+
 void test_parent_children_relations(void) {
+    printf("\n\t===test_parent_children_relations===\n");
+
     manager = dt_ecs_manager_new(&cfg);
 
-    DtEntity e1;
-    DtEntity e2;
-    DtEntity e3;
+    printf("\n\t\t===test 1 start===\n");
+    test_parent_children_relations_1();
+    printf("\t\t===test 1 success===\n");
 
-    DtEntityInfo info1;
+    printf("\n\t\t===test 2 start===\n");
+    test_parent_children_relations_2();
+    printf("\t\t===test 2 success===\n");
 
+    printf("\n\t\t===test 3 start===\n");
+    test_parent_children_relations_3();
+    printf("\t\t===test 3 success===\n");
+
+    dt_ecs_manager_free(manager);
+    printf("\n\t\t===SUCCESS===\n\n");
+}
+
+static void test_parent_children_relations_1(void) {
     e1 = dt_ecs_manager_new_entity(manager);
     e2 = dt_ecs_manager_new_entity(manager);
     e3 = dt_ecs_manager_new_entity(manager);
 
-    dt_ecs_manager_set_parent(manager, e2, e1);
-    info1 = *dt_ecs_manager_get_entity(manager, e1);
-    DtEntity children_count = info1.children_count;
-
-    DtEntity child = info1.children[0]->id;
-    DtEntity parent = dt_ecs_manager_get_parent(manager, e2)->id;
-
-    assert(children_count == 1);
-    assert(child == e2);
-    assert(parent == e1);
-
-    dt_ecs_manager_set_parent(manager, e2, DT_ENTITY_NULL);
-    info1 = *dt_ecs_manager_get_entity(manager, e1);
-
-    children_count = info1.children_count;
-    parent = dt_ecs_manager_get_parent(manager, e2)->id;
-
-    assert(children_count == 0);
-    assert(parent == DT_ENTITY_NULL);
+    assert(dt_ecs_manager_get_entity(manager, e1).children_count == 0);
+    assert(dt_ecs_manager_get_parent(manager, e2).id == DT_ENTITY_NULL);
+    assert(dt_ecs_manager_get_parent(manager, e3).id == DT_ENTITY_NULL);
 
     dt_ecs_manager_set_parent(manager, e2, e1);
     dt_ecs_manager_set_parent(manager, e3, e1);
 
-    info1 = *dt_ecs_manager_get_entity(manager, e1);
-    children_count = info1.children_count;
+    assert(dt_ecs_manager_get_entity(manager, e1).children_count == 2);
 
-    DtEntity child_1 = info1.children[0]->id;
-    DtEntity child_2 = info1.children[1]->id;
-    DtEntity parent_e2 = dt_ecs_manager_get_parent(manager, e2)->id;
-    DtEntity parent_e3 = dt_ecs_manager_get_parent(manager, e2)->id;
+    DtIterator iter = dt_ecs_manager_get_entity(manager, e1).children_iterator;
 
-    assert(children_count == 2);
-    assert(child_1 == e2);
-    assert(child_2 == e3);
+    FOREACH(DtEntity, e, &iter, {
+        assert(e == e2 || e == e3);
+    });
 
-    assert(parent_e2 == e1);
-    assert(parent_e3 == e1);
+    assert(dt_ecs_manager_get_parent(manager, e2).id == e1);
+    assert(dt_ecs_manager_get_parent(manager, e2).id == e1);
+}
 
-    dt_ecs_manager_set_parent(manager, e2, DT_ENTITY_NULL);
-    dt_ecs_manager_set_parent(manager, e3, DT_ENTITY_NULL);
+static void test_parent_children_relations_2(void) {
+    dt_ecs_manager_add_child(manager, e2, e1);
 
-    info1 = *dt_ecs_manager_get_entity(manager, e1);
-    children_count = info1.children_count;
+    DtIterator iter = dt_ecs_manager_get_entity(manager, e1).children_iterator;
 
-    parent_e2 = dt_ecs_manager_get_parent(manager, e2)->id;
-    parent_e3 = dt_ecs_manager_get_parent(manager, e2)->id;
+    FOREACH(DtEntity, e, &iter, {
+        assert(e == e3);
+    });
 
-    assert(children_count == 0);
+    iter = dt_ecs_manager_get_entity(manager, e2).children_iterator;
 
-    assert(parent_e2 == DT_ENTITY_NULL);
-    assert(parent_e3 == DT_ENTITY_NULL);
+    FOREACH(DtEntity, e, &iter, {
+        assert(e == e1);
+    });
 
-    dt_ecs_manager_free(manager);
+    assert(dt_ecs_manager_get_parent(manager, e2).id == DT_ENTITY_NULL);
+    assert(dt_ecs_manager_get_parent(manager, e1).id == e2);
+}
+
+static void test_parent_children_relations_3(void) {
+    dt_ecs_manager_kill_entity(manager, e1);
+
+    assert(dt_ecs_manager_get_entity(manager, e3).parent == DT_ENTITY_NULL);
+    assert(dt_ecs_manager_get_entity(manager, e2).children_count == 0);
 }

@@ -30,11 +30,14 @@ set(SOURCES
         Ecs/Systems.c
         Ecs/TagPool.c
         Ecs/ComponentPool.c
-        Tests/TestCreateRemoveEntity.c
-        Tests/TestParentChildrenRelations.c
         Ecs/ComponentRegister.c
         Ecs/ComponentHandler.c
+)
+
+set(TEST_SOURCES
         Tests/TestComponentRegister.c
+        Tests/TestCreateRemoveEntity.c
+        Tests/TestParentChildrenRelations.c
         Tests/TestFilter.c
 )
 
@@ -47,7 +50,7 @@ add_executable(Double_Trouble
 )
 
 add_executable(Double_Trouble_Tests
-        ${MAIN_TESTS} ${SOURCES}
+        ${MAIN_TESTS} ${SOURCES} ${TEST_SOURCES}
 )
 
 # ============ Подключаем заголовки ============

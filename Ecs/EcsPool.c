@@ -47,7 +47,13 @@ void dt_ecs_pool_reset(DtEcsPool* pool, DtEntity entity) {
 }
 
 void dt_ecs_pool_copy(DtEcsPool* pool, const DtEntity dst, const DtEntity src) {
+    if (!pool->has(pool->data, src)) return;
+
+    bool has = pool->has(pool->data, dst);
     pool->copy(pool->data, dst, src);
+    if (!has) {
+        printf("[DEBUG]\t entity \"%d\" was added to %s pool\n", dst, pool->name);
+    }
 }
 
 inline void dt_ecs_pool_remove(DtEcsPool* pool, const DtEntity entity) {

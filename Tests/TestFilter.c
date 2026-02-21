@@ -37,12 +37,21 @@ void test_filter(void) {
     e2 = dt_ecs_manager_new_entity(manager);
     e3 = dt_ecs_manager_new_entity(manager);
 
+    printf("\n\t\t===test 1 start===\n");
     test_filter_1();
+    printf("\t\t===test 1 success===\n");
+
+    printf("\n\t\t===test 2 start===\n");
     test_filter_2();
+    printf("\t\t===test 2 success===\n");
+
+    printf("\n\t\t===test 3 start===\n");
     test_filter_3();
+    printf("\t\t===test 3 success===\n");
+
 
     dt_ecs_manager_free(manager);
-    printf("\t\t===SUCCESS===\n\n");
+    printf("\n\t\t===SUCCESS===\n\n");
 }
 
 static void test_filter_1(void) {
