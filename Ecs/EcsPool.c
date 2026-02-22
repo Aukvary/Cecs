@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ComponentsHandler.h"
+#include "RegisterHandler.h"
 
 DtEcsPool* dt_ecs_pool_new(const DtEcsManager* manager, const char* name, const u16 size) {
     return size != 0 ? dt_component_pool_new(manager, name, size, NULL, NULL)

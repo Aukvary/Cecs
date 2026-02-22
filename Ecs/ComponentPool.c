@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ComponentsHandler.h"
 #include "DtEcs.h"
+#include "RegisterHandler.h"
 
 static void component_pool_add(void* pool, DtEntity entity, const void* data);
 static void* component_pool_get_item(const void* pool, DtEntity entity);

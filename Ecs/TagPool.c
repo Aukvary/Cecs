@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ComponentsHandler.h"
 #include "DtAllocators.h"
 #include "DtEcs.h"
+#include "RegisterHandler.h"
 
 static bool has = true;
 

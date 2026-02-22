@@ -32,6 +32,10 @@ set(SOURCES
         Ecs/ComponentPool.c
         Ecs/ComponentRegister.c
         Ecs/ComponentHandler.c
+        Ecs/UpdateHandler.c
+        Ecs/UpdateHandler.h
+        Ecs/UpdateRegister.c
+        Ecs/DrawHandler.c
 )
 
 set(TEST_SOURCES

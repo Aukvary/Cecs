@@ -417,36 +417,35 @@ void dt_remove_tool_components(const DtEcsManager* manager);
  *                         Определения для систем
  *============================================================================*/
 
-typedef void (*Action)(void*);
-typedef void (*Init)(DtEcsManager*, void*);
-
-/**
- * @brief Конфигурация обработчика системы
- */
-typedef struct SystemHandlerConfig {
-    u16 updater_count;
-} SystemHandlerConfig;
 
 /*=============================================================================
  *                              Система ECS (EcsSystem)
  *============================================================================*/
 
+typedef struct {
+    float delta_time;
+    float fixed_delta_time;
+} DtUpdateContext;
+
+typedef void (*Action)(void*);
+typedef void (*CtxAction)(void*, DtUpdateContext*);
+typedef void (*Init)(DtEcsManager*, void*);
+
 /**
  * @brief Контейнер для функций системы
- * @warning Если система не имеет какой-либо функции, она должна быть инициализирована
  * NULL
  */
-typedef struct EcsSystem {
+typedef struct {
     void* data;
 
     Init init;
-    Action update;
+    CtxAction update;
     Action destroy;
 
     i16 priority;
-} EcsSystem;
+} UpdateSystem;
 
-EcsSystem ecs_system_new(Init init, Action update, Action destroy, i16 priority);
+UpdateSystem ecs_system_new(Init init, CtxAction update, Action destroy, i16 priority);
 
 /*=============================================================================
  *                         Обработчик систем (SystemHandler)
@@ -455,29 +454,21 @@ EcsSystem ecs_system_new(Init init, Action update, Action destroy, i16 priority)
 /**
  * @brief Контейнер, в котором системы сгруппированы по функциям
  */
-typedef struct SystemHandler {
+typedef struct {
     DtEcsManager* manager;
+    DT_VEC(UpdateSystem*) ecs_systems;
+} UpdateHandler;
 
-    DT_VEC(EcsSystem) ecs_systems;
-} SystemHandler;
-
-SystemHandler* dt_system_handler_new(DtEcsManager* manager, u16 updater_count);
-void dt_system_handler_add(SystemHandler* handler, const EcsSystem system);
-void dt_system_handler_init(const SystemHandler* handler);
-void dt_system_handler_update(const SystemHandler* handler);
-void dt_system_handler_destroy(const SystemHandler* handler);
-void dt_system_handler_free(SystemHandler* handler);
+UpdateHandler* dt_update_handler_new(DtEcsManager* manager, u16 updater_count);
+void dt_update_handler_add(UpdateHandler* handler, UpdateSystem* system);
+void dt_update_handler_init(const UpdateHandler* handler);
+void dt_update_handler_update(const UpdateHandler* handler, DtUpdateContext* ctx);
+void dt_update_handler_destroy(const UpdateHandler* handler);
+void dt_update_handler_free(UpdateHandler* handler);
 
 /*=============================================================================
  *                         Система отрисовки (DrawSystem)
  *============================================================================*/
-
-typedef struct {
-    u16 drawers_count;
-    void (*begin_draw)(void);
-    void (*end_draw)(void);
-    i16 priority;
-} DrawHandlerConfig;
 
 typedef struct {
     void* data;
@@ -491,17 +482,12 @@ typedef struct {
  *                        Обработчик отрисовки (DrawHandler)
  *============================================================================*/
 
-typedef struct DrawHandler {
+typedef struct {
     DtEcsManager* manager;
-    DrawHandlerConfig stats;
-
-    void (*begin_draw)(void);
-    void (*end_draw)(void);
-
     DT_VEC(DrawSystem) systems;
 } DrawHandler;
 
-DrawHandler* dt_draw_handler_new(DtEcsManager* manager, const DrawHandlerConfig* cfg);
+DrawHandler* dt_draw_handler_new(DtEcsManager* manager, u16 drawers_count);
 void dt_draw_handler_add(DrawHandler* handler, const DrawSystem* system);
 void dt_draw_handler_init(const DrawHandler* handler);
 void dt_draw_handler_draw(const DrawHandler* handler);

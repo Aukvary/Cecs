@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ComponentsHandler.h"
+#include "RegisterHandler.h"
 
 
 #ifndef COMPONENT_TABLE_SIZE
@@ -27,8 +27,8 @@ void dt_register_component(DtComponentData* data) {
 
     component_data_by_id[data->id] = data;
 
-    int idx = dt_component_get_hash(data->name) % COMPONENT_TABLE_SIZE;
-    const int start = idx;
+    u64 idx = dt_component_get_hash(data->name) % COMPONENT_TABLE_SIZE;
+    const u64 start = idx;
     while (component_data_by_name[idx] != NULL) {
         if (strcmp(data->name, component_data_by_name[idx]->name) == 0)
             return;
@@ -45,11 +45,7 @@ void dt_register_component(DtComponentData* data) {
 }
 
 const DtComponentData* dt_component_get_data_by_id(const u16 id) {
-    if (id < 0 || id >= COMPONENT_TABLE_SIZE) {
-        return NULL;
-    }
-
-    if (component_data_by_id[id] == NULL) {
+    if (id >= COMPONENT_TABLE_SIZE) {
         return NULL;
     }
 

@@ -2,13 +2,13 @@
 #define COMPONENTS_HANDLER_H
 
 #include <DtNumericalTypes.h>
-#include <stddef.h>
 #include <stdio.h>
+#include "DtEcs.h"
 
 /**
  * @brief metadata of component and components field
  */
-typedef struct DtComponentAttribute {
+typedef struct {
     const char* name;
     unsigned long long data_size;
     void* data;
@@ -48,9 +48,8 @@ typedef struct DtComponentData {
     } component_name##_Fields;                                                                     \
     DtComponentData component_name##_data();
 
-#define DT_DEFINE_EMPTY_COMPONENT(component_name, fields)                                          \
+#define DT_DEFINE_EMPTY_COMPONENT(component_name)                                                  \
     typedef struct component_name {                                                                \
-        fields(DT_FIELD_DECL, component_name)                                                      \
     } component_name;                                                                              \
     DtComponentData component_name##_data();
 
@@ -103,4 +102,70 @@ const DtComponentData* dt_component_get_data_by_id(u16 id);
  */
 const DtComponentData* dt_component_get_data_by_name(const char* name);
 
-#endif
+typedef struct {
+    char* name;
+    u16 id;
+
+    UpdateSystem* (*new)(void);
+    Init init;
+    CtxAction update;
+    Action destroy;
+
+    i16 priority;
+} DtUpdateData;
+
+#define DT_DEFINE_UPDATE(system_name) DtUpdateData system_name##_data();
+
+#define DT_REGISTER_UPDATE(system_name, new_func, system)                                          \
+    static DtUpdateData local_##system_name##_data;                                                \
+    static __attribute__((constructor)) void dt_##system_name##_register_update(void) {            \
+        local_##system_name##_data = (DtUpdateData) {                                              \
+            .name = #system_name,                                                                  \
+            .new = new_func,                                                                       \
+            .init = (system).init,                                                                 \
+            .update = (system).update,                                                             \
+            .destroy = (system).destroy,                                                           \
+            .priority = (system).priority,                                                         \
+        };                                                                                         \
+        dt_update_register(&local_##system_name##_data);                                           \
+    }                                                                                              \
+    DtUpdateData system_name##_data() { return local_##system_name##_data; }
+
+void dt_update_register(DtUpdateData* data);
+const DtUpdateData* dt_update_get_data_by_name(const char* name);
+const DtUpdateData* dt_update_get_data_by_id(u16 id);
+
+typedef struct {
+    char* name;
+    u16 id;
+
+    DrawSystem* (*new)(void);
+    Init init;
+    Action draw;
+    Action destroy;
+
+    i16 priority;
+} DtDrawData;
+
+#define DT_DEFINE_DRAW(system_name) DtDrawData system_name##_data();
+
+#define DT_REGISTER_DRAW(system_name, new_func, system)                                            \
+    static DtDrawData local_##system_name##_data;                                                \
+    static __attribute__((constructor)) void dt_##system_name##_register_draw(void) {              \
+        local_##system_name##_data = (DtDrawData) {                                                \
+            .name = #system_name,                                                                  \
+            .new = new_func,                                                                       \
+            .init = (system).init,                                                                 \
+            .draw = (system).draw,                                                                 \
+            .destroy = (system).destroy,                                                           \
+            .priority = (system).priority,                                                         \
+        };                                                                                         \
+        dt_draw_register(&local_##system_name##_data);                                             \
+    }                                                                                              \
+    DtDrawData system_name##_data() { return local_##system_name##_data; }
+
+void dt_draw_register(DtDrawData* data);
+const DtDrawData* dt_draw_get_data_by_name(const char* name);
+const DtDrawData* dt_draw_get_data_by_id(u16 id);
+
+#endif /*COMPONENTS_HANDLER_H*/

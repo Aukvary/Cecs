@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Collections/Collections.h"
-#include "ComponentsHandler.h"
 #include "DtAllocators.h"
 #include "DtEcs.h"
+#include "RegisterHandler.h"
 
 /**
  * @brief compair two pools by id
