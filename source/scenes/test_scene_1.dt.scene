@@ -12,8 +12,10 @@
     "exclude_mask_count": 4,
     "filters_size": 4
   },
-  "updater_count": 4,
-  "drawer_count": 4,
+  "systems": [
+    "TestUpdate1",
+    "TestDraw1"
+  ],
   "entities": {
     "0": {
       "components": [

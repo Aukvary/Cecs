@@ -31,27 +31,33 @@ typedef struct DtComponentData {
     DtComponentAttribute* attributes;
 } DtComponentData;
 
-#define DT_FIELD_DECL(type, name, struct_name, ...) type name;
-#define DT_FIELD_ENUM_DECL(type, name, struct_name, ...) DT_COMPONENT_FIELD_##struct_name##_##name,
-#define DT_FIELD_COUNT(type, name, struct_name, ...) +1
-#define DT_FIELD_NAME(type, name, struct_name, ...) #name,
-#define DT_FIELD_OFFSET(type, name, struct_name, ...) offsetof(struct_name, name),
-#define DT_FIELD_TYPE(type, name, struct_name, ...) #type,
-#define DT_FIELD_SIZE(type, name, struct_name, ...) sizeof(type),
+#define DT_FIELD_DECL(type, name, component_name, ...) type name;
+#define DT_FIELD_COUNT(type, name, component_name, ...) +1
+#define DT_FIELD_NAME(type, name, component_name, ...) #name,
+#define DT_FIELD_OFFSET(type, name, component_name) offsetof(component_name, name),
+#define DT_FIELD_TYPE(type, name, component_name, ...) #type,
+#define DT_FIELD_SIZE(type, name, component_name, ...) sizeof(type),
 
 #define DT_DEFINE_COMPONENT(component_name, fields)                                                \
-    typedef struct component_name {                                                                \
+    typedef struct {                                                                               \
         fields(DT_FIELD_DECL, component_name)                                                      \
-    } component_name;                                                                              \
-    typedef struct component_name##Fields {                                                        \
-        enum { fields(DT_FIELD_ENUM_DECL, component_name) };                                       \
-    } component_name##_Fields;                                                                     \
-    DtComponentData component_name##_data();
+    } component_name;
 
-#define DT_DEFINE_EMPTY_COMPONENT(component_name)                                                  \
-    typedef struct component_name {                                                                \
-    } component_name;                                                                              \
-    DtComponentData component_name##_data();
+#define DT_REGISTER_TAG(component_name)                                                            \
+    static DtComponentData local_##component_name##_data;                                          \
+    static __attribute__((constructor)) void component_name##_register_component(void) {           \
+        local_##component_name##_data = (DtComponentData) {                                        \
+            .name = #component_name,                                                               \
+            .attributes = NULL,                                                                    \
+            .attribute_count = 0,                                                                  \
+            .field_count = 0,                                                                      \
+            .field_names = NULL,                                                                   \
+            .field_offsets = NULL,                                                                 \
+            .component_size = 0,                                                                   \
+        };                                                                                         \
+        dt_register_component(&local_##component_name##_data);                                     \
+    }                                                                                              \
+    DtComponentData component_name##_data() { return local_##component_name##_data; }
 
 #define DT_REGISTER_COMPONENT(component_name, fields, ...)                                         \
     static DtComponentAttribute component_name##_attrs[] = {__VA_ARGS__};                          \
@@ -107,25 +113,17 @@ typedef struct {
     u16 id;
 
     UpdateSystem* (*new)(void);
-    Init init;
-    CtxAction update;
-    Action destroy;
 
     i16 priority;
 } DtUpdateData;
 
-#define DT_DEFINE_UPDATE(system_name) DtUpdateData system_name##_data();
 
-#define DT_REGISTER_UPDATE(system_name, new_func, system)                                          \
+#define DT_REGISTER_UPDATE(system_name, new_func)                                                  \
     static DtUpdateData local_##system_name##_data;                                                \
     static __attribute__((constructor)) void dt_##system_name##_register_update(void) {            \
         local_##system_name##_data = (DtUpdateData) {                                              \
             .name = #system_name,                                                                  \
             .new = new_func,                                                                       \
-            .init = (system).init,                                                                 \
-            .update = (system).update,                                                             \
-            .destroy = (system).destroy,                                                           \
-            .priority = (system).priority,                                                         \
         };                                                                                         \
         dt_update_register(&local_##system_name##_data);                                           \
     }                                                                                              \
@@ -140,25 +138,16 @@ typedef struct {
     u16 id;
 
     DrawSystem* (*new)(void);
-    Init init;
-    Action draw;
-    Action destroy;
 
     i16 priority;
 } DtDrawData;
 
-#define DT_DEFINE_DRAW(system_name) DtDrawData system_name##_data();
-
-#define DT_REGISTER_DRAW(system_name, new_func, system)                                            \
-    static DtDrawData local_##system_name##_data;                                                \
+#define DT_REGISTER_DRAW(system_name, new_func)                                                    \
+    static DtDrawData local_##system_name##_data;                                                  \
     static __attribute__((constructor)) void dt_##system_name##_register_draw(void) {              \
         local_##system_name##_data = (DtDrawData) {                                                \
             .name = #system_name,                                                                  \
             .new = new_func,                                                                       \
-            .init = (system).init,                                                                 \
-            .draw = (system).draw,                                                                 \
-            .destroy = (system).destroy,                                                           \
-            .priority = (system).priority,                                                         \
         };                                                                                         \
         dt_draw_register(&local_##system_name##_data);                                             \
     }                                                                                              \

@@ -4,6 +4,6 @@
 #include "RegisterHandler.h"
 
 #define HIERARCHY_DIRTY(X, name)
-DT_DEFINE_EMPTY_COMPONENT(HierarchyDirty, HIERARCHY_DIRTY)
+DT_DEFINE_TAG_COMPONENT(HierarchyDirty, HIERARCHY_DIRTY)
 
 #endif
