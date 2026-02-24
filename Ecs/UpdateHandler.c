@@ -60,3 +60,8 @@ const DtUpdateData* dt_update_get_data_by_id(u16 id) {
 
     return update_data_by_id[id];
 }
+
+const DtUpdateData** dt_update_get_all(u16* size) {
+    *size = id_counter;
+    return update_data_by_id;
+}

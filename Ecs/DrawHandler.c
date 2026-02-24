@@ -60,3 +60,8 @@ const DtDrawData* dt_draw_get_data_by_id(u16 id) {
 
     return draw_data_by_id[id];
 }
+
+const DtDrawData** dt_draw_get_all(u16* size) {
+    *size = id_counter;
+    return draw_data_by_id;
+}

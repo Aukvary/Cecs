@@ -490,5 +490,6 @@ void dt_draw_handler_add(DrawHandler* handler, const DrawSystem* system);
 void dt_draw_handler_init(const DrawHandler* handler);
 void dt_draw_handler_draw(const DrawHandler* handler);
 void dt_draw_handler_destroy(const DrawHandler* handler);
+void dt_draw_handler_free(DrawHandler* handler);
 
 #endif /* DT_ECS_H */

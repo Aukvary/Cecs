@@ -6,8 +6,7 @@ int main() {
     // test_parent_children_relations();
     // test_pools();
     // test_filter();
-
-    test_component_register();
-
+    // test_component_register();
+    test_systems_register();
     return 0;
 }

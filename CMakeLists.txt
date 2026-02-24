@@ -46,6 +46,7 @@ set(TEST_SOURCES
         Tests/TestPools.c
         Tests/TestRegisterAll.c
         Tests/TestComponentRegister.c
+        Tests/TestSystemsRegister.c
 )
 
 set(MAIN_TESTS mains/main_tests.c)

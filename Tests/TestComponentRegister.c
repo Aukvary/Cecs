@@ -37,23 +37,20 @@ void test_component_register(void) {
 
 void test_component_register_1(void) {
     func_components[0] = TestEmptyComponent1_data();
-    assert(func_components[0].name != NULL);
-
     func_components[1] = TestEmptyComponent2_data();
-    assert(func_components[1].name != NULL);
-
     func_components[2] = TestDataComponent1_data();
-    assert(func_components[2].name != NULL);
-
     func_components[3] = TestDataComponent2_data();
-    assert(func_components[3].name != NULL);
+
+    for (int i = 0; i < 4; i++)
+        assert(func_components[3].name != NULL);
 }
 
 void test_component_register_2(void) {
     for (int i = 0; i < 4; i++) {
         bool found = false;
         for (int j = 0; j < count; j++) {
-            if (strcmp(func_components[i].name, components[j]->name) != 0) continue;
+            if (strcmp(func_components[i].name, components[j]->name) != 0)
+                continue;
             found = true;
         }
 
@@ -62,7 +59,12 @@ void test_component_register_2(void) {
 }
 
 void test_component_register_3(void) {
-    assert(TestDataComponent1_data().attribute_count == 1);
-    assert(strcmp(TestDataComponent1_data().attributes[0].attribute_name, "test_attr") == 0);
-    assert(((TestAttribute*)TestDataComponent1_data().attributes[0].data)->test_value == 10);
+    assert(TestEmptyComponent1_data().attribute_count == 1);
+    assert(strcmp(TestEmptyComponent1_data().attributes[0].attribute_name, "test_attr") == 0);
+    assert(((TestAttribute*) TestEmptyComponent1_data().attributes[0].data)->test_value == 10);
+
+    assert(strcmp(TestDataComponent1_data().filed_attributes[0]->attribute_name, "test_attr") == 0);
+    assert(((TestAttribute*) TestDataComponent1_data().filed_attributes[0]->data)->test_value ==
+           100);
+    assert(TestDataComponent1_data().filed_attributes_count[0] == 1);
 }

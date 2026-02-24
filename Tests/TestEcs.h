@@ -9,7 +9,12 @@ typedef struct {
     int test_value;
 } TestAttribute;
 
-#define TEST_DATA_COMPONENT_1(X, name) X(int, data, name)
+#define TEST_DATA_COMPONENT_1(X, name)                                                             \
+    X(int, data, name,                                                                             \
+      (DtAttributeData) {                                                                          \
+          .attribute_name = "test_attr",                                                           \
+          .data = &(TestAttribute) {.test_value = 100},                                             \
+      })
 DT_DEFINE_COMPONENT(TestDataComponent1, TEST_DATA_COMPONENT_1);
 
 #define TEST_DATA_COMPONENT_2(X, name) X(char*, data, name)
@@ -36,5 +41,6 @@ void test_parent_children_relations(void);
 void test_pools(void);
 void test_filter(void);
 void test_component_register(void);
+void test_systems_register(void);
 
 #endif

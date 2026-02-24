@@ -2,11 +2,12 @@
 #include "Ecs/RegisterHandler.h"
 #include "TestEcs.h"
 
-DT_REGISTER_TAG(TestEmptyComponent1);
+DT_REGISTER_TAG(TestEmptyComponent1, {
+                                         .attribute_name = "test_attr",
+                                         .data = &(TestAttribute) {.test_value = 10},
+                                     });
 DT_REGISTER_TAG(TestEmptyComponent2);
-DT_REGISTER_COMPONENT(TestDataComponent1, TEST_DATA_COMPONENT_1,
-                      (DtAttributeData) {.attribute_name = "test_attr",
-                                         .data = &(TestAttribute) {10}});
+DT_REGISTER_COMPONENT(TestDataComponent1, TEST_DATA_COMPONENT_1);
 DT_REGISTER_COMPONENT(TestDataComponent2, TEST_DATA_COMPONENT_2);
 
 static void test_update_system_init(DtEcsManager* manager, void* data);
@@ -50,7 +51,7 @@ static void test_update_system_update(void* data, DtUpdateContext* ctx) {
 
     FOREACH(DtEntity, e, &update->filter->entities.entities_iterator,
             {
-
+                printf("simulating update\n");
             });
 }
 
@@ -100,7 +101,7 @@ static void test_draw_system_draw(void* data) {
 
     FOREACH(DtEntity, e, &draw->filter->entities.entities_iterator,
             {
-
+                printf("simulating draw\n");
             });
 }
 
