@@ -70,3 +70,8 @@ const DtComponentData* dt_component_get_data_by_name(const char* name) {
 
     return component_data_by_name[idx];
 }
+
+const DtComponentData** dt_component_get_all(u16* size) {
+    *size = id_counter;
+    return component_data_by_id;
+}

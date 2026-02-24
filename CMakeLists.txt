@@ -39,11 +39,13 @@ set(SOURCES
 )
 
 set(TEST_SOURCES
-        Tests/TestComponentRegister.c
+        Tests/TestRegisterAll.c
         Tests/TestCreateRemoveEntity.c
         Tests/TestParentChildrenRelations.c
         Tests/TestFilter.c
         Tests/TestPools.c
+        Tests/TestRegisterAll.c
+        Tests/TestComponentRegister.c
 )
 
 set(MAIN_TESTS mains/main_tests.c)

@@ -2,9 +2,12 @@
 
 
 int main() {
-    test_create_remove_entity();
-    test_parent_children_relations();
-    test_pools();
-    test_filter();
+    // test_create_remove_entity();
+    // test_parent_children_relations();
+    // test_pools();
+    // test_filter();
+
+    test_component_register();
+
     return 0;
 }

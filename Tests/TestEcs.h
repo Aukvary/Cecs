@@ -5,6 +5,10 @@
 #include "Ecs/DtEcs.h"
 #include "Ecs/RegisterHandler.h"
 
+typedef struct {
+    int test_value;
+} TestAttribute;
+
 #define TEST_DATA_COMPONENT_1(X, name) X(int, data, name)
 DT_DEFINE_COMPONENT(TestDataComponent1, TEST_DATA_COMPONENT_1);
 
@@ -31,5 +35,6 @@ void test_create_remove_entity(void);
 void test_parent_children_relations(void);
 void test_pools(void);
 void test_filter(void);
+void test_component_register(void);
 
 #endif

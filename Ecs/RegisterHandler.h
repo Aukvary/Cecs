@@ -9,26 +9,26 @@
  * @brief metadata of component and components field
  */
 typedef struct {
-    const char* name;
-    unsigned long long data_size;
+    char* attribute_name;
     void* data;
-} DtComponentAttribute;
+} DtAttributeData;
 
 /**
  * @brief data of serialized component
  */
 typedef struct DtComponentData {
     char* name;
-    unsigned short id;
+    u16 id;
 
-    int field_count;
+    u16 field_count;
     char** field_names;
-    int* field_offsets;
+    u16* field_offsets;
+    DtAttributeData** filed_attributes;
 
     u64 component_size;
 
-    unsigned long long attribute_count;
-    DtComponentAttribute* attributes;
+    DtAttributeData* attributes;
+    u8 attribute_count;
 } DtComponentData;
 
 #define DT_FIELD_DECL(type, name, component_name, ...) type name;
@@ -37,13 +37,18 @@ typedef struct DtComponentData {
 #define DT_FIELD_OFFSET(type, name, component_name) offsetof(component_name, name),
 #define DT_FIELD_TYPE(type, name, component_name, ...) #type,
 #define DT_FIELD_SIZE(type, name, component_name, ...) sizeof(type),
+#define DT_FIELD_ATTRIBUTE(type, name, component_name, ...)                                        \
+    DtAttribute** { __VA_ARGS__ }
 
 #define DT_DEFINE_COMPONENT(component_name, fields)                                                \
     typedef struct {                                                                               \
         fields(DT_FIELD_DECL, component_name)                                                      \
     } component_name;
 
-#define DT_REGISTER_TAG(component_name)                                                            \
+#define DT_REGISTER_TAG(component_name, ...)                                                       \
+    static DtAttributeData component_name##_attrs[] = {__VA_ARGS__};                               \
+    static u16 component_name##_attrs_count =                                                      \
+        sizeof(component_name##_attrs) / sizeof(component_name##_attrs[0]);                        \
     static DtComponentData local_##component_name##_data;                                          \
     static __attribute__((constructor)) void component_name##_register_component(void) {           \
         local_##component_name##_data = (DtComponentData) {                                        \
@@ -60,11 +65,11 @@ typedef struct DtComponentData {
     DtComponentData component_name##_data() { return local_##component_name##_data; }
 
 #define DT_REGISTER_COMPONENT(component_name, fields, ...)                                         \
-    static DtComponentAttribute component_name##_attrs[] = {__VA_ARGS__};                          \
+    static DtAttributeData component_name##_attrs[] = {__VA_ARGS__};                              \
     static char* component_name##_field_names[] = {fields(DT_FIELD_NAME, component_name)};         \
-    static int component_name##_field_offsets[] = {fields(DT_FIELD_OFFSET, component_name)};       \
-    static int component_name##_attrs_count =                                                      \
-        sizeof(component_name##_attrs) / sizeof(component_name##_attrs[0]);                        \
+    static u16 component_name##_field_offsets[] = {fields(DT_FIELD_OFFSET, component_name)};       \
+    static u16 component_name##_attrs_count =                                                      \
+        (sizeof((DtAttributeData[]) {__VA_ARGS__}) / sizeof(DtAttributeData));                     \
     static DtComponentData local_##component_name##_data;                                          \
     static __attribute__((constructor)) void component_name##_register_component(void) {           \
         local_##component_name##_data = (DtComponentData) {                                        \
@@ -107,6 +112,8 @@ const DtComponentData* dt_component_get_data_by_id(u16 id);
  * @note if global pool hasn't this name return -1
  */
 const DtComponentData* dt_component_get_data_by_name(const char* name);
+
+const DtComponentData** dt_component_get_all(u16* size);
 
 typedef struct {
     char* name;

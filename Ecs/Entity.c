@@ -396,7 +396,8 @@ void dt_entity_container_reset(DtEntityContainer* container, const DtEntity enti
     if (!dt_entity_container_has(container, entity))
         return;
 
-    container->auto_reset(&container->dense_items[container->sparce_entities[entity]],
+    container->auto_reset((u8*) container->dense_items +
+                              container->sparce_entities[entity] * container->item_size,
                           container->item_size);
 }
 
@@ -407,12 +408,13 @@ void dt_entity_container_copy(DtEntityContainer* container, const DtEntity dst,
 
     if (dt_entity_container_has(container, dst))
         container->auto_copy(
-            (u8*)container->dense_items + container->sparce_entities[dst] * container->item_size,
-            (u8*)container->dense_items + container->sparce_entities[src] * container->item_size,
+            (u8*) container->dense_items + container->sparce_entities[dst] * container->item_size,
+            (u8*) container->dense_items + container->sparce_entities[src] * container->item_size,
             container->item_size);
     else
         dt_entity_container_add(container, dst,
-                                &container->dense_items[container->sparce_entities[src]]);
+                                (u8*) container->dense_items +
+                                    container->sparce_entities[src] * container->item_size);
 }
 
 void dt_entity_container_resize(DtEntityContainer* container, u16 new_size) {

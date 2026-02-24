@@ -344,13 +344,11 @@ struct DtEcsManager {
 
 #define DT_ECS_MANAGER_ADD_TO_POOL(manager, T, entity, data)                                       \
     ({                                                                                             \
-        T tmp;                                                                                     \
         dt_ecs_manager_entity_add_component_by_name(manager, entity, #T, data);                    \
     })
 
 #define DT_ECS_MANAGER_REMOVE_FROM_POOL(manager, T, entity)                                        \
     ({                                                                                             \
-        T tmp;                                                                                     \
         dt_ecs_manager_entity_remove_component_by_name(manager, entity, #T);                       \
     })
 

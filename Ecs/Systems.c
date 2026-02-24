@@ -4,50 +4,50 @@
 #include "DtEcs.h"
 
 static int cmp_systems(const void* s1, const void* s2) {
-    return ((EcsSystem*) s1)->priority - ((EcsSystem*) s2)->priority;
+    return ((UpdateSystem*) s1)->priority - ((UpdateSystem*) s2)->priority;
 }
 
 static int cmp_drawers(const void* s1, const void* s2) {
     return ((DrawSystem*) s1)->priority - ((DrawSystem*) s2)->priority;
 }
 
-EcsSystem ecs_system_new(Init init, CtxAction update, Action destroy, i16 priority) {
-    return (EcsSystem) {.init = init, .update = update, .destroy = destroy, .priority = priority};
+UpdateSystem ecs_system_new(Init init, CtxAction update, Action destroy, i16 priority) {
+    return (UpdateSystem) {.init = init, .update = update, .destroy = destroy, .priority = priority};
 }
 
-SystemHandler* dt_update_handler_new(DtEcsManager* manager, u16 updater_count) {
-    SystemHandler* system_handler = DT_MALLOC(sizeof(SystemHandler));
+UpdateHandler* dt_update_handler_new(DtEcsManager* manager, u16 updater_count) {
+    UpdateHandler* system_handler = DT_MALLOC(sizeof(UpdateHandler));
 
-    *system_handler = (SystemHandler) {
+    *system_handler = (UpdateHandler) {
         .manager = manager,
-        .ecs_systems = DT_VEC_NEW(EcsSystem, updater_count),
+        .ecs_systems = DT_VEC_NEW(UpdateSystem*, updater_count),
     };
 
     return system_handler;
 }
 
-inline void dt_update_handler_add(SystemHandler* handler, const EcsSystem system) {
+inline void dt_update_handler_add(UpdateHandler* handler, UpdateSystem* system) {
     DT_VEC_ADD(handler->ecs_systems, system);
 }
 
-inline void dt_update_handler_init(const SystemHandler* handler) {
-    qsort(handler->ecs_systems, dt_vec_count(handler->ecs_systems), sizeof(EcsSystem), cmp_systems);
+inline void dt_update_handler_init(const UpdateHandler* handler) {
+    qsort(handler->ecs_systems, dt_vec_count(handler->ecs_systems), sizeof(UpdateSystem), cmp_systems);
 
-    FOREACH(EcsSystem, system, DT_VEC_ITERATOR(handler->ecs_systems),
+    FOREACH(UpdateSystem, system, DT_VEC_ITERATOR(handler->ecs_systems),
             { system.init(handler->manager, system.data); });
 }
 
-inline void dt_update_handler_update(const SystemHandler* handler, DtUpdateContext* ctx) {
-    FOREACH(EcsSystem, system, DT_VEC_ITERATOR(handler->ecs_systems),
+inline void dt_update_handler_update(const UpdateHandler* handler, DtUpdateContext* ctx) {
+    FOREACH(UpdateSystem, system, DT_VEC_ITERATOR(handler->ecs_systems),
             { system.update(system.data, ctx); });
 }
 
-inline void dt_update_handler_destroy(const SystemHandler* handler) {
-    FOREACH(EcsSystem, system, DT_VEC_ITERATOR(handler->ecs_systems),
+inline void dt_update_handler_destroy(const UpdateHandler* handler) {
+    FOREACH(UpdateSystem, system, DT_VEC_ITERATOR(handler->ecs_systems),
             { system.destroy(system.data); });
 }
 
-inline void dt_update_handler_free(SystemHandler* handler) { free(handler); }
+inline void dt_update_handler_free(UpdateHandler* handler) { free(handler); }
 
 DrawHandler* dt_draw_handler_new(DtEcsManager* manager, u16 drawers_count) {
     DrawHandler* handler = DT_MALLOC(sizeof(DrawHandler));
