@@ -33,9 +33,9 @@ set(SOURCES
         Ecs/ComponentRegister.c
         Ecs/ComponentHandler.c
         Ecs/UpdateHandler.c
-        Ecs/UpdateHandler.h
         Ecs/UpdateRegister.c
         Ecs/DrawHandler.c
+        scheduler/SceneLoader.c
 )
 
 set(TEST_SOURCES
@@ -44,7 +44,6 @@ set(TEST_SOURCES
         Tests/TestParentChildrenRelations.c
         Tests/TestFilter.c
         Tests/TestPools.c
-        Tests/TestRegisterAll.c
         Tests/TestComponentRegister.c
         Tests/TestSystemsRegister.c
 )
@@ -77,7 +76,6 @@ if (EXISTS ${RAYLIB_LIB_FILE})
     target_link_libraries(Double_Trouble ${RAYLIB_LIB_FILE})
 else ()
     message(WARNING "Raylib library not found: ${RAYLIB_LIB_FILE}")
-    # Пробуем найти библиотеку по имени
     find_library(RAYLIB_LIB ${RAYLIB_LIB_NAME} PATHS ${RAYLIB_LIB_DIR})
     if (RAYLIB_LIB)
         message(STATUS "Found library: ${RAYLIB_LIB}")
@@ -92,7 +90,6 @@ if (EXISTS ${RAYLIB_LIB_FILE})
     target_link_libraries(Double_Trouble_Tests ${RAYLIB_LIB_FILE})
 else ()
     message(WARNING "Raylib library not found: ${RAYLIB_LIB_FILE}")
-    # Пробуем найти библиотеку по имени
     find_library(RAYLIB_LIB ${RAYLIB_LIB_NAME} PATHS ${RAYLIB_LIB_DIR})
     if (RAYLIB_LIB)
         message(STATUS "Found library: ${RAYLIB_LIB}")
