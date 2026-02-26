@@ -264,7 +264,7 @@ void dt_ecs_pool_free(DtEcsPool* pool);
 /**
  * @brief Маска с данными о фильтре ECS
  */
-typedef struct DtEcsMask {
+typedef struct {
     DtEcsManager* manager;
 
     u16* include_pools;
@@ -343,14 +343,10 @@ struct DtEcsManager {
 #define DT_ECS_MANAGER_GET_POOL(manager, T) ({ dt_ecs_manager_get_pool_by_name((manager), #T); })
 
 #define DT_ECS_MANAGER_ADD_TO_POOL(manager, T, entity, data)                                       \
-    ({                                                                                             \
-        dt_ecs_manager_entity_add_component_by_name(manager, entity, #T, data);                    \
-    })
+    ({ dt_ecs_manager_entity_add_component_by_name(manager, entity, #T, data); })
 
 #define DT_ECS_MANAGER_REMOVE_FROM_POOL(manager, T, entity)                                        \
-    ({                                                                                             \
-        dt_ecs_manager_entity_remove_component_by_name(manager, entity, #T);                       \
-    })
+    ({ dt_ecs_manager_entity_remove_component_by_name(manager, entity, #T); })
 
 /**
  * @brief Возвращает маску с типом T по умолчанию
@@ -383,6 +379,8 @@ struct DtEcsManager {
 
 DtEcsManager* dt_ecs_manager_new(const DtEcsManagerConfig* cfg);
 DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager);
+DtEntity dt_ecs_manager_new_entity_from(DtEcsManager* manager,
+                                        DtEntityInfo info); // TODO: implement
 DtEntityInfo dt_ecs_manager_get_entity(const DtEcsManager* manager, DtEntity entity);
 DtEntityInfo dt_ecs_manager_get_parent(const DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_set_parent(const DtEcsManager* manager, DtEntity child, DtEntity parent);

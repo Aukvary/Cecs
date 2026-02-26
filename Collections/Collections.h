@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "DtNumericalTypes.h"
+
 /**
  * @brief struct for handle iteration with FOREACH macros
 
@@ -169,5 +171,35 @@ DtVecHeader* dt_vec_iterator(void* data);
  * @param data pointer to vector header
  */
 void dt_vec_free(void* data);
+
+//TODO:comment
+typedef struct DtRbNode {
+    bool is_red;
+    struct DtRbNode* parent;
+    struct DtRbNode* left;
+    struct DtRbNode* right;
+
+    void* data;
+    u64 hash;
+} DtRbNode;
+
+//TODO:comment
+typedef struct {
+    DtRbNode* root;
+
+    DtIterator iterator;
+    DtRbNode* iterator_node;
+} DtRbTree;
+
+//TODO:comment
+DtRbTree dt_rb_tree_new();
+//TODO:comment
+void dt_rb_tree_add(DtRbTree* head, void* data, u64 hash);
+//TODO:comment
+void* dt_rb_tree_get(DtRbTree* head, u64 hash);
+//TODO:comment
+void dt_rb_tree_remove(DtRbTree* head, u64 hash);
+//TODO:comment
+void dt_rb_tree_free(DtRbTree* head);
 
 #endif

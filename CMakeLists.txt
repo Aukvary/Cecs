@@ -36,6 +36,7 @@ set(SOURCES
         Ecs/UpdateRegister.c
         Ecs/DrawHandler.c
         scheduler/SceneLoader.c
+        Collections/RbTree.c
 )
 
 set(TEST_SOURCES

@@ -1,9 +1,7 @@
 {
-  "name": "test_scene_1",
-  "id": 0,
   "manager_config": {
     "dense_size": 4,
-    "sparce_size": 4,
+    "sparse_size": 4,
     "recycle_size": 4,
     "children_size": 2,
     "component_count": 3,

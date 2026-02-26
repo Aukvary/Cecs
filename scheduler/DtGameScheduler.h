@@ -20,16 +20,24 @@ typedef struct {
     DrawHandler* draw_handler;
 } DtScene;
 
+//TODO:comment
+DtScene* dt_scene;
 //TODO: comments
 const DtScene* dt_scenes_get_active(void);
 //TODO: comments
-const DtScene* dt_scenes_set_active_without_free(int idx);
+const DtScene* dt_scenes_set_active_without_unload(int idx);
 //TODO: comments
 void dt_scenes_set_active_with_unload(int idx);
 //TODO: comments
-int dt_scenes_scene_is_load(int idx);
-
-DtScene dt_load_all_scenes(void) __attribute__((constructor));
+void dt_scene_load_by_id(int idx);
+//TODO: comments
+void dt_scene_unload_by_id(int idx);
+//TODO: comments
+bool dt_scenes_scene_is_load(int idx);
+//TODO: comments
+void dt_add_all_scenes(void);
+//TODO: comments
+DtScene dt_add_extension_scene(void );
 
 //TODO: comments
 void dt_serialize_prefab(DtEntityInfo* info, const char* path);
