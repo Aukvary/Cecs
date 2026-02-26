@@ -42,7 +42,7 @@ void test_component_register_1(void) {
     func_components[3] = TestDataComponent2_data();
 
     for (int i = 0; i < 4; i++)
-        assert(func_components[3].name != NULL);
+        assert(func_components[i].name != NULL);
 }
 
 void test_component_register_2(void) {
