@@ -21,6 +21,10 @@ if (LINUX)
     set(RAYLIB_LIB_FILE "${RAYLIB_LIB_DIR}/linux/libraylib.a")
 endif ()
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
 set(SOURCES
         Collections/Collections.c
         Collections/Iterator.c
@@ -49,16 +53,52 @@ set(TEST_SOURCES
         Tests/TestSystemsRegister.c
 )
 
-set(MAIN_TESTS mains/main_tests.c)
-set(MAIN mains/main.c)
-
-
-add_executable(Double_Trouble
-        ${MAIN} ${SOURCES}
+add_library(DtEngine
+        STATIC
+        ${SOURCES}
 )
 
-add_executable(Double_Trouble_Tests
-        ${MAIN_TESTS} ${SOURCES} ${TEST_SOURCES}
+set_target_properties(DtEngine PROPERTIES
+        OUTPUT_NAME "DtEngine"
+        ARCHIVE_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
+        LIBRARY_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
+)
+
+add_executable(DtEngineTest
+        mains/main_tests.c ${SOURCES} ${TEST_SOURCES}
+)
+
+set_target_properties(DtEngineTest PROPERTIES
+        OUTPUT_NAME "DtEngineTest"
+        RUNTIME_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
+)
+
+set_target_properties(GameLibStatic PROPERTIES
+        OUTPUT_NAME "GameLib"
+        ARCHIVE_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
+        LIBRARY_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
+        CLEAN_DIRECT_OUTPUT 1
+)
+
+add_library(GameLibShared SHARED ${SOURCES})
+
+set_target_properties(GameLibShared PROPERTIES
+        OUTPUT_NAME "GameLib"
+        ARCHIVE_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
+        LIBRARY_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
+        RUNTIME_OUTPUT_NAME "GameLib"
+        VERSION "1.0.0"
+)
+
+add_executable(Editor
+        mains/main_editor.c ${SOURCES}
+)
+
+add_executable(Game
+        mains/main_game.c ${SOURCES}
 )
 
 # ============ Подключаем заголовки ============

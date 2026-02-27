@@ -3,6 +3,15 @@
 
 #include <stdbool.h>
 #include "Ecs/DtEcs.h"
+#include "Ecs/RegisterHandler.h"
+
+
+
+#ifdef STATIC_LINK
+
+#else
+
+#endif
 
 //TODO: comments
 typedef struct {
