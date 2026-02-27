@@ -30,7 +30,7 @@ BreakConstructorInitializersBeforeComma: false
 ColumnLimit: 100
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ContinuationIndentWidth: 4
-IncludeCategories: 
+IncludeCategories:
   - Regex: '^<.*'
     Priority: 1
   - Regex: '^".*'

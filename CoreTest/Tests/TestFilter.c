@@ -8,7 +8,7 @@ static const DtEcsManagerConfig cfg = {
     .sparce_size = 3,
     .recycle_size = 3,
     .components_count = 0,
-    .pools_size = 1,
+    .pools_size = 0,
     .masks_size = 0,
 
     .children_size = 1,
@@ -31,7 +31,7 @@ static DtEcsFilter* filter_test_1;
 void test_filter(void) {
     printf("\n\t\t===test_filter===\n");
 
-    manager = dt_ecs_manager_new(&cfg);
+    manager = dt_ecs_manager_new(cfg);
 
     e1 = dt_ecs_manager_new_entity(manager);
     e2 = dt_ecs_manager_new_entity(manager);

@@ -37,7 +37,7 @@ static void test_systems_register_2(void);
 void test_systems_register(void) {
     printf("\n\t===test_systems_register===\n");
 
-    manager = dt_ecs_manager_new(&cfg);
+    manager = dt_ecs_manager_new(cfg);
     updaters = dt_update_get_all(&updaters_count);
     drawers = dt_draw_get_all(&drawers_count);
     update_handler = dt_update_handler_new(manager, updaters_count);

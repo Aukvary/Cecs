@@ -173,6 +173,6 @@ static void tag_pool_next(void* data) {
 }
 
 void tag_pool_free(void* pool) {
-    free(((DtTagPool*) pool)->buckets);
-    free(pool);
+    DT_FREE(((DtTagPool*) pool)->buckets);
+    DT_FREE(pool);
 }

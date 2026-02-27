@@ -1,7 +1,7 @@
 #ifndef ECS_MANAGER_TESTS_H
 #define ECS_MANAGER_TESTS_H
 
-#include "DtAllocators.h"
+#include "../Core/DtAllocators.h"
 #include "Ecs/DtEcs.h"
 #include "Ecs/RegisterHandler.h"
 

@@ -31,7 +31,7 @@ static void test_create_remove_entity_5(void);
 void test_create_remove_entity(void) {
     printf("\n\t===test_create_remove_entity===\n");
 
-    manager = dt_ecs_manager_new(&cfg);
+    manager = dt_ecs_manager_new(cfg);
 
     printf("\n\t\t===test 1 start===\n");
     test_create_remove_entity_1();

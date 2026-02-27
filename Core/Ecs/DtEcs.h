@@ -377,7 +377,7 @@ struct DtEcsManager {
  *                     Функции для работы с ECS менеджером
  *============================================================================*/
 
-DtEcsManager* dt_ecs_manager_new(const DtEcsManagerConfig* cfg);
+DtEcsManager* dt_ecs_manager_new(DtEcsManagerConfig cfg);
 DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager);
 DtEntity dt_ecs_manager_new_entity_from(DtEcsManager* manager,
                                         DtEntityInfo info); // TODO: implement
@@ -441,8 +441,6 @@ typedef struct {
     i16 priority;
 } UpdateSystem;
 
-UpdateSystem ecs_system_new(Init init, CtxAction update, Action destroy, i16 priority);
-
 /*=============================================================================
  *                         Обработчик систем (SystemHandler)
  *============================================================================*/
@@ -452,7 +450,7 @@ UpdateSystem ecs_system_new(Init init, CtxAction update, Action destroy, i16 pri
  */
 typedef struct {
     DtEcsManager* manager;
-    DT_VEC(UpdateSystem*) ecs_systems;
+    DT_VEC(UpdateSystem*) systems;
 } UpdateHandler;
 
 UpdateHandler* dt_update_handler_new(DtEcsManager* manager, u16 updater_count);
@@ -480,7 +478,7 @@ typedef struct {
 
 typedef struct {
     DtEcsManager* manager;
-    DT_VEC(DrawSystem) systems;
+    DT_VEC(DrawSystem*) systems;
 } DrawHandler;
 
 DrawHandler* dt_draw_handler_new(DtEcsManager* manager, u16 drawers_count);

@@ -4,69 +4,76 @@ project(Double_Trouble C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(LINUX TRUE)
 endif ()
 
+if (LINUX)
+    set(CORE_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/builds/linux/core")
+    set(EDITOR_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/builds/linux/editor")
+    set(GAME_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/builds/linux/game")
+else ()
+    set(CORE_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/builds/windows/core")
+    set(EDITOR_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/builds/windows/editor")
+    set(GAME_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/builds/windows/game")
+endif ()
+
 set(RAYLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(RAYLIB_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-set(RAYLIB_LIB_NAME "raylib")
 
 if (WIN32)
     set(RAYLIB_LIB_FILE "${RAYLIB_LIB_DIR}/windows/libraylib.a")
-endif ()
-
-if (LINUX)
+else ()
     set(RAYLIB_LIB_FILE "${RAYLIB_LIB_DIR}/linux/libraylib.a")
 endif ()
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-set(SOURCES
-        Collections/Collections.c
-        Collections/Iterator.c
-        Ecs/DtEcsManager.c
-        Ecs/Entity.c
-        Ecs/EcsPool.c
-        Ecs/Systems.c
-        Ecs/TagPool.c
-        Ecs/ComponentPool.c
-        Ecs/ComponentRegister.c
-        Ecs/ComponentHandler.c
-        Ecs/UpdateHandler.c
-        Ecs/UpdateRegister.c
-        Ecs/DrawHandler.c
-        scheduler/SceneLoader.c
-        Collections/RbTree.c
+set(CORE_SOURCES
+        Core/Collections/Collections.c
+        Core/Collections/Iterator.c
+        Core/Ecs/DtEcsManager.c
+        Core/Ecs/Entity.c
+        Core/Ecs/EcsPool.c
+        Core/Ecs/Systems.c
+        Core/Ecs/TagPool.c
+        Core/Ecs/ComponentPool.c
+        Core/Ecs/ComponentRegister.c
+        Core/Ecs/ComponentHandler.c
+        Core/Ecs/UpdateHandler.c
+        Core/Ecs/UpdateRegister.c
+        Core/Ecs/DrawHandler.c
+#        Core/scheduler/SceneLoader.c
+        Core/Collections/RbTree.c
 )
 
 set(TEST_SOURCES
-        Tests/TestRegisterAll.c
-        Tests/TestCreateRemoveEntity.c
-        Tests/TestParentChildrenRelations.c
-        Tests/TestFilter.c
-        Tests/TestPools.c
-        Tests/TestComponentRegister.c
-        Tests/TestSystemsRegister.c
+        CoreTest/main_tests.c
+        CoreTest/Tests/TestRegisterAll.c
+        CoreTest/Tests/TestCreateRemoveEntity.c
+        CoreTest/Tests/TestParentChildrenRelations.c
+        CoreTest/Tests/TestFilter.c
+        CoreTest/Tests/TestPools.c
+        CoreTest/Tests/TestComponentRegister.c
+        CoreTest/Tests/TestSystemsRegister.c
 )
 
-add_library(DtEngine
-        STATIC
-        ${SOURCES}
+set(GAME_SOURCES
+        GameScripts/DeleteMe.c
+
 )
+
+set(EDITOR_SOURCES
+        Editor/DeleteMe.c
+)
+
+add_library(DtEngine STATIC ${CORE_SOURCES})
 
 set_target_properties(DtEngine PROPERTIES
         OUTPUT_NAME "DtEngine"
         ARCHIVE_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
-        LIBRARY_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
-        RUNTIME_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
 )
 
 add_executable(DtEngineTest
-        mains/main_tests.c ${SOURCES} ${TEST_SOURCES}
+        ${TEST_SOURCES}
 )
 
 set_target_properties(DtEngineTest PROPERTIES
@@ -74,105 +81,95 @@ set_target_properties(DtEngineTest PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
 )
 
-set_target_properties(GameLibStatic PROPERTIES
-        OUTPUT_NAME "GameLib"
-        ARCHIVE_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
-        LIBRARY_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
-        RUNTIME_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
-        CLEAN_DIRECT_OUTPUT 1
-)
+add_library(GameLibStatic STATIC ${GAME_SOURCES})
+add_library(GameLibShared SHARED ${GAME_SOURCES})
+target_compile_definitions(GameLibShared PRIVATE -DEDITOR)
 
-add_library(GameLibShared SHARED ${SOURCES})
-
-set_target_properties(GameLibShared PROPERTIES
-        OUTPUT_NAME "GameLib"
-        ARCHIVE_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
-        LIBRARY_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
-        RUNTIME_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
-        RUNTIME_OUTPUT_NAME "GameLib"
-        VERSION "1.0.0"
-)
+if (WIN32)
+    set_target_properties(GameLibStatic PROPERTIES
+            OUTPUT_NAME "GameLibStatic"
+            ARCHIVE_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
+    )
+    set_target_properties(GameLibShared PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
+            ARCHIVE_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
+    )
+    target_compile_definitions(GameLibShared PRIVATE -DGAMELIB_EXPORTS)
+else ()
+    set_target_properties(GameLibStatic PROPERTIES
+            OUTPUT_NAME "GameLib"
+            ARCHIVE_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
+    )
+    set_target_properties(GameLibShared PROPERTIES
+            OUTPUT_NAME "GameLib"
+            LIBRARY_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
+            VERSION "1.0.0"
+            SOVERSION "1"
+    )
+endif ()
 
 add_executable(Editor
-        mains/main_editor.c ${SOURCES}
+        Editor/main_editor.c
+        ${EDITOR_SOURCES}
 )
+
+set_target_properties(Editor PROPERTIES
+        OUTPUT_NAME "Editor"
+        RUNTIME_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
+)
+
+add_library(EditorLib
+        STATIC
+        ${EDITOR_SOURCES}
+)
+
+if (WIN32)
+    set_target_properties(EditorLib PROPERTIES
+            OUTPUT_NAME "EditorLibStatic"
+            ARCHIVE_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
+    )
+else ()
+    set_target_properties(EditorLib PROPERTIES
+            OUTPUT_NAME "EditorLib"
+            ARCHIVE_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
+    )
+endif ()
 
 add_executable(Game
-        mains/main_game.c ${SOURCES}
+        Game/main_game.c
+        ${GAME_SOURCES}
 )
 
-# ============ Подключаем заголовки ============
-target_include_directories(Double_Trouble PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${RAYLIB_INCLUDE_DIR}
+set_target_properties(Game PROPERTIES
+        OUTPUT_NAME "Game"
+        RUNTIME_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
 )
 
-target_include_directories(Double_Trouble_Tests PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${RAYLIB_INCLUDE_DIR}
+# ============ Include директории ============
+foreach (TARGET DtEngine DtEngineTest GameLibStatic GameLibShared Editor Game)
+    target_include_directories(${TARGET} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/Core"
+    )
+endforeach ()
+
+foreach (TARGET GameLibShared Editor)
+    target_include_directories(${TARGET} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/Editor"
+    )
+endforeach ()
+
+target_include_directories(Game PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/Game"
 )
 
-if (EXISTS ${RAYLIB_LIB_FILE})
-    message(STATUS "Linking with: ${RAYLIB_LIB_FILE}")
-    target_link_libraries(Double_Trouble ${RAYLIB_LIB_FILE})
-else ()
-    message(WARNING "Raylib library not found: ${RAYLIB_LIB_FILE}")
-    find_library(RAYLIB_LIB ${RAYLIB_LIB_NAME} PATHS ${RAYLIB_LIB_DIR})
-    if (RAYLIB_LIB)
-        message(STATUS "Found library: ${RAYLIB_LIB}")
-        target_link_libraries(Double_Trouble ${RAYLIB_LIB})
-    else ()
-        message(FATAL_ERROR "Cannot find Raylib library!")
-    endif ()
-endif ()
-
-if (EXISTS ${RAYLIB_LIB_FILE})
-    message(STATUS "Linking with: ${RAYLIB_LIB_FILE}")
-    target_link_libraries(Double_Trouble_Tests ${RAYLIB_LIB_FILE})
-else ()
-    message(WARNING "Raylib library not found: ${RAYLIB_LIB_FILE}")
-    find_library(RAYLIB_LIB ${RAYLIB_LIB_NAME} PATHS ${RAYLIB_LIB_DIR})
-    if (RAYLIB_LIB)
-        message(STATUS "Found library: ${RAYLIB_LIB}")
-        target_link_libraries(Double_Trouble_Tests ${RAYLIB_LIB})
-    else ()
-        message(FATAL_ERROR "Cannot find Raylib library!")
-    endif ()
-endif ()
-
-# ============ Системные библиотеки для Windows ============
-if (WIN32)
-    target_link_libraries(Double_Trouble_Tests
-            opengl32 # OpenGL
-            gdi32 # GDI для рисования
-            winmm # Windows Multimedia (таймеры, звук)
-            m # Math library (может понадобиться)
-    )
-    # target_link_options(Double_Trouble PRIVATE -mwindows)
-endif ()
-
-if (LINUX)
-    target_link_libraries(Double_Trouble_Tests
-            raylib
-            GL X11 Xrandr Xi Xxf86vm Xcursor Xinerama
-            asound m pthread dl rt
-    )
-endif ()
-
-if (WIN32)
-    target_link_libraries(Double_Trouble_Tests
-            opengl32 # OpenGL
-            gdi32 # GDI для рисования
-            winmm # Windows Multimedia (таймеры, звук)
-            m # Math library (может понадобиться)
-    )
-    # target_link_options(Double_Trouble PRIVATE -mwindows)
-endif ()
-
-if (LINUX)
-    target_link_libraries(Double_Trouble_Tests
-            raylib
-            GL X11 Xrandr Xi Xxf86vm Xcursor Xinerama
-            asound m pthread dl rt
-    )
-endif ()
+# ============ Линковка зависимостей ============
+foreach (TARGET DtEngineTest GameLibStatic GameLibShared)
+    target_link_libraries(${TARGET} PUBLIC
+            -Wl,--whole-archive
+            DtEngine
+            -Wl,--no-whole-archive
+)
+endforeach ()
+target_link_libraries(GameLibShared PRIVATE EditorLib)
+target_link_libraries(Game PUBLIC GameLibStatic)

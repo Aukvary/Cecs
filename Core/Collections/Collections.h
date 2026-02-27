@@ -2,6 +2,7 @@
 #define COLLECTIONS_H
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "DtNumericalTypes.h"
@@ -44,6 +45,8 @@ typedef struct {
  * @brief vector data
  */
 typedef struct {
+    int magic;
+
     size_t count;
     size_t capacity;
 
@@ -113,7 +116,14 @@ void* dt_vec_new(size_t item_size, size_t capacity);
  *
  * @param data pointer to data array
  */
-static DtVecHeader* dt_vec_header(void* data) { return &((DtVecHeader*) data)[-1]; }
+static DtVecHeader* dt_vec_header(void* data) {
+    DtVecHeader* header = &((DtVecHeader*) data)[-1];
+    if (header->magic != 'DtVc') {
+        printf("DtVecHeader magic number mismatch\n");
+        exit(1);
+    }
+    return header;
+}
 /**
  * @brief return capacity of data array
  *

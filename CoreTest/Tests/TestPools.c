@@ -36,7 +36,7 @@ void test_copy(void* dst, const void* src, size_t size);
 
 void test_pools(void) {
     printf("\n\t===test_pools===\n");
-    manager = dt_ecs_manager_new(&cfg);
+    manager = dt_ecs_manager_new(cfg);
 
     e1 = dt_ecs_manager_new_entity(manager);
     e2 = dt_ecs_manager_new_entity(manager);

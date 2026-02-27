@@ -30,4 +30,9 @@
 #define DT_CALLOC(count, size) calloc((count), (size))
 #endif
 
+#ifndef DT_FREE
+#include <malloc.h>
+#define DT_FREE(ptr) free((ptr))
+#endif
+
 #endif

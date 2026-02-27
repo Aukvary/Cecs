@@ -28,7 +28,7 @@ static void test_parent_children_relations_3(void);
 void test_parent_children_relations(void) {
     printf("\n\t===test_parent_children_relations===\n");
 
-    manager = dt_ecs_manager_new(&cfg);
+    manager = dt_ecs_manager_new(cfg);
 
     printf("\n\t\t===test 1 start===\n");
     test_parent_children_relations_1();
