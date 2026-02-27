@@ -5,14 +5,6 @@
 #include "Ecs/DtEcs.h"
 #include "Ecs/RegisterHandler.h"
 
-
-
-#ifdef STATIC_LINK
-
-#else
-
-#endif
-
 //TODO: comments
 typedef struct {
     char* name;
@@ -29,8 +21,10 @@ typedef struct {
     DrawHandler* draw_handler;
 } DtScene;
 
-//TODO:comment
-DtScene* dt_scene;
+typedef struct {
+    DtScene* active_scene;
+} DtScheduler;
+
 //TODO: comments
 const DtScene* dt_scenes_get_active(void);
 //TODO: comments
@@ -43,18 +37,5 @@ void dt_scene_load_by_id(int idx);
 void dt_scene_unload_by_id(int idx);
 //TODO: comments
 bool dt_scenes_scene_is_load(int idx);
-//TODO: comments
-void dt_add_all_scenes(void);
-//TODO: comments
-DtScene dt_add_extension_scene(void );
-
-//TODO: comments
-void dt_serialize_prefab(DtEntityInfo* info, const char* path);
-//TODO: comments
-DtEntityInfo dt_deserialize_entity_from_prefab(const char* path);
-//TODO: comments
-void dt_serialize_game_object(DtEntityInfo* info, const char* path);
-//TODO: comments
-DtEntityInfo dt_deserialize_entity_from_game_object(const char* path);
 
 #endif /*DT_GAME_SCHEDULER_H*/
