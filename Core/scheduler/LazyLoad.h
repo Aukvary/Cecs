@@ -12,8 +12,11 @@ struct ModuleInfo {
     const DtDrawData* drawers;
 
     void (*initialize)(DtScheduler* scheduler);
-    void (*destroy)(DtScheduler* scheduler);
+    void (*deinitialize)(DtScheduler* scheduler);
 };
+
+void dt_module_initialize(DtScheduler* scheduler);
+void dt_module_deinitialize(DtScheduler* scheduler);
 
 //TODO: add comment
 ModuleInfo* dt_load_module(const char* path);
