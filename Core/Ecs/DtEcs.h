@@ -7,7 +7,6 @@
 
 #include <DtNumericalTypes.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include "Collections/Collections.h"
 
 /*=============================================================================
@@ -40,29 +39,39 @@ typedef void (*DtCopyItemHandler)(void* dst, const void* src, size_t size);
  * @brief Основной обработчик ECS
  */
 typedef struct DtEcsManager DtEcsManager;
+// TODO: comments
 typedef struct DtEcsFilter DtEcsFilter;
 
 /**
  * @brief Информация о сущности
  */
-typedef struct DtEntityInfo {
+typedef struct {
     DtEcsManager* manager;
 
     DtEntity id;
     u16* components;
-    int component_size;
-    int component_count;
+    u16 component_size;
+    u16 component_count;
 
     DtEntity parent;
     DtEntity* children;
-    int children_size;
-    int base_children_size;
-    int children_count;
+    u16 children_size;
+    u16 base_children_size;
+    u16 children_count;
     DtIterator children_iterator;
     u16 children_iterator_ptr;
 
-    int gen;
+    u16 gen;
 } DtEntityInfo;
+
+typedef struct DtRawEntity {
+    u16* components;
+    u16 component_count;
+
+    struct DtRawEntity* parent;
+    struct DtRawEntity* children;
+    u16 children_count;
+} DtRawEntity;
 
 /*=============================================================================
  *                             Макросы для сущностей
@@ -248,7 +257,6 @@ DtEcsPool* dt_component_pool_new(const DtEcsManager* manager, const char* name, 
 DtEcsPool* dt_tag_pool_new(const DtEcsManager* manager, const char* name);
 
 void dt_ecs_pool_add(DtEcsPool* pool, DtEntity entity, const void* data);
-DtComponentPool* dt_ecs_pool_cast_to_component_pool(DtEcsPool* pool); // TODO: реализовать
 void* dt_ecs_pool_get(const DtEcsPool* pool, DtEntity entity);
 int dt_ecs_pool_has(const DtEcsPool* pool, DtEntity entity);
 void dt_ecs_pool_reset(DtEcsPool* pool, DtEntity entity);
@@ -381,6 +389,8 @@ DtEcsManager* dt_ecs_manager_new(DtEcsManagerConfig cfg);
 DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager);
 DtEntity dt_ecs_manager_new_entity_from(DtEcsManager* manager,
                                         DtEntityInfo info); // TODO: implement
+DtEntity dt_ecs_manager_new_entity_from_prefab(DtEcsManager* manager,
+                                               DtRawEntity entity); // TODO: implement
 DtEntityInfo dt_ecs_manager_get_entity(const DtEcsManager* manager, DtEntity entity);
 DtEntityInfo dt_ecs_manager_get_parent(const DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_set_parent(const DtEcsManager* manager, DtEntity child, DtEntity parent);

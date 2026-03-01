@@ -1,30 +1,33 @@
 #ifndef LAZY_LOAD_H
 #define LAZY_LOAD_H
-#include "DtGameScheduler.h"
+#include "DtScheduler.h"
 #include "Ecs/RegisterHandler.h"
 
 //TODO: add comment
-typedef struct {
+struct ModuleInfo {
     char* name;
-    void (*init)(void);
+
     const DtComponentData* components;
     const DtUpdateData* updaters;
     const DtDrawData* drawers;
-} ModuleInfo;
+
+    void (*initialize)(DtScheduler* scheduler);
+    void (*destroy)(DtScheduler* scheduler);
+};
 
 //TODO: add comment
-ModuleInfo* dt_load_module(const char* directory);
+ModuleInfo* dt_load_module(const char* path);
 //TODO: add comment
 void dt_unload_module(void* module);
 
 
 //TODO: comments
-void dt_add_all_scenes(const char* directory);
+void dt_add_scenes(const char* directory);
 //TODO: comments
-DtScene dt_add_extension_scene(void);
+void dt_add_scene(const char* path);
 
 
 //TODO: comments
-DtEntityInfo dt_load_prefab(const char* path);
+DtRawEntity* dt_load_prefab(const char* path);
 
 #endif /*LAZY_LOAD_H*/

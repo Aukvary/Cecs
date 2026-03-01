@@ -41,7 +41,7 @@ set(CORE_SOURCES
         Core/Ecs/UpdateHandler.c
         Core/Ecs/UpdateRegister.c
         Core/Ecs/DrawHandler.c
-#        Core/scheduler/SceneLoader.c
+        Core/scheduler/SceneLoader.c
         Core/Collections/RbTree.c
 )
 
