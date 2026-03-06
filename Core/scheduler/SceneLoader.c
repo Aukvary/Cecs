@@ -14,13 +14,12 @@
 
 #define SCENE_EXTENSION ".dt.scene"
 
-static DtRbTree scenes;
 static DtScene* dt_scene_parse(const char* path, DtEnvironment* env);
 static void dt_scene_parse_ecs_manager(cJSON* json_cfg, DtScene* scene);
 static void dt_scene_parse_update_systems(cJSON* systems, DtScene* scene);
 static void dt_scene_parse_draw_systems(cJSON* systems, DtScene* scene);
 static void dt_scene_parse_entities(cJSON* entities, DtScene* scene);
-static void dt_component_parse(cJSON* component, DtComponentData* data, void* field_data);
+static void dt_component_parse(cJSON* component, const DtComponentData* data, void* field_data);
 
 static u64 get_scene_hash(const char* name) {
     int hash = 2147483647;
@@ -58,17 +57,17 @@ void dt_add_scene(const char* path) {
     char* ext = strchr(path, '.');
 
     size_t len = strlen(file_name) - strlen(ext);
-    char* name = DT_MALLOC(len + 1);
-    strncpy(name, file_name, len);
 
     DtScene* scene = dt_scene_parse(path, env);
-    if (scene == NULL) {
+    if (!scene) {
         fprintf(stderr, "[DEBUG]Failed to parse scene: %s\n", path);
-        DT_FREE(name);
         return;
     }
 
-    scene->name = file_name;
+    char* name = DT_MALLOC(len + 1);
+    strncpy(name, file_name, len);
+
+    scene->name = name;
 
     dt_rb_tree_add(&env->scenes, scene, get_scene_hash(path));
 #else
@@ -121,6 +120,11 @@ static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
     }
 
     DtScene* scene = DT_MALLOC(sizeof(DtScene));
+
+    if (scene == NULL) {
+        // TODO: add handle
+        return NULL;
+    }
 
     *scene = (DtScene) {
         .environment = env,
@@ -253,7 +257,6 @@ static void dt_scene_parse_draw_systems(cJSON* systems, DtScene* scene) {
 static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
     u16 count = cJSON_GetArraySize(entities);
     scene->entities = DT_CALLOC(count, sizeof(DtRawEntity));
-    u16 i = 0;
     cJSON* json_entity = NULL;
     cJSON_ArrayForEach(json_entity, entities) {
         cJSON* components = cJSON_GetObjectItem(json_entity, "components");
@@ -267,29 +270,22 @@ static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
             } else {
                 char* name = cJSON_GetStringValue(cJSON_GetObjectItem(component, "name"));
                 cJSON* values = cJSON_GetObjectItem(component, "values");
-                DtComponentData* data = dt_component_get_data_by_name(name);
+                const DtComponentData* data = dt_component_get_data_by_name(name);
+                void* instance = DT_STACK_ALLOC(data->component_size);
+
                 cJSON* value = NULL;
-                cJSON_ArrayForEach(value, values) { dt_component_parse(value, data); }
+                cJSON_ArrayForEach(value, values) { dt_component_parse(value, data, instance); }
             }
         }
     }
 }
 
-static void dt_component_parse(cJSON* component, DtComponentData* data, void* field_data) {
+static void dt_component_parse(cJSON* component, const DtComponentData* data, void* field_data) {
     const char* field_name = component->string;
     i32 i = dt_component_get_field_index(data, field_name);
-    if (i == -1) return;
+    if (i == -1)
+        return;
+
     u16 offset = data->field_offsets[i];
     char* type = data->field_types[i];
-
-    if (cJSON_IsNumber(component)) {
-
-    } else if (cJSON_IsString(component)) {
-
-    } else if (cJSON_IsBool(component)) {
-
-    } else if (cJSON_IsArray(component)) {
-
-    } else if (cJSON_IsNull(component)) {
-    }
 }

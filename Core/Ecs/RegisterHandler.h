@@ -146,7 +146,7 @@ const DtComponentData* dt_component_get_data_by_id(u16 id);
  */
 const DtComponentData* dt_component_get_data_by_name(const char* name);
 
-i32 dt_component_get_field_index(DtComponentData* data, const char* name);
+i32 dt_component_get_field_index(const DtComponentData* data, const char* name);
 
 // TODO: comments
 const DtComponentData** dt_component_get_all(u16* size);

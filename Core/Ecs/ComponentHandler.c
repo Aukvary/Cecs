@@ -96,7 +96,7 @@ const DtComponentData* dt_component_get_data_by_name(const char* name) {
     return NULL;
 }
 
-i32 dt_component_get_field_index(DtComponentData* data, const char* name) {
+i32 dt_component_get_field_index(const DtComponentData* data, const char* name) {
     for (u16 i = 0; i < data->field_count; i++) {
         if (strcmp(data->field_names[i], name) != 0) continue;
         return i;
