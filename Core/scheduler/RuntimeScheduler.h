@@ -62,11 +62,9 @@ void dt_add_scene(const char* path);
 // TODO: comments
 const DtScene* dt_scenes_get_active(void);
 // TODO: comments
-const DtScene* dt_scenes_set_active(const char* name, bool unload);
+DtScene* dt_scenes_set_active(const char* name);
 // TODO: comments
-void dt_scene_load_by_id(const char* name);
-// TODO: comments
-void dt_scene_unload_by_id(const char* name);
+void dt_scene_unload(const char* name);
 // TODO: comments
 bool dt_scenes_scene_is_loaded(const char* name);
 

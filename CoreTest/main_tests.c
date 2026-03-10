@@ -8,5 +8,7 @@ int main() {
     test_filter();
     test_component_register();
     test_systems_register();
+    test_scene_parse();
+
     return 0;
 }

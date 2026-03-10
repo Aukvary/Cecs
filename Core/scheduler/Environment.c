@@ -96,3 +96,14 @@ void dt_module_unload(DtEnvironment* env, ModuleInfo* info) {
     dt_rb_tree_remove(&env->modules, get_hash(info->name));
     DT_LIB_CLOSE(info->handle);
 }
+
+const DtScene* dt_scenes_get_active(void) {
+    return environment.active_scene;
+}
+
+DtScene* dt_scenes_set_active(const char* name) {
+    DtScene* scene = environment.active_scene;
+    u64 hash = get_hash(name);
+    environment.active_scene = dt_rb_tree_get(&environment.scenes, hash);
+    return scene;
+}

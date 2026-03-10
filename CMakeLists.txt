@@ -58,6 +58,7 @@ set(TEST_SOURCES
         CoreTest/Tests/TestPools.c
         CoreTest/Tests/TestComponentRegister.c
         CoreTest/Tests/TestSystemsRegister.c
+        CoreTest/Tests/TestSceneParse.c
 )
 
 set(GAME_SOURCES
@@ -214,7 +215,15 @@ endif ()
 
 
 # ============ Линковка зависимостей ============
+foreach (TARGET DtEngine_Objects DtEngineTest GameLibStatic GameLibShared Editor EditorLib)
+    if (DEBUG_ENABLED)
+        target_compile_definitions(${TARGET} PRIVATE -DDEBUG)
+    endif ()
+endforeach ()
 foreach (TARGET DtEngineTest GameLibStatic GameLibShared Editor EditorLib)
+    if (DEBUG_ENABLED)
+        target_compile_definitions(${TARGET} PRIVATE -DDEBUG)
+    endif ()
     target_link_libraries(${TARGET} PRIVATE $<TARGET_OBJECTS:DtEngine_Objects>)
 endforeach ()
 target_link_libraries(GameLibShared PRIVATE EditorLib)

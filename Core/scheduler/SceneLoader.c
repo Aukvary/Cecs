@@ -45,16 +45,16 @@ void dt_add_scene(const char* path) {
         return;
     }
 
-    char* file_name = strrchr(path, '/');
+    char* file_name = strrchr(path, '/') + 1;
+    if (file_name == NULL)
+        file_name = path;
 #if defined(_WIN32) || defined(_WIN64)
     char* win_file_name = strrchr(path, '\\');
     if (win_file_name != NULL)
         file_name = win_file_name;
 #endif
 
-    char* ext = strchr(path, '.');
-
-    size_t len = strlen(file_name) - strlen(ext);
+    size_t len = strlen(file_name) - strlen(SCENE_EXTENSION);
 
     DtScene* scene = dt_scene_parse(path, env);
     if (!scene) {
@@ -63,11 +63,12 @@ void dt_add_scene(const char* path) {
     }
 
     char* name = DT_MALLOC(len + 1);
+    name[len] = '\0';
     strncpy(name, file_name, len);
 
     scene->name = name;
 
-    dt_rb_tree_add(&env->scenes, scene, get_scene_hash(path));
+    dt_rb_tree_add(&env->scenes, scene, get_scene_hash(name));
 }
 
 static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
@@ -83,26 +84,41 @@ static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
     fseek(file, 0, SEEK_SET);
 
     char* scene_info = DT_STACK_ALLOC(size + 1);
-    fgets(scene_info, size, file);
+    fread(scene_info, 1, size, file);
 
     cJSON* root = cJSON_Parse(scene_info);
     if (root == NULL) {
-        // TODO: add handle
+        fprintf(stderr, "[ERROR] file hasn't scene data%s\n", path);
+        return NULL;
     }
 
     cJSON* manager_config = cJSON_GetObjectItem(root, "manager_config");
-    cJSON* update_systems = cJSON_GetObjectItem(root, "draw_systems");
-    cJSON* draw_systems = cJSON_GetObjectItem(root, "update_systems");
-    cJSON* entities = cJSON_GetObjectItem(root, "");
+    cJSON* update_systems = cJSON_GetObjectItem(root, "update_systems");
+    cJSON* draw_systems = cJSON_GetObjectItem(root, "draw_systems");
+    cJSON* entities = cJSON_GetObjectItem(root, "entities");
 
-    if (!manager_config || !update_systems || !draw_systems || !entities) {
-        // TODO: add handle
+#ifdef DEBUG
+    if (!manager_config) {
+        fprintf(stderr, "[WARNING] file hasn't manager_config data%s\n", path);
     }
+
+    if (!update_systems) {
+        fprintf(stderr, "[WARNING] file hasn't update_systems data%s\n", path);
+    }
+
+    if (!draw_systems) {
+        fprintf(stderr, "[WARNING] file hasn't draw_systems data%s\n", path);
+    }
+
+    if (!entities) {
+        fprintf(stderr, "[WARNING] file hasn't entities data%s\n", path);
+    }
+#endif
 
     DtScene* scene = DT_MALLOC(sizeof(DtScene));
 
     if (scene == NULL) {
-        // TODO: add handle
+        fprintf(stderr, "[error] didn't manage to allocate memory for scene%s\n", path);
         return NULL;
     }
 
@@ -122,91 +138,42 @@ static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
 }
 
 static void dt_scene_parse_ecs_manager(cJSON* json_cfg, DtScene* scene) {
+    if (!json_cfg)
+        return;
+
     DtEcsManagerConfig cfg;
-    cJSON* dense_size = cJSON_GetObjectItem(json_cfg, "dense_size");
-    if (!dense_size) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"dense_size\" data");
-        cfg.dense_size = 0;
-    } else {
-        cfg.dense_size = dense_size->valueint;
-    }
 
-    cJSON* sparse_size = cJSON_GetObjectItem(json_cfg, "sparse_size");
-    if (!sparse_size) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"sparse_size\" data");
-        cfg.sparse_size = 0;
-    } else {
-        cfg.sparse_size = sparse_size->valueint;
-    }
+#define GET_JSON_INT(json, field)                                                                  \
+    ({                                                                                             \
+        cJSON* item = cJSON_GetObjectItem(json, #field);                                           \
+        if (item) {                                                                                \
+            cfg.field = (int) cJSON_GetNumberValue(item);                                          \
+        } else {                                                                                   \
+            fprintf(stderr, "[WARNING]Scene hasn't \"" #field "\" data\n");                        \
+            cfg.field = 0;                                                                         \
+        }                                                                                          \
+    })
 
-    cJSON* recycle_size = cJSON_GetObjectItem(json_cfg, "recycle_size");
-    if (!recycle_size) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"recycle_size\" data");
-        cfg.recycle_size = 0;
-    } else {
-        cfg.recycle_size = recycle_size->valueint;
-    }
+    GET_JSON_INT(json_cfg, dense_size);
+    GET_JSON_INT(json_cfg, sparse_size);
+    GET_JSON_INT(json_cfg, recycle_size);
+    GET_JSON_INT(json_cfg, children_size);
+    GET_JSON_INT(json_cfg, components_count);
+    GET_JSON_INT(json_cfg, pools_size);
+    GET_JSON_INT(json_cfg, include_mask_count);
+    GET_JSON_INT(json_cfg, exclude_mask_count);
+    GET_JSON_INT(json_cfg, filters_size);
+    GET_JSON_INT(json_cfg, masks_size);
 
-    cJSON* children_size = cJSON_GetObjectItem(json_cfg, "children_size");
-    if (!children_size) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"children_size\" data");
-        cfg.children_size = 0;
-    } else {
-        cfg.children_size = children_size->valueint;
-    }
-
-    cJSON* component_count = cJSON_GetObjectItem(json_cfg, "component_count");
-    if (!component_count) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"component_count\" data");
-        cfg.components_count = 0;
-    } else {
-        cfg.components_count = component_count->valueint;
-    }
-
-    cJSON* pools_size = cJSON_GetObjectItem(json_cfg, "pools_size");
-    if (!pools_size) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"pools_size\" data");
-        cfg.pools_size = 0;
-    } else {
-        cfg.pools_size = pools_size->valueint;
-    }
-
-    cJSON* include_mask_count = cJSON_GetObjectItem(json_cfg, "include_mask_count");
-    if (!include_mask_count) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"include_mask_count\" data");
-        cfg.include_mask_count = 0;
-    } else {
-        cfg.include_mask_count = include_mask_count->valueint;
-    }
-
-    cJSON* exclude_mask_count = cJSON_GetObjectItem(json_cfg, "exclude_mask_count");
-    if (!exclude_mask_count) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"exclude_mask_count\" data");
-        cfg.exclude_mask_count = 0;
-    } else {
-        cfg.exclude_mask_count = exclude_mask_count->valueint;
-    }
-
-    cJSON* filters_size = cJSON_GetObjectItem(json_cfg, "filters_size");
-    if (!filters_size) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"filters_size\" data");
-        cfg.filters_size = 0;
-    } else {
-        cfg.filters_size = filters_size->valueint;
-    }
-
-    cJSON* masks_size = cJSON_GetObjectItem(json_cfg, "masks_size");
-    if (!masks_size) {
-        fprintf(stderr, "[DEBUG]Scene hasn't \"masks_size\" data");
-        cfg.masks_size = 0;
-    } else {
-        cfg.masks_size = masks_size->valueint;
-    }
+#undef GET_JSON_INT
 
     scene->manager = dt_ecs_manager_new(cfg);
 }
 
 static void dt_scene_parse_update_systems(cJSON* systems, DtScene* scene) {
+    if (!systems)
+        return;
+
     u16 count = cJSON_GetArraySize(systems);
 
     scene->update_handler = dt_update_handler_new(scene->manager, count);
@@ -215,12 +182,15 @@ static void dt_scene_parse_update_systems(cJSON* systems, DtScene* scene) {
         const DtUpdateData* data = NULL;
         const char* name = cJSON_GetStringValue(system);
         if ((data = dt_update_get_data_by_name(name))) {
-            dt_update_handler_add(scene->update_handler, data->new());
+            UpdateSystem* s = data->new();
+            dt_update_handler_add(scene->update_handler, s);
         }
     }
 }
 
 static void dt_scene_parse_draw_systems(cJSON* systems, DtScene* scene) {
+    if (!systems)
+        return;
     u16 count = cJSON_GetArraySize(systems);
 
     scene->draw_handler = dt_draw_handler_new(scene->manager, count);
@@ -235,6 +205,8 @@ static void dt_scene_parse_draw_systems(cJSON* systems, DtScene* scene) {
 }
 
 static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
+    if (!entities)
+        return;
     const u16 count = cJSON_GetArraySize(entities);
     scene->entities = DT_CALLOC(count, sizeof(DtRawEntity));
     const cJSON* json_entity = NULL;
@@ -246,7 +218,7 @@ static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
         cJSON_ArrayForEach(component, components) {
             if (cJSON_IsString(component)) {
                 dt_ecs_manager_entity_add_component(scene->manager, entity,
-                                                            cJSON_GetStringValue(component), NULL);
+                                                    cJSON_GetStringValue(component), NULL);
             } else {
                 const char* name = cJSON_GetStringValue(cJSON_GetObjectItem(component, "name"));
                 const cJSON* values = cJSON_GetObjectItem(component, "values");
@@ -264,10 +236,18 @@ static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
                     const char* type = data->field_types[i];
 
                     dt_parse_type(type, value, (u8*) instance + offset);
-                    dt_ecs_manager_entity_add_component(
-                        scene->manager, entity, cJSON_GetStringValue(component), instance);
+                    dt_ecs_manager_entity_add_component(scene->manager, entity, name, instance);
                 }
             }
         }
+    }
+
+    json_entity = NULL;
+    cJSON_ArrayForEach(json_entity, entities) {
+        const cJSON* parent = cJSON_GetObjectItem(json_entity, "parent");
+        if (!parent)
+            continue;
+        dt_ecs_manager_set_parent(scene->manager, (u16)atoi(json_entity->string),
+                                  (u16) cJSON_GetNumberValue(parent));
     }
 }

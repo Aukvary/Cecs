@@ -11,6 +11,7 @@ static void parse_long(cJSON* src, void* dst);
 static void parse_unsigned_long(cJSON* src, void* dst);
 static void parse_long_long(cJSON* src, void* dst);
 static void parse_unsigned_long_long(cJSON* src, void* dst);
+static void parse_char_ptr(cJSON* src, void* dst);
 
 static u64 get_hash(const char* name) {
     int hash = 2147483647;
@@ -31,6 +32,7 @@ __attribute__((constructor)) static void dt_parser_initialize(void) {
     dt_add_type_parser("unsigned long", parse_unsigned_long);
     dt_add_type_parser("long long", parse_long_long);
     dt_add_type_parser("unsigned long long", parse_unsigned_long_long);
+    dt_add_type_parser("char*", parse_char_ptr);
 }
 
 void dt_add_type_parser(const char* type, const TypeParser parser) {
@@ -105,5 +107,12 @@ static void parse_unsigned_long_long(cJSON* src, void* dst) {
     if (cJSON_IsNumber(src)) {
         unsigned long long num = (unsigned long long)cJSON_GetNumberValue(src);
         memcpy(dst, &num, sizeof(unsigned long long));
+    }
+}
+
+static void parse_char_ptr(cJSON* src, void* dst) {
+    if (cJSON_IsString(src)) {
+        const char* str = cJSON_GetStringValue(src);
+        memcpy(dst, &str, sizeof(char*));
     }
 }
