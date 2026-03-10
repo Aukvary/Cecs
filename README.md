@@ -8,8 +8,8 @@
 - Сборка: CMake
 - Зависимостии:
   - [RayLib](https://github.com/raysan5/raylib) - для графики
-  - [Nuklear](https://github.com/Immediate-Mode-UI/Nuklear) - для отладки и редактора
-  - [Nurlear-RayLib](https://github.com/RobLoach/raylib-nuklear) - биндинги для использования Nurlear в RayLib
+  - [Nuklear](https://github.com/Immediate-Mode-UI/Nuklear) - для отладки 
+  - [Nurlear-RayLib](https://github.com/RobLoach/raylib-nuklear) - биндинги для использования Nurlear c RayLib
   - [cJSON](https://github.com/DaveGamble/cJSON) - для парсинга json'ов
 
 # Особенности
