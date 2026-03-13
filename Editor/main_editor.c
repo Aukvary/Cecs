@@ -2,15 +2,20 @@
 #include "raylib-nuklear.h"
 #include "raylib.h"
 #include "scheduler/RuntimeScheduler.h"
+#include "GameLibLink/GameLib.h"
 
 #define MAIN_SCENE_PATH "./editor_main_scene.dt.scene"
-
 #define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 800
+
+const DtScene* main_scene;
+DtUpdateContext update_ctx = (DtUpdateContext) {
+    .delta_time = 0.2f,
+    .fixed_delta_time = 0.2f,
+};
+
 struct nk_context* ctx;
 struct nk_colorf bg;
-
-const DtScene* scene;
 
 static void initialize_main_scene();
 static void initialize_window();
@@ -19,20 +24,29 @@ static void deinitialize_ecs_manager();
 static void deinitialize_window();
 
 int main(void) {
-    initialize_main_scene();
+    // initialize_main_scene();
+    load_game_lib();
     initialize_window();
 
     while (!WindowShouldClose()) {
-
+        // dt_update_handler_update(main_scene->update_handler, &update_ctx);
+        // dt_draw_handler_draw(main_scene->draw_handler);
     }
-    UnloadNuklear(ctx);
-    CloseWindow();
+
+    // deinitialize_ecs_manager();
+    deinitialize_window();
 
     return 0;
 }
 
 static void initialize_main_scene() {
+    main_scene = dt_add_scene(MAIN_SCENE_PATH);
+    dt_scenes_set_active_by(main_scene);
+    dt_update_handler_init(main_scene->update_handler);
+}
 
+static void deinitialize_ecs_manager() {
+    dt_scene_unload_by(main_scene);
 }
 
 static void initialize_window() {
@@ -48,4 +62,9 @@ static void initialize_window() {
         0.24f,
         1.0f,
     };
+}
+
+static void deinitialize_window() {
+    UnloadNuklear(ctx);
+    CloseWindow();
 }

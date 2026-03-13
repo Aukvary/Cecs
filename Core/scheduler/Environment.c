@@ -35,13 +35,13 @@ DtEnvironment* dt_environment_instance(void) { return &environment; }
 ModuleInfo* dt_module_load(DtEnvironment* env, const char* path) {
     DT_LIB_HANDLE lib = DT_LIB_LOAD(path);
     if (!lib) {
-        fprintf(stderr, "[DEBUG]library hasn't loaded: %s\n", path);
+        fprintf(stderr, "[DEBUG] library hasn't loaded: %s\n", path);
         return NULL;
     }
 
     char* module_name = *(char**) DT_LIB_GET(lib, "dt_module_name");
     if (!module_name) {
-        fprintf(stderr, "[DEBUG]library hasn't module name\n");
+        fprintf(stderr, "[DEBUG] library hasn't module name\n");
         return NULL;
     }
 
@@ -49,7 +49,7 @@ ModuleInfo* dt_module_load(DtEnvironment* env, const char* path) {
 
     ModuleInfo* module;
     if ((module = dt_rb_tree_get(&env->modules, hash))) {
-        fprintf(stderr, "[DEBUG]module already loaded: %s\n", module_name);
+        fprintf(stderr, "[DEBUG] module already loaded: %s\n", module_name);
         return module;
     }
 
@@ -81,12 +81,12 @@ ModuleInfo* dt_module_load(DtEnvironment* env, const char* path) {
 
 void dt_module_unload(DtEnvironment* env, ModuleInfo* info) {
     if (!info) {
-        fprintf(stderr, "[DEBUG]module was NULL\n");
+        fprintf(stderr, "[DEBUG] module was NULL\n");
         return;
     }
 
     if (dt_rb_tree_get(&env->modules, get_hash(info->name)) == NULL) {
-        fprintf(stderr, "[DEBUG]module hasn't loaded: %s\n", info->name);
+        fprintf(stderr, "[DEBUG] module hasn't loaded: %s\n", info->name);
         return;
     }
 
@@ -97,13 +97,25 @@ void dt_module_unload(DtEnvironment* env, ModuleInfo* info) {
     DT_LIB_CLOSE(info->handle);
 }
 
-const DtScene* dt_scenes_get_active(void) {
-    return environment.active_scene;
+const DtScene* dt_scenes_get_active(void) { return environment.active_scene; }
+
+const DtScene* dt_scenes_set_active(const char* name) {
+    const DtScene* scene = environment.active_scene;
+    const u64 hash = get_hash(name);
+    DtScene* new_scene = dt_rb_tree_get(&environment.scenes, hash);
+
+    if (!new_scene)
+        return NULL;
+
+    environment.active_scene = new_scene;
+    return scene;
 }
 
-DtScene* dt_scenes_set_active(const char* name) {
-    DtScene* scene = environment.active_scene;
-    u64 hash = get_hash(name);
-    environment.active_scene = dt_rb_tree_get(&environment.scenes, hash);
-    return scene;
+const DtScene* dt_scenes_set_active_by(const DtScene* scene) {
+    if (!scene)
+        return NULL;
+
+    const DtScene* prev_scene = environment.active_scene;
+    environment.active_scene = scene;
+    return prev_scene;
 }

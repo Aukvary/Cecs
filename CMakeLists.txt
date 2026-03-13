@@ -47,7 +47,6 @@ set(CORE_SOURCES
         Core/Collections/RbTree.c
         Core/scheduler/Environment.c
         Core/scheduler/TypeParse.c
-        Core/Components/Components.h
 )
 
 set(TEST_SOURCES
@@ -72,8 +71,8 @@ set(GAME_SOURCES
 )
 
 set(EDITOR_SOURCES
-        Editor/DeleteMe.c
         Editor/UI/user_interface.c
+        Editor/GameLibLink/GameLibLoader.c
 )
 
 add_library(DtEngine_Objects OBJECT ${CORE_SOURCES})
@@ -174,7 +173,7 @@ set_target_properties(Game PROPERTIES
 )
 
 # ============ Include директории ============
-foreach (TARGET DtEngine_Objects DtEngineTestModule DtEngine DtEngineTest GameLibStatic GameLibShared Editor Game)
+foreach (TARGET DtEngine_Objects DtEngineTestModule DtEngine DtEngineTest GameLibStatic GameLibShared Editor EditorLib Game)
     target_include_directories(${TARGET} PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/Core"
     )

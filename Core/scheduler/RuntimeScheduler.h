@@ -47,9 +47,6 @@ typedef struct {
     DtEnvironment* environment;
     char* name;
 
-    DtRawEntity* entities;
-    u16 entities_count;
-
     DtEcsManager* manager;
     UpdateHandler* update_handler;
     DrawHandler* draw_handler;
@@ -58,13 +55,17 @@ typedef struct {
 // TODO: comments
 void dt_add_scenes(const char* directory);
 // TODO: comments
-void dt_add_scene(const char* path);
+const DtScene* dt_add_scene(const char* path);
 // TODO: comments
 const DtScene* dt_scenes_get_active(void);
 // TODO: comments
-DtScene* dt_scenes_set_active(const char* name);
+const DtScene* dt_scenes_set_active(const char* name);
+// TODO: comments
+const DtScene* dt_scenes_set_active_by(const DtScene* scene);
 // TODO: comments
 void dt_scene_unload(const char* name);
+// TODO: comments
+void dt_scene_unload_by(const DtScene* scene);
 // TODO: comments
 bool dt_scenes_scene_is_loaded(const char* name);
 
@@ -81,7 +82,7 @@ typedef struct {
 } ModuleInfo;
 
 struct DtEnvironment {
-    DtScene* active_scene;
+    const DtScene* active_scene;
     DtRbTree modules;
     DtRbTree scenes;
 

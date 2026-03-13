@@ -38,11 +38,11 @@ static int is_scene(const char* filename) {
     return strcmp(filename + len_filename - len_ext, SCENE_EXTENSION) == 0;
 }
 
-void dt_add_scene(const char* path) {
+const DtScene* dt_add_scene(const char* path) {
     DtEnvironment* env = dt_environment_instance();
     if (!is_scene(path)) {
-        fprintf(stderr, "[DEBUG]File is not a scene or doesn't exist: %s\n", path);
-        return;
+        fprintf(stderr, "[DEBUG] File is not a scene or doesn't exist: %s\n", path);
+        return NULL;
     }
 
     char* file_name = strrchr(path, '/') + 1;
@@ -58,8 +58,8 @@ void dt_add_scene(const char* path) {
 
     DtScene* scene = dt_scene_parse(path, env);
     if (!scene) {
-        fprintf(stderr, "[DEBUG]Failed to parse scene: %s\n", path);
-        return;
+        fprintf(stderr, "[DEBUG] Failed to parse scene: %s\n", path);
+        return NULL;
     }
 
     char* name = DT_MALLOC(len + 1);
@@ -69,6 +69,8 @@ void dt_add_scene(const char* path) {
     scene->name = name;
 
     dt_rb_tree_add(&env->scenes, scene, get_scene_hash(name));
+
+    return scene;
 }
 
 static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
@@ -76,6 +78,7 @@ static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
 
     if (file == NULL) {
         fprintf(stderr, "[ERROR] Could not open file %s\n", path);
+        return NULL;
     }
 
     fseek(file, 0, SEEK_END);
@@ -149,7 +152,7 @@ static void dt_scene_parse_ecs_manager(cJSON* json_cfg, DtScene* scene) {
         if (item) {                                                                                \
             cfg.field = (int) cJSON_GetNumberValue(item);                                          \
         } else {                                                                                   \
-            fprintf(stderr, "[WARNING]Scene hasn't \"" #field "\" data\n");                        \
+            fprintf(stderr, "[WARNING] Scene hasn't \"" #field "\" data\n");                        \
             cfg.field = 0;                                                                         \
         }                                                                                          \
     })
@@ -208,7 +211,6 @@ static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
     if (!entities)
         return;
     const u16 count = cJSON_GetArraySize(entities);
-    scene->entities = DT_CALLOC(count, sizeof(DtRawEntity));
     const cJSON* json_entity = NULL;
     cJSON_ArrayForEach(json_entity, entities) {
         const cJSON* components = cJSON_GetObjectItem(json_entity, "components");
@@ -247,7 +249,24 @@ static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
         const cJSON* parent = cJSON_GetObjectItem(json_entity, "parent");
         if (!parent)
             continue;
-        dt_ecs_manager_set_parent(scene->manager, (u16)atoi(json_entity->string),
+        dt_ecs_manager_set_parent(scene->manager, (u16) atoi(json_entity->string),
                                   (u16) cJSON_GetNumberValue(parent));
     }
+}
+
+void dt_scene_unload_by(const DtScene* scene) {
+    if (!scene)
+        return;
+
+    dt_rb_tree_remove(&dt_environment_instance()->scenes, get_scene_hash(scene->name));
+
+    DT_FREE(scene->name);
+
+    dt_ecs_manager_free(scene->manager);
+
+    dt_update_handler_destroy(scene->update_handler);
+    dt_update_handler_free(scene->update_handler);
+
+    dt_draw_handler_destroy(scene->draw_handler);
+    dt_draw_handler_free(scene->draw_handler);
 }

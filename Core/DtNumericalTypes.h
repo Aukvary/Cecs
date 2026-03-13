@@ -16,4 +16,15 @@ typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
 
+typedef struct {
+    f32 x;
+    f32 y;
+} DtVec2;
+
+typedef struct {
+    f32 x;
+    f32 y;
+    f32 z;
+} DtVec3;
+
 #endif
