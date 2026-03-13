@@ -90,6 +90,7 @@ add_executable(DtEngineTest
 )
 
 add_library(DtEngineTestModule SHARED ${TEST_MODULE})
+target_compile_options(DtEngineTestModule PRIVATE -fPIC)
 
 set_target_properties(DtEngineTest PROPERTIES
         OUTPUT_NAME "DtEngineTest"

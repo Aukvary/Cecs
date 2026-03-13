@@ -161,15 +161,17 @@ const DtComponentData** dt_component_get_all(u16* size);
 typedef struct {
     char* name;
     u16 id;
-
     UpdateSystem* (*new)(void);
-
-    i16 priority;
+    DtAttributeData* attributes;
+    u16 attribute_count;
 } DtUpdateData;
 
 // TODO: comments
-#define DT_REGISTER_UPDATE(system_name, new_func)                                                  \
+#define DT_REGISTER_UPDATE(system_name, new_func, ...)                                             \
     static DtUpdateData local_##system_name##_data;                                                \
+    static DtAttributeData system_name##_attrs[] = {__VA_ARGS__};                                  \
+    static u16 system_name##_attrs_count =                                                         \
+        (sizeof((DtAttributeData[]) {__VA_ARGS__}) / sizeof(DtAttributeData));                     \
                                                                                                    \
     static __attribute__((constructor(DT_ORDER_REGISTER_COUNT))) void system_name##_add_count() {  \
         dt_update_increment_count();                                                               \
@@ -179,6 +181,8 @@ typedef struct {
         local_##system_name##_data = (DtUpdateData) {                                              \
             .name = #system_name,                                                                  \
             .new = new_func,                                                                       \
+            .attributes = system_name##_attrs,                                                     \
+            .attribute_count = system_name##_attrs_count,                                          \
         };                                                                                         \
         dt_update_register(&local_##system_name##_data);                                           \
     }                                                                                              \
@@ -199,15 +203,17 @@ void dt_update_increment_count();
 typedef struct {
     char* name;
     u16 id;
-
     DrawSystem* (*new)(void);
-
-    i16 priority;
+    DtAttributeData* attributes;
+    u16 attribute_count;
 } DtDrawData;
 
 // TODO: comments
-#define DT_REGISTER_DRAW(system_name, new_func)                                                    \
+#define DT_REGISTER_DRAW(system_name, new_func, ...)                                               \
     static DtDrawData local_##system_name##_data;                                                  \
+    static DtAttributeData system_name##_attrs[] = {__VA_ARGS__};                                  \
+    static u16 system_name##_attrs_count =                                                         \
+        (sizeof((DtAttributeData[]) {__VA_ARGS__}) / sizeof(DtAttributeData));                     \
     static __attribute__((constructor(DT_ORDER_REGISTER_COUNT))) void system_name##_add_count() {  \
         dt_draw_increment_count();                                                                 \
     }                                                                                              \
@@ -216,6 +222,8 @@ typedef struct {
         local_##system_name##_data = (DtDrawData) {                                                \
             .name = #system_name,                                                                  \
             .new = new_func,                                                                       \
+            .attributes = system_name##_attrs,                                                     \
+            .attribute_count = system_name##_attrs_count,                                          \
         };                                                                                         \
         dt_draw_register(&local_##system_name##_data);                                             \
         dt_draw_increment_count();                                                                 \
