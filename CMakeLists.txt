@@ -38,7 +38,7 @@ set(CORE_SOURCES
         Core/Ecs/Systems.c
         Core/Ecs/TagPool.c
         Core/Ecs/ComponentPool.c
-        Core/Ecs/ComponentRegister.c
+        Core/Components/Components.c
         Core/Ecs/ComponentHandler.c
         Core/Ecs/UpdateHandler.c
         Core/Ecs/UpdateRegister.c
@@ -47,6 +47,7 @@ set(CORE_SOURCES
         Core/Collections/RbTree.c
         Core/scheduler/Environment.c
         Core/scheduler/TypeParse.c
+        Core/Components/Components.h
 )
 
 set(TEST_SOURCES
@@ -72,6 +73,7 @@ set(GAME_SOURCES
 
 set(EDITOR_SOURCES
         Editor/DeleteMe.c
+        Editor/UI/user_interface.c
 )
 
 add_library(DtEngine_Objects OBJECT ${CORE_SOURCES})
@@ -99,6 +101,7 @@ set_target_properties(DtEngineTest PROPERTIES
 
 set_target_properties(DtEngineTestModule PROPERTIES
         OUTPUT_NAME "ModuleTest"
+        LIBRARY_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
         RUNTIME_OUTPUT_DIRECTORY "${CORE_OUTPUT_DIR}"
 )
 
@@ -219,6 +222,7 @@ endforeach ()
 if (TARGET Editor)
     target_compile_definitions(Editor PRIVATE
             -DRAYLIB_NUKLEAR_IMPLEMENTATION
+            -DRAYLIB_NUKLEAR_INCLUDE_DEFAULT_FONT
     )
 
     target_include_directories(Editor PRIVATE

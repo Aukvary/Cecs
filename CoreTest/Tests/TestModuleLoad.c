@@ -1,6 +1,5 @@
 #include <assert.h>
-
-
+#include <string.h>
 #include "TestEcs.h"
 #include "scheduler/RuntimeScheduler.h"
 

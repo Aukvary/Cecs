@@ -1,3 +1,3 @@
-#include "BaseComponents.h"
+#include "Components.h"
 
 DT_REGISTER_TAG(HierarchyDirty)
