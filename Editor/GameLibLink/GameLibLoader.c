@@ -30,7 +30,7 @@ void load_game_lib() {
 }
 
 void reload_game_lib() {
-    DT_LIB_CLOSE(game_lib);
+    dt_module_unload(dt_environment_instance(), game_lib);
     game_lib = dt_module_load(dt_environment_instance(), DT_LIB_NAME(GAME_LIB_PATH));
     init_game_data();
 }

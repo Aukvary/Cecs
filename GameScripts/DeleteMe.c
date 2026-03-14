@@ -1,5 +1,10 @@
 #include <stdio.h>
 #include "scheduler/RuntimeScheduler.h"
+#include "GameScripts.h"
+
+DT_REGISTER_TAG(TestTag)
+DT_REGISTER_COMPONENT(GameType, GAME_TYPE)
+
 void initialize_func(DtEnvironment* game) {
     printf("initialize start\n");
 #ifdef EDITOR

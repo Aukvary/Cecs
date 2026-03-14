@@ -255,11 +255,7 @@ static DtRbNode* dt_rb_node_remove(DtRbNode** root, u64 hash) {
     return z;
 }
 
-static void dt_rb_node_remove_balance(
-    DtRbNode** root,
-    DtRbNode* x,
-    DtRbNode* parent
-) {
+static void dt_rb_node_remove_balance(DtRbNode** root, DtRbNode* x, DtRbNode* parent) {
     while ((x == NULL || !x->is_red) && x != *root) {
 
         if (parent == NULL)
@@ -282,14 +278,12 @@ static void dt_rb_node_remove_balance(
                 w = parent->right;
             }
 
-            if ((w->left == NULL || !w->left->is_red) &&
-                (w->right == NULL || !w->right->is_red)) {
+            if ((w->left == NULL || !w->left->is_red) && (w->right == NULL || !w->right->is_red)) {
 
                 w->is_red = true;
                 x = parent;
                 parent = x->parent;
-            }
-            else {
+            } else {
                 if (w->right == NULL || !w->right->is_red) {
                     if (w->left)
                         w->left->is_red = false;
@@ -325,14 +319,12 @@ static void dt_rb_node_remove_balance(
                 w = parent->left;
             }
 
-            if ((w->left == NULL || !w->left->is_red) &&
-                (w->right == NULL || !w->right->is_red)) {
+            if ((w->left == NULL || !w->left->is_red) && (w->right == NULL || !w->right->is_red)) {
 
                 w->is_red = true;
                 x = parent;
                 parent = x->parent;
-            }
-            else {
+            } else {
 
                 if (w->left == NULL || !w->left->is_red) {
                     if (w->right)
@@ -363,6 +355,13 @@ static void dt_rb_node_remove_balance(
 DtRbTree dt_rb_tree_new() {
     return (DtRbTree) {
         .root = NULL,
+        .iterator =
+            (DtIterator) {
+                .start = dt_rb_start,
+                .current = dt_rb_current,
+                .has_current = dt_rb_has_current,
+                .next = dt_rb_next,
+            },
     };
 }
 
@@ -377,9 +376,7 @@ void dt_rb_tree_add(DtRbTree* head, void* data, u64 hash) {
     head->root->is_red = false;
 }
 
-void* dt_rb_tree_get(DtRbTree* head, u64 hash) {
-    return dt_rb_node_get(head->root, hash);
-}
+void* dt_rb_tree_get(DtRbTree* head, u64 hash) { return dt_rb_node_get(head->root, hash); }
 
 void dt_rb_tree_remove(DtRbTree* head, u64 hash) {
     if (head->root == NULL)
@@ -389,7 +386,8 @@ void dt_rb_tree_remove(DtRbTree* head, u64 hash) {
 }
 
 static DtRbNode* dt_rb_find_leftmost(DtRbNode* node) {
-    if (node == NULL) return NULL;
+    if (node == NULL)
+        return NULL;
     while (node->left != NULL) {
         node = node->left;
     }
@@ -397,7 +395,8 @@ static DtRbNode* dt_rb_find_leftmost(DtRbNode* node) {
 }
 
 static DtRbNode* dt_rb_find_rightmost(DtRbNode* node) {
-    if (node == NULL) return NULL;
+    if (node == NULL)
+        return NULL;
     while (node->right != NULL) {
         node = node->right;
     }
@@ -405,7 +404,8 @@ static DtRbNode* dt_rb_find_rightmost(DtRbNode* node) {
 }
 
 static DtRbNode* dt_rb_find_next_inorder(DtRbNode* node) {
-    if (node == NULL) return NULL;
+    if (node == NULL)
+        return NULL;
 
     if (node->right != NULL) {
         return dt_rb_find_leftmost(node->right);
@@ -421,7 +421,8 @@ static DtRbNode* dt_rb_find_next_inorder(DtRbNode* node) {
 }
 
 static DtRbNode* dt_rb_find_prev_inorder(DtRbNode* node) {
-    if (node == NULL) return NULL;
+    if (node == NULL)
+        return NULL;
 
     if (node->left != NULL) {
         return dt_rb_find_rightmost(node->left);
@@ -441,13 +442,9 @@ static void dt_rb_start(void* data) {
     tree->iterator_node = dt_rb_find_leftmost(tree->root);
 }
 
-static void* dt_rb_current(void* data) {
-    return ((DtRbTree*)data)->iterator_node;
-}
+static void* dt_rb_current(void* data) { return ((DtRbTree*) data)->iterator_node; }
 
-static bool dt_rb_has_current(void* data) {
-    return ((DtRbTree*)data)->iterator_node != NULL;
-}
+static bool dt_rb_has_current(void* data) { return ((DtRbTree*) data)->iterator_node != NULL; }
 
 static void dt_rb_next(void* data) {
     DtRbTree* tree = data;

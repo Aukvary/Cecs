@@ -25,9 +25,14 @@ __attribute__((constructor(DT_ORDER_INIT_ENVIRONMENT))) static void initialize_e
         .get_draw = dt_draw_get_data_by_name,
     };
 
+    environment.modules.iterator.enumerable = &environment.modules;
+    environment.scenes.iterator.enumerable = &environment.scenes;
+
     environment.components = dt_component_get_all(&environment.components_count);
     environment.updaters = dt_update_get_all(&environment.updaters_count);
     environment.drawers = dt_draw_get_all(&environment.drawers_count);
+
+    printf("[DEBUG] environment initialized\n");
 }
 
 DtEnvironment* dt_environment_instance(void) { return &environment; }

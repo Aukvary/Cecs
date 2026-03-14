@@ -29,18 +29,24 @@ void dt_update_handler_add(UpdateHandler* handler, UpdateSystem* system) {
 void dt_update_handler_init(const UpdateHandler* handler) {
     qsort(handler->systems, dt_vec_count(handler->systems), sizeof(UpdateSystem), cmp_updaters);
 
-    FOREACH(UpdateSystem*, system, DT_VEC_ITERATOR(handler->systems),
-            { system->init(handler->manager, system->data); });
+    FOREACH(UpdateSystem*, system, DT_VEC_ITERATOR(handler->systems), {
+        if (system->init)
+            system->init(handler->manager, system->data);
+    });
 }
 
 void dt_update_handler_update(const UpdateHandler* handler, DtUpdateContext* ctx) {
-    FOREACH(UpdateSystem*, system, DT_VEC_ITERATOR(handler->systems),
-            { system->update(system->data, ctx); });
+    FOREACH(UpdateSystem*, system, DT_VEC_ITERATOR(handler->systems), {
+        if (system->update)
+            system->update(system->data, ctx);
+    });
 }
 
 void dt_update_handler_destroy(const UpdateHandler* handler) {
-    FOREACH(UpdateSystem*, system, DT_VEC_ITERATOR(handler->systems),
-            { system->destroy(system->data); });
+    FOREACH(UpdateSystem*, system, DT_VEC_ITERATOR(handler->systems), {
+        if (system->destroy)
+            system->destroy(system->data);
+    });
 }
 
 void dt_update_handler_free(UpdateHandler* handler) {
@@ -65,8 +71,10 @@ void dt_draw_handler_add(DrawHandler* handler, const DrawSystem* system) {
 
 void dt_draw_handler_init(const DrawHandler* handler) {
     qsort(handler->systems, dt_vec_count(handler->systems), sizeof(DrawSystem*), cmp_drawers);
-    FOREACH(DrawSystem*, system, DT_VEC_ITERATOR(handler->systems),
-            { system->init(handler->manager, system->data); });
+    FOREACH(DrawSystem*, system, DT_VEC_ITERATOR(handler->systems), {
+        if (system->init)
+            system->init(handler->manager, system->data);
+    });
 }
 
 void dt_draw_handler_draw(const DrawHandler* handler) {

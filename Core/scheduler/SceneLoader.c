@@ -141,8 +141,10 @@ static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
 }
 
 static void dt_scene_parse_ecs_manager(cJSON* json_cfg, DtScene* scene) {
-    if (!json_cfg)
+    if (!json_cfg) {
+        scene->manager = dt_ecs_manager_new((DtEcsManagerConfig){0});
         return;
+    }
 
     DtEcsManagerConfig cfg;
 
@@ -174,8 +176,10 @@ static void dt_scene_parse_ecs_manager(cJSON* json_cfg, DtScene* scene) {
 }
 
 static void dt_scene_parse_update_systems(cJSON* systems, DtScene* scene) {
-    if (!systems)
+    if (!systems) {
+        scene->update_handler = dt_update_handler_new(scene->manager, 0);
         return;
+    }
 
     u16 count = cJSON_GetArraySize(systems);
 
@@ -192,8 +196,10 @@ static void dt_scene_parse_update_systems(cJSON* systems, DtScene* scene) {
 }
 
 static void dt_scene_parse_draw_systems(cJSON* systems, DtScene* scene) {
-    if (!systems)
+    if (!systems) {
+        scene->draw_handler = dt_draw_handler_new(scene->manager, 0);
         return;
+    }
     u16 count = cJSON_GetArraySize(systems);
 
     scene->draw_handler = dt_draw_handler_new(scene->manager, count);
@@ -210,7 +216,6 @@ static void dt_scene_parse_draw_systems(cJSON* systems, DtScene* scene) {
 static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
     if (!entities)
         return;
-    const u16 count = cJSON_GetArraySize(entities);
     const cJSON* json_entity = NULL;
     cJSON_ArrayForEach(json_entity, entities) {
         const cJSON* components = cJSON_GetObjectItem(json_entity, "components");

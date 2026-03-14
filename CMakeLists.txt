@@ -73,6 +73,7 @@ set(GAME_SOURCES
 set(EDITOR_SOURCES
         Editor/UI/user_interface.c
         Editor/GameLibLink/GameLibLoader.c
+        Editor/UI/Systems.c
 )
 
 add_library(DtEngine_Objects OBJECT ${CORE_SOURCES})
@@ -150,17 +151,10 @@ add_library(EditorLib
 target_compile_definitions(EditorLib PRIVATE -DEDITOR)
 target_compile_definitions(EditorLib PRIVATE -DEDITOR_LIB)
 
-if (WIN32)
-    set_target_properties(EditorLib PROPERTIES
-            OUTPUT_NAME "EditorLibStatic"
-            ARCHIVE_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
-    )
-else ()
-    set_target_properties(EditorLib PROPERTIES
-            OUTPUT_NAME "EditorLib"
-            ARCHIVE_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
-    )
-endif ()
+set_target_properties(EditorLib PROPERTIES
+        OUTPUT_NAME "EditorLib"
+        ARCHIVE_OUTPUT_DIRECTORY " ${EDITOR_OUTPUT_DIR}"
+)
 
 add_executable(Game
         Game/main_game.c
@@ -179,7 +173,7 @@ foreach (TARGET DtEngine_Objects DtEngineTestModule DtEngine DtEngineTest GameLi
     )
 endforeach ()
 
-foreach (TARGET GameLibShared Editor)
+foreach (TARGET GameLibShared Editor EditorLib)
     target_include_directories(${TARGET} PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/Editor"
     )
@@ -197,12 +191,12 @@ foreach (TARGET DtEngine DtEngineTestModule DtEngineTest DtEngineTestModule Game
     if (TARGET ${TARGET})
         target_include_directories(${TARGET} PRIVATE
                 ${CJSON_INCLUDE_DIRS}
-                ${RAYLIB_INCLUDE_DIRS}
+${RAYLIB_INCLUDE_DIRS}
         )
 
         target_link_libraries(${TARGET} PRIVATE
                 ${CJSON_LINK_LIBRARIES}
-                ${RAYLIB_LINK_LIBRARIES}
+${RAYLIB_LINK_LIBRARIES}
         )
 
         if (WIN32)
@@ -220,7 +214,6 @@ endforeach ()
 
 if (TARGET Editor)
     target_compile_definitions(Editor PRIVATE
-            -DRAYLIB_NUKLEAR_IMPLEMENTATION
             -DRAYLIB_NUKLEAR_INCLUDE_DEFAULT_FONT
     )
 
