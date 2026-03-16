@@ -208,7 +208,7 @@ DT_REGISTER_UPDATE(MyUpdate, my_update_new); //регестрируем сист
 ```
 
 ## Modules
-- `DtModuleInfo` - хранит информацию о модуле(компоненты, системы
+- `DtModuleInfo` - хранит информацию о модуле(компоненты, системы, сцены)
 - `DtEnvironment` - хранит информацию о компонентах, системах и сценах
 ``` C
 ModuleInfo* lib = dt_module_load(dt_environment_instance(), DT_LIB_NAME("./my_lib")); //загрузка библиотеки
