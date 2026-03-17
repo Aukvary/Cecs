@@ -4,8 +4,6 @@ project(Double_Trouble C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(PKG_CONFIG_PATH C:/msys64/clang64/lib/pkgconfig;C:/msys64/mingw64/lib/pkgconfig)
-
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(LINUX TRUE)
 endif ()
@@ -153,7 +151,7 @@ target_compile_definitions(EditorLib PRIVATE -DEDITOR_LIB)
 
 set_target_properties(EditorLib PROPERTIES
         OUTPUT_NAME "EditorLib"
-        ARCHIVE_OUTPUT_DIRECTORY " ${EDITOR_OUTPUT_DIR}"
+        ARCHIVE_OUTPUT_DIRECTORY "${EDITOR_OUTPUT_DIR}"
 )
 
 add_executable(Game
@@ -231,6 +229,8 @@ if (DEBUG_ENABLED)
 endif ()
 foreach (TARGET DtEngineTestModule DtEngineTest GameLibStatic GameLibShared Editor EditorLib)
     target_link_libraries(${TARGET} PRIVATE $<TARGET_OBJECTS:DtEngine_Objects>)
+#    target_compile_definitions(${TARGET} PRIVATE -DNOGDI)
+#    target_compile_definitions(${TARGET} PRIVATE -DNOUSER)
 endforeach ()
 target_link_libraries(GameLibShared PRIVATE EditorLib)
 target_link_libraries(Game PUBLIC GameLibStatic)

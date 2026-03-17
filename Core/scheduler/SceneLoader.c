@@ -5,8 +5,23 @@
 #include "Collections/Collections.h"
 #include "DtAllocators.h"
 #include "scheduler/RuntimeScheduler.h"
-#if defined(_WIN32) || defined(_WIN64)
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define Rectangle _WinRectangle
+#define CloseWindow _WinCloseWindow
+#define ShowCursor _WinShowCursor
+#define DrawText _WinDrawText
+#define LoadImage _WinLoadImage
+#define PlaySound _WinPlaySound
+#define DrawTextEx _WinDrawTextEx
 #include <windows.h>
+#undef Rectangle
+#undef CloseWindow
+#undef ShowCursor
+#undef DrawText
+#undef LoadImage
+#undef PlaySound
+#undef  DrawTextEx
 #else
 #include <dirent.h>
 #include <sys/types.h>

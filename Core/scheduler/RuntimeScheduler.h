@@ -1,18 +1,31 @@
 #ifndef LAZY_LOAD_H
 #define LAZY_LOAD_H
 #include <cjson/cJSON.h>
-
-
 #include "Ecs/RegisterHandler.h"
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define Rectangle _WinRectangle
+#define CloseWindow _WinCloseWindow
+#define ShowCursor _WinShowCursor
+#define DrawText _WinDrawText
+#define LoadImage _WinLoadImage
+#define PlaySound _WinPlaySound
+#define DrawTextEx _WinDrawTextEx
 #include <windows.h>
+#undef Rectangle
+#undef CloseWindow
+#undef ShowCursor
+#undef DrawText
+#undef LoadImage
+#undef PlaySound
+#undef DrawTextEx
+
 #define DT_LIB_HANDLE HMODULE
-#define DT_LIB_LOAD(name) LoadLibrary(name)
+#define DT_LIB_LOAD(name) LoadLibraryA(name)
 #define DT_LIB_GET(handle, name) GetProcAddress(handle, name)
 #define DT_LIB_CLOSE(handle) FreeLibrary(handle)
 #define DT_LIB_NAME(name) name ".dll"
-
 #define DT_EXPORT __declspec(dllexport)
 #else
 #include <dlfcn.h>
@@ -39,7 +52,7 @@
 // TODO: add comment
 typedef struct DtEnvironment DtEnvironment;
 
-//TODO: comment
+// TODO: comment
 typedef void (*TypeParser)(cJSON* src, void* dst);
 
 // TODO: comments
@@ -113,13 +126,13 @@ void dt_module_unload(DtEnvironment* env, ModuleInfo* info);
 // TODO: comments
 DT_EXPORT DtEnvironment* dt_environment_instance(void);
 
-//TODO: comments
+// TODO: comments
 void dt_add_type_parser(const char* type, TypeParser parser);
 
-//TODO: comments
+// TODO: comments
 void dt_link_type_parser(const char* type, const char* base_type);
 
-//TODO: comments
+// TODO: comments
 void dt_parse_type(const char* type, cJSON* src, void* dst);
 
 #endif /*LAZY_LOAD_H*/
