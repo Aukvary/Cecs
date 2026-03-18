@@ -56,8 +56,7 @@ void hierarchy_tree_draw(void* data) {
         nk_layout_row_static(ctx, 50, 150, 1);
 
         if (nk_button_label(ctx, "rebuild")) {
-            system("/home/aukvary/Downloads/clion-2025.3.1/bin/cmake/linux/x64/bin/cmake --build "
-                   "/home/aukvary/projects/Cecs/cmake-build-debug --target GameLibShared -- -j 14");
+
             reload_game_lib();
         }
         nk_layout_row_static(ctx, 50, 150, 1);

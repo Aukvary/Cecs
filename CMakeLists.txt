@@ -21,12 +21,6 @@ endif ()
 set(RAYLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(RAYLIB_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 
-if (WIN32)
-    set(RAYLIB_LIB_FILE "${RAYLIB_LIB_DIR}/windows/libraylib.a")
-else ()
-    set(RAYLIB_LIB_FILE "${RAYLIB_LIB_DIR}/linux/libraylib.a")
-endif ()
-
 set(CORE_SOURCES
         Core/Collections/Vec.c
         Core/Collections/Iterator.c
@@ -189,12 +183,12 @@ foreach (TARGET DtEngine DtEngineTestModule DtEngineTest DtEngineTestModule Game
     if (TARGET ${TARGET})
         target_include_directories(${TARGET} PRIVATE
                 ${CJSON_INCLUDE_DIRS}
-${RAYLIB_INCLUDE_DIRS}
+                ${RAYLIB_INCLUDE_DIRS}
         )
 
         target_link_libraries(${TARGET} PRIVATE
                 ${CJSON_LINK_LIBRARIES}
-${RAYLIB_LINK_LIBRARIES}
+                ${RAYLIB_LINK_LIBRARIES}
         )
 
         if (WIN32)
@@ -222,15 +216,27 @@ endif ()
 
 
 # ============ Линковка зависимостей ============
-if (DEBUG_ENABLED)
-    foreach (TARGET DtEngine_Objects DtEngineTest GameLibStatic GameLibShared Editor EditorLib)
-        target_compile_definitions(${TARGET} PRIVATE -DDEBUG)
-    endforeach ()
-endif ()
+set(MY_TARGETS
+        DtEngine_Objects
+        DtEngineTest
+        GameLibStatic
+        GameLibShared
+        Editor
+        EditorLib
+)
+
+foreach(TGT ${MY_TARGETS})
+    if(TARGET ${TGT})
+        target_compile_definitions(${TGT} PRIVATE
+                $<$<OR:$<BOOL:${DEBUG_ENABLE}>,$<CONFIG:Debug>>:DEBUG>
+        )
+    endif()
+endforeach()
+
 foreach (TARGET DtEngineTestModule DtEngineTest GameLibStatic GameLibShared Editor EditorLib)
     target_link_libraries(${TARGET} PRIVATE $<TARGET_OBJECTS:DtEngine_Objects>)
-#    target_compile_definitions(${TARGET} PRIVATE -DNOGDI)
-#    target_compile_definitions(${TARGET} PRIVATE -DNOUSER)
+    #    target_compile_definitions(${TARGET} PRIVATE -DNOGDI)
+    #    target_compile_definitions(${TARGET} PRIVATE -DNOUSER)
 endforeach ()
 target_link_libraries(GameLibShared PRIVATE EditorLib)
 target_link_libraries(Game PUBLIC GameLibStatic)

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "DtEcs.h"
 #include "ExecuteOrder.h"
+#include "scheduler/FileHandle.h"
 
 /**
  * @brief metadata of component and components field
@@ -150,11 +151,14 @@ const DtComponentData* dt_component_get_data_by_id(u16 id);
  *
  * @note if global pool hasn't this name return -1
  */
+DT_EXPORT
 const DtComponentData* dt_component_get_data_by_name(const char* name);
 
+DT_EXPORT
 i32 dt_component_get_field_index(const DtComponentData* data, const char* name);
 
 // TODO: comments
+DT_EXPORT
 const DtComponentData** dt_component_get_all(u16* size);
 
 typedef struct {
@@ -190,10 +194,12 @@ typedef struct {
 // TODO: comments
 void dt_update_register(DtUpdateData* data);
 // TODO: comments
+DT_EXPORT
 const DtUpdateData* dt_update_get_data_by_name(const char* name);
 // TODO: comments
 const DtUpdateData* dt_update_get_data_by_id(u16 id);
 // TODO: comments
+DT_EXPORT
 const DtUpdateData** dt_update_get_all(u16* size);
 // TODO:comments
 void dt_update_increment_count();
@@ -231,10 +237,12 @@ typedef struct {
 // TODO: comments
 void dt_draw_register(DtDrawData* data);
 // TODO: comments
+DT_EXPORT
 const DtDrawData* dt_draw_get_data_by_name(const char* name);
 // TODO: comments
 const DtDrawData* dt_draw_get_data_by_id(u16 id);
 // TODO: comments
+DT_EXPORT
 const DtDrawData** dt_draw_get_all(u16* size);
 // TODO: comments
 void dt_draw_increment_count();
