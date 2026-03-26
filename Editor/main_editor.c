@@ -4,7 +4,7 @@
 #include "raylib-nuklear.h"
 #include "scheduler/RuntimeScheduler.h"
 
-#define MAIN_SCENE_PATH "./editor_main_scene.dt.scene"
+#define MAIN_SCENE_PATH "./main menu.dt.scene"
 #define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 800
 

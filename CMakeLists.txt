@@ -235,8 +235,6 @@ endforeach()
 
 foreach (TARGET DtEngineTestModule DtEngineTest GameLibStatic GameLibShared Editor EditorLib)
     target_link_libraries(${TARGET} PRIVATE $<TARGET_OBJECTS:DtEngine_Objects>)
-    #    target_compile_definitions(${TARGET} PRIVATE -DNOGDI)
-    #    target_compile_definitions(${TARGET} PRIVATE -DNOUSER)
 endforeach ()
 target_link_libraries(GameLibShared PRIVATE EditorLib)
 target_link_libraries(Game PUBLIC GameLibStatic)
