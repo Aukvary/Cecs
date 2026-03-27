@@ -1,6 +1,8 @@
 @echo off
-set "TARGET=%~1"
 
+pushd "%~dp0"
+
+set "TARGET=%~1"
 if "%TARGET%"=="" set "TARGET=all"
 
 if not exist cmake-build-debug (
@@ -8,4 +10,4 @@ if not exist cmake-build-debug (
 )
 cmake --build cmake-build-debug --target %TARGET%
 
-@REM if exist cmake-build-debug rmdir /s /q cmake-build-debug
+popd
