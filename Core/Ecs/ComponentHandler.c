@@ -40,14 +40,14 @@ void dt_register_component(DtComponentData* data) {
 
         idx = (idx + 1) % size;
         if (idx == start) {
-            printf("[DEBUG]component count out of range");
+            printf("[DEBUG] component count out of range");
             exit(1);
         }
     }
 
     component_data_by_name[idx] = data;
     component_data_by_id[data->id] = data;
-    printf("[DEBUD]%s component was registered with id %d\n", data->name, data->id);
+    printf("[DEBUD] %s component was registered with id %d\n", data->name, data->id);
 }
 
 const DtComponentData* dt_component_get_data_by_id(const u16 id) {

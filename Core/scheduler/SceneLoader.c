@@ -237,7 +237,7 @@ static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
                     u16 offset = data->field_offsets[i];
                     const char* type = data->field_types[i];
 
-                    dt_parse_type(type, value, (u8*) instance + offset);
+                    dt_parse_json_to_type(type, value, (u8*) instance + offset);
                     dt_ecs_manager_entity_add_component(scene->manager, entity, name, instance);
                 }
             }

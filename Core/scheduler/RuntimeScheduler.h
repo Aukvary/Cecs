@@ -21,6 +21,9 @@ typedef struct DtEnvironment DtEnvironment;
 // TODO: comment
 typedef void (*TypeParser)(cJSON* src, void* dst);
 
+// TODO: comment
+typedef cJSON* (*TypeSerializer)(const void* src);
+
 // TODO: comments
 typedef struct {
     DtEnvironment* environment;
@@ -93,12 +96,18 @@ void dt_module_unload(DtEnvironment* env, ModuleInfo* info);
 DT_EXPORT DtEnvironment* dt_environment_instance(void);
 
 // TODO: comments
-void dt_add_type_parser(const char* type, TypeParser parser);
+void dt_add_parser_json_to_type(const char* type, TypeParser parser);
 
 // TODO: comments
-void dt_link_type_parser(const char* type, const char* base_type);
+void dt_link_parser_json_to_type(const char* type, const char* base_type);
 
 // TODO: comments
-void dt_parse_type(const char* type, cJSON* src, void* dst);
+void dt_parse_json_to_type(const char* type, cJSON* src, void* dst);
+
+// TODO: comments
+void dt_add_serializer_type_to_json(const char* type, TypeSerializer serializer);
+
+//TODO: comments
+cJSON* dt_serialize_type_to_json(const char* type, const void* src);
 
 #endif /*LAZY_LOAD_H*/

@@ -1,6 +1,9 @@
 set(EDITOR_SOURCES
         Editor/GameLibLink/GameLibLoader.c
         Editor/UI/Systems.c
+        Editor/UI/EntityComponentsPanel.c
+        Editor/UI/Inspecor.c
+        Editor/UI/ManagePanel.c
 )
 
 add_executable(Editor Editor/main_editor.c ${EDITOR_SOURCES})
