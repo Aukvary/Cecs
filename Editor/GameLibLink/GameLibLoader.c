@@ -1,6 +1,7 @@
 #include <string.h>
 
 
+#include "DtAllocators.h"
 #include "GameLib.h"
 #include "scheduler/RuntimeScheduler.h"
 
@@ -30,6 +31,8 @@ u16 updates_count;
 
 const DtDrawData** draws;
 u16 draws_count;
+
+char* json_scene = NULL;
 
 const DtScene* game_scene = NULL;
 
@@ -63,10 +66,11 @@ void reload_game_lib(bool rebuild) {
     init_game_data();
 }
 
-void save_game_scene(const DtScene* scene, const char* path) {
+void save_game_scene() {
     cJSON* root = cJSON_CreateObject();
 
-    cJSON_AddItemToObject(root, "manager_config", dt_scene_serialize_ecs_manager(scene->manager));
+    cJSON_AddItemToObject(root, "manager_config",
+                          dt_scene_serialize_ecs_manager(game_scene->manager));
 
     // TODO: add scene -> json parser
     //  cJSON* update_sys = cJSON_AddArrayToObject(root, "update_systems");
@@ -78,17 +82,50 @@ void save_game_scene(const DtScene* scene, const char* path) {
     //      cJSON_AddItemToArray(draw_sys,
     //      cJSON_CreateString(scene->draw_handler->systems[i]->name));
 
-    cJSON_AddItemToObject(root, "entities", dt_scene_serialize_entities(scene));
+    cJSON_AddItemToObject(root, "entities", dt_scene_serialize_entities(game_scene));
 
-    char* out = cJSON_PrintBuffered(root, 1024 * 1024, 0);
-    FILE* f = fopen(path, "w");
+    int len;
+    if (json_scene) {
+        DT_FREE(json_scene);
+        len = (int) strlen(json_scene);
+    } else {
+        len = 256 * 256;
+    }
+    json_scene = cJSON_PrintBuffered(root, len, true);
+    FILE* f = fopen(GAME_SCENE_PATH, "w");
     if (f) {
-        fputs(out, f);
+        fputs(json_scene, f);
         fflush(f);
         fclose(f);
     }
-    free(out);
+
     cJSON_Delete(root);
+}
+
+void load_game_scene() {
+    FILE* file = fopen(GAME_SCENE_PATH, "rb");
+
+    if (file == NULL) {
+        fprintf(stderr, "[ERROR] Could not open file %s\n", GAME_SCENE_PATH);
+        return;
+    }
+
+    fseek(file, 0, SEEK_END);
+
+    i32 size = (i32) ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    json_scene = DT_MALLOC(size + 1);
+    fread(json_scene, 1, size, file);
+
+    game_scene = dt_add_scene_from_json(json_scene, "game_scene");
+
+    fclose(file);
+}
+
+void reload_game_scene() {
+    dt_scene_unload_by(game_scene);
+    game_scene = dt_add_scene_from_json(json_scene, game_scene->name);
 }
 
 static cJSON* dt_scene_serialize_ecs_manager(const DtEcsManager* manager) {
@@ -132,10 +169,8 @@ static cJSON* dt_scene_serialize_entities(const DtScene* scene) {
 
                 u8* instance = dt_ecs_pool_get(pool, i);
                 for (int f = 0; f < data->field_count; f++) {
-                    cJSON* value = dt_serialize_type_to_json(
-                        data->field_types[f],
-                        instance + data->field_offsets[f]
-                    );
+                    cJSON* value = dt_serialize_type_to_json(data->field_types[f],
+                                                             instance + data->field_offsets[f]);
                     cJSON_AddItemToObject(values_obj, data->field_names[f], value);
                 }
                 cJSON_AddItemToArray(components_arr, comp_obj);

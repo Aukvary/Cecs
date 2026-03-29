@@ -39,6 +39,8 @@ void dt_add_scenes(const char* directory);
 // TODO: comments
 const DtScene* dt_add_scene(const char* path);
 // TODO: comments
+const DtScene* dt_add_scene_from_json(const char* json, const char* name);
+// TODO: comments
 const DtScene* dt_scenes_get_active(void);
 // TODO: comments
 const DtScene* dt_scenes_set_active(const char* name);

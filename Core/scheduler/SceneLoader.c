@@ -10,6 +10,7 @@
 #define SCENE_EXTENSION ".dt.scene"
 
 static DtScene* dt_scene_parse(const char* path, DtEnvironment* env);
+static DtScene* dt_scene_parse_from_json(const char* scene_info, DtEnvironment* env);
 static void dt_scene_parse_ecs_manager(cJSON* json_cfg, DtScene* scene);
 static void dt_scene_parse_update_systems(cJSON* systems, DtScene* scene);
 static void dt_scene_parse_draw_systems(cJSON* systems, DtScene* scene);
@@ -68,6 +69,21 @@ const DtScene* dt_add_scene(const char* path) {
     return scene;
 }
 
+const DtScene* dt_add_scene_from_json(const char* json, const char* name) {
+    DtEnvironment* env = dt_environment_instance();
+    DtScene* scene = dt_scene_parse_from_json(json, env);
+    if (!scene) {
+        fprintf(stderr, "[DEBUG] Failed to parse scene: %s\n", "from source");
+        return NULL;
+    }
+
+    scene->name = name;
+
+    dt_rb_tree_add(&env->scenes, scene, get_scene_hash(name));
+
+    return scene;
+}
+
 static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
     FILE* file = fopen(path, "rb");
 
@@ -81,7 +97,7 @@ static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
     i32 size = (i32) ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    char* scene_info = DT_STACK_ALLOC(size + 1);
+    char* scene_info = DT_MALLOC(size + 1);
     fread(scene_info, 1, size, file);
 
     cJSON* root = cJSON_Parse(scene_info);
@@ -131,6 +147,55 @@ static DtScene* dt_scene_parse(const char* path, DtEnvironment* env) {
 
 
     fclose(file);
+    free(scene_info);
+    return scene;
+}
+
+static DtScene* dt_scene_parse_from_json(const char* scene_info, DtEnvironment* env) {
+    cJSON* root = cJSON_Parse(scene_info);
+    if (root == NULL) {
+        fprintf(stderr, "[ERROR] file hasn't scene data%s\n", "from source");
+        return NULL;
+    }
+
+    cJSON* manager_config = cJSON_GetObjectItem(root, "manager_config");
+    cJSON* update_systems = cJSON_GetObjectItem(root, "update_systems");
+    cJSON* draw_systems = cJSON_GetObjectItem(root, "draw_systems");
+    cJSON* entities = cJSON_GetObjectItem(root, "entities");
+
+#ifdef DEBUG
+    if (!manager_config) {
+        fprintf(stderr, "[WARNING] file hasn't manager_config data%s\n", "from source");
+    }
+
+    if (!update_systems) {
+        fprintf(stderr, "[WARNING] file hasn't update_systems data%s\n", "from source");
+    }
+
+    if (!draw_systems) {
+        fprintf(stderr, "[WARNING] file hasn't draw_systems data%s\n", "from source");
+    }
+
+    if (!entities) {
+        fprintf(stderr, "[WARNING] file hasn't entities data%s\n", "from source");
+    }
+#endif
+
+    DtScene* scene = DT_MALLOC(sizeof(DtScene));
+
+    if (scene == NULL) {
+        fprintf(stderr, "[error] didn't manage to allocate memory for scene%s\n", "from source");
+        return NULL;
+    }
+
+    *scene = (DtScene) {
+        .environment = env,
+    };
+
+    dt_scene_parse_ecs_manager(manager_config, scene);
+    dt_scene_parse_update_systems(update_systems, scene);
+    dt_scene_parse_draw_systems(draw_systems, scene);
+    dt_scene_parse_entities(entities, scene);
 
     return scene;
 }
@@ -259,8 +324,6 @@ void dt_scene_unload_by(const DtScene* scene) {
         return;
 
     dt_rb_tree_remove(&dt_environment_instance()->scenes, get_scene_hash(scene->name));
-
-    DT_FREE(scene->name);
 
     dt_ecs_manager_free(scene->manager);
 

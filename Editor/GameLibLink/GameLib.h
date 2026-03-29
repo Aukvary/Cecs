@@ -6,6 +6,8 @@
 void load_game_lib();
 void build_game_lib();
 void reload_game_lib(bool rebuild);
-void save_game_scene(const DtScene* scene, const char* path);
+void save_game_scene();
+void load_game_scene();
+void reload_game_scene();
 
 #endif /*GAME_LIB_H*/

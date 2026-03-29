@@ -30,7 +30,7 @@ static void deinitialize_window();
 int main(void) {
     initialize_main_scene();
     load_game_lib();
-    game_scene = dt_add_scene(GAME_SCENE_PATH);
+    load_game_scene();
     initialize_window();
 
 
@@ -46,6 +46,7 @@ int main(void) {
         DrawNuklear(ctx);
 
         EndDrawing();
+
     }
 
     deinitialize_ecs_manager();
