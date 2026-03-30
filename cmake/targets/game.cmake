@@ -23,6 +23,7 @@ set_target_properties(Game PROPERTIES
         OUTPUT_NAME "Game"
         RUNTIME_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIR}"
 )
+target_include_directories(Game PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Editor")
 
 target_include_directories(GameLibStatic PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/Core"

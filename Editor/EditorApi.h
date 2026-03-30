@@ -5,6 +5,10 @@
 
 #define DECLARE_EDITOR_FUNC_TABLE DT_EXPORT DtEFuncTable func_table;
 
+#define DTE_EDIT_DRAW
+#define DTE_EDIT_UPDATE
+#define DTE_INSPECTOR_HIDE "hide"
+
 typedef enum { DTE_NORMAL, DTE_WARNING, DTE_ERROR } DtEMessageType;
 
 typedef struct {

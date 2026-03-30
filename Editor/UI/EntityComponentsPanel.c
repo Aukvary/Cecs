@@ -1,4 +1,5 @@
 #include <scheduler/RuntimeScheduler.h>
+#include <string.h>
 #include "DtAllocators.h"
 #include "EditorApi.h"
 #include "UI.h"
@@ -52,10 +53,19 @@ static void component_panel_draw(void* _) {
 
             if (nk_tree_push_id(ctx, NK_TREE_TAB, comp_name, NK_MAXIMIZED, i)) {
                 for (int j = 0; j < component_data->field_count; j++) {
+                    bool hide = false;
+                    for (int k = 0; k < component_data->filed_attributes_count[j]; k++) {
+                        if (strcmp(component_data->filed_attributes[k]->attribute_name,
+                                   DTE_INSPECTOR_HIDE) == 0) {
+                            hide = true;
+                            break;
+                        }
+                    }
+                    if (hide) continue;
                     u8* field_addr = (u8*) component_ptr + component_data->field_offsets[j];
 
                     dte_inspector_field_draw(component_data->field_types[j],
-                                                   component_data->field_names[j], field_addr);
+                                             component_data->field_names[j], field_addr);
                 }
 
                 nk_layout_row_dynamic(ctx, 25, 1);
