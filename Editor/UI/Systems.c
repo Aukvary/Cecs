@@ -67,7 +67,6 @@ void hierarchy_tree_draw(void* data) {
         }
     }
     nk_end(ctx);
-
 }
 
 static void draw_entity_node(DtEntity e) {

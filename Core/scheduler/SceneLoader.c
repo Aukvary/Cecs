@@ -77,8 +77,8 @@ const DtScene* dt_add_scene_from_json(const char* json, const char* name) {
         return NULL;
     }
 
-    scene->name = name;
-
+    char* name_copy = strdup(name);
+    scene->name = name_copy;
     dt_rb_tree_add(&env->scenes, scene, get_scene_hash(name));
 
     return scene;
@@ -303,8 +303,8 @@ static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
                     const char* type = data->field_types[i];
 
                     dt_parse_json_to_type(type, value, (u8*) instance + offset);
-                    dt_ecs_manager_entity_add_component(scene->manager, entity, name, instance);
                 }
+                dt_ecs_manager_entity_add_component(scene->manager, entity, name, instance);
             }
         }
     }
@@ -325,6 +325,7 @@ void dt_scene_unload_by(const DtScene* scene) {
 
     dt_rb_tree_remove(&dt_environment_instance()->scenes, get_scene_hash(scene->name));
 
+    DT_FREE(scene->name);
     dt_ecs_manager_free(scene->manager);
 
     dt_update_handler_destroy(scene->update_handler);

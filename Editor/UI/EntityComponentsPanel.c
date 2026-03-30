@@ -6,7 +6,7 @@
 extern DtEntity selected_entity;
 
 static DrawSystem* component_panel_new();
-static void component_panel_draw(void* data);
+static void component_panel_draw(void* _);
 
 DT_REGISTER_DRAW(ComponentPanelDraw, component_panel_new)
 
@@ -54,7 +54,7 @@ static void component_panel_draw(void* _) {
                 for (int j = 0; j < component_data->field_count; j++) {
                     u8* field_addr = (u8*) component_ptr + component_data->field_offsets[j];
 
-                    dt_editor_inspector_field_draw(component_data->field_types[j],
+                    dte_inspector_field_draw(component_data->field_types[j],
                                                    component_data->field_names[j], field_addr);
                 }
 

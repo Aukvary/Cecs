@@ -4,6 +4,7 @@ set(EDITOR_SOURCES
         Editor/UI/EntityComponentsPanel.c
         Editor/UI/Inspecor.c
         Editor/UI/ManagePanel.c
+        Editor/UI/MessagePanel.c
 )
 
 add_executable(Editor Editor/main_editor.c ${EDITOR_SOURCES})
@@ -33,4 +34,7 @@ if (TARGET Editor)
     target_compile_definitions(Editor PRIVATE
             -DRAYLIB_NUKLEAR_INCLUDE_DEFAULT_FONT
     )
+    if (LINUX)
+        target_compile_options(Editor -rdynamic)
+    endif ()
 endif ()

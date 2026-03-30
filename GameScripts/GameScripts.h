@@ -7,8 +7,8 @@
 #include "Ecs/RegisterHandler.h"
 
 #define GAME_TYPE(X, name)\
-    X(Vector2, field1, name)\
-    X(int, num, name)
+    X(int, field1, name)\
+    X(char*, num, name)
 DT_DEFINE_COMPONENT(GameType, GAME_TYPE)
 
 #endif /*GAME_SCRIPTS_H*/

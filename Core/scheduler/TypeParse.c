@@ -163,7 +163,8 @@ static void parse_json_to_double(cJSON* src, void* dst) {
 static void parse_json_to_char_ptr(cJSON* src, void* dst) {
     if (cJSON_IsString(src)) {
         const char* str = cJSON_GetStringValue(src);
-        memcpy(dst, &str, sizeof(char*));
+        char* str_copy = strdup(str);
+        *(char**) dst = str_copy;
     }
 }
 
@@ -235,8 +236,8 @@ static cJSON* serialize_double_to_json(const void* src) {
 }
 
 static cJSON* serialize_char_ptr_to_json(const void* src) {
-    const char* str = src;
-    return cJSON_CreateString(str ? str : "");
+    const char** str = (const char**) src;
+    return cJSON_CreateString(*str ? *str : "");
 }
 
 static cJSON* serialize_vector2_to_json(const void* src) {
