@@ -315,7 +315,7 @@ static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
         if (!parent)
             continue;
         dt_ecs_manager_set_parent(scene->manager, (u16) atoi(json_entity->string),
-                                  (u16) cJSON_GetNumberValue(parent));
+                                  (DtEntity) cJSON_GetNumberValue(parent));
     }
 }
 

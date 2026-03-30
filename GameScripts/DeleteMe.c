@@ -7,21 +7,12 @@ DT_REGISTER_COMPONENT(GameType, GAME_TYPE)
 
 #ifdef EDITOR
 #include "EditorApi.h"
-DT_EXPORT
-DtELogFuncTable func_table;
+DECLARE_EDITOR_FUNC_TABLE
 #endif
 
-void initialize_func(DtEnvironment* game) {
-    printf("initialize start\n");
-#ifdef EDITOR
+void initialize_func(DtEnvironment* game) {}
 
-#else
-    printf("default mode\n");
-#endif
-    printf("initialize end\n");
-}
-
-void deinitialize_func(DtEnvironment* game) { printf("deinit\n"); }
+void deinitialize_func(DtEnvironment* game) {}
 
 DT_DEFINE_MODULE("game", initialize_func, deinitialize_func)
 

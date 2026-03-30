@@ -95,21 +95,27 @@ ModuleInfo* dt_module_load(DtEnvironment* env, const char* path);
 void dt_module_unload(DtEnvironment* env, ModuleInfo* info);
 
 // TODO: comments
-DT_EXPORT DtEnvironment* dt_environment_instance(void);
+DT_EXPORT
+DtEnvironment* dt_environment_instance(void);
 
 // TODO: comments
+DT_EXPORT
 void dt_add_parser_json_to_type(const char* type, TypeParser parser);
 
 // TODO: comments
+DT_EXPORT
 void dt_link_parser_json_to_type(const char* type, const char* base_type);
 
 // TODO: comments
+DT_EXPORT
 void dt_parse_json_to_type(const char* type, cJSON* src, void* dst);
 
 // TODO: comments
+DT_EXPORT
 void dt_add_serializer_type_to_json(const char* type, TypeSerializer serializer);
 
 //TODO: comments
+DT_EXPORT
 cJSON* dt_serialize_type_to_json(const char* type, const void* src);
 
 #endif /*LAZY_LOAD_H*/

@@ -430,7 +430,9 @@ void dt_entity_container_resize(DtEntityContainer* container, u16 new_size) {
     container->sparse_entities = tmp;
 }
 
-static void default_entity_item_reset(void* data, const size_t size) { memset(data, 0, size); }
+static void default_entity_item_reset(void* data, const size_t size) {
+    memset(data, 0, size);
+}
 
 void dt_entity_container_free(DtEntityContainer* container) {
     free(container->dense_items);

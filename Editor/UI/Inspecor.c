@@ -1,7 +1,9 @@
 #include <limits.h>
 #include <raylib.h>
 #include <string.h>
+
 #include "Collections/Collections.h"
+#include "DtAllocators.h"
 #include "EditorApi.h"
 #include "UI.h"
 
@@ -46,8 +48,7 @@ __attribute__((constructor)) void initialize_field_handlers() {
     dte_add_inspector_type("Vector2", inspector_field_vector2);
 }
 
-void dte_add_inspector_type(const char* type,
-                                  void (*handle)(const char* name, void* data)) {
+void dte_add_inspector_type(const char* type, void (*handle)(const char* name, void* data)) {
     dt_rb_tree_add(&field_handlers, handle, get_hash(type));
 }
 
@@ -188,15 +189,26 @@ static void inspector_field_double(const char* field, void* dst) {
 }
 
 static void inspector_field_char_ptr(const char* field, void* dst) {
-    char** str = dst;
-    int len = (int) strlen(*str);
-
     nk_layout_row_dynamic(ctx, 20, 1);
     char label[64];
     snprintf(label, sizeof(label), "%s:", field);
     nk_label(ctx, label, NK_TEXT_LEFT);
 
+    char** str = dst;
+
+    if (!*str) {
+        *str = DT_MALLOC(256);
+        if (!*str) {
+            // TODO: add handle
+            exit(1);
+        }
+        *str[0] = '\0';
+    }
+
+    int len = (int) strlen(*str);
+
     nk_edit_string(ctx, NK_EDIT_FIELD, *str, &len, 255, nk_filter_default);
+
     (*str)[len] = '\0';
 }
 

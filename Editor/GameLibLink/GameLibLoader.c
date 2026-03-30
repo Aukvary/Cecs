@@ -38,6 +38,8 @@ char* json_scene = NULL;
 
 const DtScene* game_scene = NULL;
 
+extern DtEFuncTable func_table;
+
 static cJSON* dt_scene_serialize_ecs_manager(const DtEcsManager* manager);
 static cJSON* dt_scene_serialize_entities(const DtScene* scene);
 
@@ -55,11 +57,9 @@ static void init_game_data() {
 void load_game_lib() {
     game_lib = dt_module_load(dt_environment_instance(), DT_LIB_NAME(GAME_LIB_PATH));
     init_game_data();
-    DtELogFuncTable* log_func_table = (DtELogFuncTable*) DT_LIB_GET(game_lib->handle, "func_table");
-    if (log_func_table) {
-        log_func_table->log = dte_log;
-        log_func_table->warn = dte_warning_log;
-        log_func_table->error = dte_error_log;
+    DtEFuncTable* game_lib_func_table = (DtEFuncTable*) DT_LIB_GET(game_lib->handle, "func_table");
+    if (game_lib_func_table) {
+        *game_lib_func_table = func_table;
         void (*func)(void) = (void (*)()) DT_LIB_GET(game_lib->handle, "test");
         func();
     }
@@ -74,7 +74,7 @@ void reload_game_lib(bool rebuild) {
     }
     game_lib = dt_module_load(dt_environment_instance(), DT_LIB_NAME(GAME_LIB_PATH));
     init_game_data();
-    DtELogFuncTable* log_func_table = (DtELogFuncTable*) DT_LIB_GET(game_lib->handle, "func_table");
+    DtEFuncTable* log_func_table = (DtEFuncTable*) DT_LIB_GET(game_lib->handle, "func_table");
     if (log_func_table) {
         log_func_table->log = dte_log;
         log_func_table->warn = dte_warning_log;

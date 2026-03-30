@@ -23,7 +23,7 @@ static int dt_component_get_hash(const char* name) {
 }
 
 void dt_register_component(DtComponentData* data) {
-    if (!size)
+    if (size == 0)
         size = 107ULL;
     if (!component_data_by_id) {
         component_data_by_id = DT_CALLOC(size, sizeof(DtComponentData*));
