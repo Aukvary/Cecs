@@ -12,7 +12,7 @@
 #include "Ecs/DtEcs.h"
 #include "scheduler/RuntimeScheduler.h"
 
-extern struct nk_context* ctx;
+extern struct nk_context* nk_ctx;
 extern const DtComponentData** components;
 extern u16 components_count;
 const extern DtScene* game_scene;

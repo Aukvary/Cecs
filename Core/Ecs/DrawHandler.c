@@ -65,8 +65,8 @@ const DtDrawData* dt_draw_get_data_by_name(const char* name) {
         idx = (idx + 1) % size;
         if (idx == start) {
             DtEnvironment* env = dt_environment_instance();
-            FOREACH(ModuleInfo*, info, &env->modules.iterator, {
-                const DtDrawData* data = info->environment->get_draw(name);
+            FOREACH(ModuleInfo, info, &env->modules.iterator, {
+                const DtDrawData* data = info.environment->get_draw(name);
                 if (data)
                     return data;
             });

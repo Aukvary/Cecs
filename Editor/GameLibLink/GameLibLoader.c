@@ -1,8 +1,8 @@
 #include <math.h>
 #include <string.h>
+#include "../GameLib.h"
 #include "DtAllocators.h"
 #include "EditorApi.h"
-#include "GameLib.h"
 #include "scheduler/RuntimeScheduler.h"
 
 #define GAME_LIB_PATH "./libGameLib"
@@ -19,7 +19,7 @@
 #define REBUILD_SCRIPT_PATH "./../../../" BUILD_MOD ".sh GameLibShared"
 #endif /*_WIN32*/
 
-#define GAME_SCENE_PATH "./game_scene.dt.scene"
+#define GAME_SCENE_PATH "./source/game_scene.dt.scene"
 
 ModuleInfo* game_lib;
 
@@ -141,7 +141,8 @@ void load_game_scene() {
     json_scene = DT_MALLOC(size + 1);
     fread(json_scene, 1, size, file);
 
-    game_scene = dt_add_scene_from_json(json_scene, "game_scene");
+    game_scene = dt_add_scene_from_json(json_scene, GAME_SCENE_PATH);
+    load_game_systems();
 
     fclose(file);
 }

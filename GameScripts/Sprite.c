@@ -8,15 +8,17 @@ DT_REGISTER_COMPONENT(Sprite, sprite_init, SPRITE)
 static void sprite_init(void* data) {
     Sprite* sprite = data;
 
-    if (!sprite->path_to_sprite) {
+    if (!sprite->path) {
         func_table.error("Failed to load image from path: NULL");
         sprite->texture.id = 0;
         return;
     }
 
-    Image image = LoadImage(sprite->path_to_sprite);
+    Image image = LoadImage(sprite->path);
+    ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+
     if (!image.data) {
-        func_table.error("Failed to load image from path: %s", sprite->path_to_sprite);
+        func_table.error("Failed to load image from path: %s", sprite->path);
     }
 
     sprite->texture = LoadTextureFromImage(image);
@@ -30,17 +32,5 @@ void on_change_path_to_sprite(DtEcsPool* pool, DtEntity entity) {
         UnloadTexture(sprite->texture);
     }
 
-    if (!sprite->path_to_sprite) {
-        func_table.error("Failed to load image from path: NULL");
-        sprite->texture.id = 0;
-        return;
-    }
-
-    Image image = LoadImage(sprite->path_to_sprite);
-    if (!image.data) {
-        func_table.error("Failed to load image from path: %s", sprite->path_to_sprite);
-    }
-
-    sprite->texture = LoadTextureFromImage(image);
-    UnloadImage(image);
+    sprite_init(sprite);
 }

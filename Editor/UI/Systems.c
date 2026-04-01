@@ -9,35 +9,15 @@
 #include "raylib-nuklear.h"
 
 #include <stdbool.h>
+#include "../GameLib.h"
 #include "DtAllocators.h"
 #include "Ecs/RegisterHandler.h"
-#include "GameLibLink/GameLib.h"
 #include "UI.h"
 #include "scheduler/RuntimeScheduler.h"
 
 DtEntity selected_entity = 0;
 
 static void draw_entity_node(DtEntity e);
-
-DT_REGISTER_UPDATE(HotKeyReloadSystem, reload_system_new)
-UpdateSystem* reload_system_new() {
-    UpdateSystem* system = DT_MALLOC(sizeof(UpdateSystem));
-
-    *system = (UpdateSystem) {
-        .init = NULL,
-        .update = reload_system_update,
-        .destroy = NULL,
-    };
-
-    return system;
-}
-
-void reload_system_update(void* data, DtUpdateContext* update_ctx) {
-    if (!IsKeyPressed(KEY_C))
-        return;
-    printf("call reload game lib");
-    reload_game_lib(true);
-}
 
 DT_REGISTER_DRAW(HierarchyTreeSystem, hierarchy_tree_new)
 DrawSystem* hierarchy_tree_new() {
@@ -55,9 +35,9 @@ void hierarchy_tree_draw(void* data) {
     float width = (float) GetScreenWidth();
     float height = (float) GetScreenHeight();
 
-    if (nk_begin(ctx, "Hierarchy", nk_rect(0, height / 30, width / 6, height - height / 4),
+    if (nk_begin(nk_ctx, "Hierarchy", nk_rect(0, height / 30, width / 6, height - height / 4),
                  NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_TITLE)) {
-        nk_layout_row_dynamic(ctx, 20, 1);
+        nk_layout_row_dynamic(nk_ctx, 20, 1);
 
         for (int i = 0; i < game_scene->manager->entities_ptr; i++) {
             if (game_scene->manager->sparse_entities[i].alive &&
@@ -66,7 +46,7 @@ void hierarchy_tree_draw(void* data) {
             }
         }
     }
-    nk_end(ctx);
+    nk_end(nk_ctx);
 }
 
 static void draw_entity_node(DtEntity e) {
@@ -79,7 +59,7 @@ static void draw_entity_node(DtEntity e) {
     int is_selected = selected_entity == e;
     int old_selected = is_selected;
 
-    if (nk_tree_element_push_id(ctx, type, label, NK_MINIMIZED, &is_selected, e)) {
+    if (nk_tree_element_push_id(nk_ctx, type, label, NK_MINIMIZED, &is_selected, e)) {
 
         if (is_selected != old_selected) {
             selected_entity = e;
@@ -91,7 +71,7 @@ static void draw_entity_node(DtEntity e) {
             draw_entity_node(children[i]);
         }
 
-        nk_tree_pop(ctx);
+        nk_tree_pop(nk_ctx);
     } else {
         if (is_selected != old_selected) {
             selected_entity = e;

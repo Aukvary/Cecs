@@ -30,20 +30,20 @@ static void message_panel_draw(void* _) {
     float width = (float) GetScreenWidth();
     float height = (float) GetScreenHeight();
 
-    if (nk_begin(ctx, "MSG Panel",
+    if (nk_begin(nk_ctx, "MSG Panel",
                  nk_rect(0, height - height / 4 + height / 30, width - width / 5,
                          height / 4 - height / 30),
                  NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_TITLE)) {
-        nk_layout_row_dynamic(ctx, 20, 1);
+        nk_layout_row_dynamic(nk_ctx, 20, 1);
         for (int i = 0; i < message_count; i++) {
             int real_idx =
                 (message_count < MAX_MESSAGES) ? i : (message_write_ptr + i) % MAX_MESSAGES;
 
             DtEMessage* msg = &messages[real_idx];
-            nk_label(ctx, msg->text, NK_TEXT_ALIGN_LEFT);
+            nk_label(nk_ctx, msg->text, NK_TEXT_ALIGN_LEFT);
         }
     }
-    nk_end(ctx);
+    nk_end(nk_ctx);
 }
 
 static void dt_editor_add_message(DtEMessageType type, const char* format, va_list args) {

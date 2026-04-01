@@ -1,11 +1,11 @@
 #include "Ecs/DtEcs.h"
 #define RAYLIB_NUKLEAR_IMPLEMENTATION
-#include "GameLibLink/GameLib.h"
+#include "GameLib.h"
 #include "raylib-nuklear.h"
 #include "scheduler/RuntimeScheduler.h"
 
-#define MAIN_SCENE_PATH "./main menu.dt.scene"
-#define GAME_SCENE_PATH "./game_scene.dt.scene"
+#define MAIN_SCENE_PATH "./source/main menu.dt.scene"
+#define GAME_SCENE_PATH "./source/game_scene.dt.scene"
 
 #define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 800
@@ -18,7 +18,7 @@ DtUpdateContext update_ctx = (DtUpdateContext) {
 
 extern const DtScene* game_scene;
 
-struct nk_context* ctx;
+struct nk_context* nk_ctx;
 struct nk_colorf bg;
 
 static void initialize_main_scene();
@@ -28,22 +28,23 @@ static void deinitialize_ecs_manager();
 static void deinitialize_window();
 
 int main(void) {
+    initialize_window();
     initialize_main_scene();
     load_game_lib();
     load_game_scene();
-    initialize_window();
+
+    dt_update_handler_init(main_scene->update_handler);
+    dt_draw_handler_init(main_scene->draw_handler);
 
     while (!WindowShouldClose()) {
         dt_update_handler_update(main_scene->update_handler, &update_ctx);
 
-        UpdateNuklear(ctx);
-        dt_draw_handler_draw(main_scene->draw_handler);
+        UpdateNuklear(nk_ctx);
 
         BeginDrawing();
-
         ClearBackground(ColorFromNuklearF(bg));
-        DrawNuklear(ctx);
-
+        dt_draw_handler_draw(main_scene->draw_handler);
+        DrawNuklear(nk_ctx);
         EndDrawing();
 
     }
@@ -67,7 +68,7 @@ static void initialize_window() {
 
     const int fontSize = 18;
     Font font = LoadFontFromNuklear(fontSize);
-    ctx = InitNuklearEx(font, fontSize);
+    nk_ctx = InitNuklearEx(font, fontSize);
     bg = (struct nk_colorf) {
         0.1f,
         0.18f,
@@ -79,6 +80,6 @@ static void initialize_window() {
 static void deinitialize_ecs_manager() { dt_scene_unload_by(main_scene); }
 
 static void deinitialize_window() {
-    UnloadNuklear(ctx);
+    UnloadNuklear(nk_ctx);
     CloseWindow();
 }

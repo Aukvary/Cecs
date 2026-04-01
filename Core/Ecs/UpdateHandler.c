@@ -65,8 +65,8 @@ const DtUpdateData* dt_update_get_data_by_name(const char* name) {
         idx = (idx + 1) % size;
         if (idx == start) {
             DtEnvironment* env = dt_environment_instance();
-            FOREACH(ModuleInfo*, info, &env->modules.iterator, {
-                const DtUpdateData* data = info->environment->get_update(name);
+            FOREACH(ModuleInfo, info, &env->modules.iterator, {
+                const DtUpdateData* data = info.environment->get_update(name);
                 if (data)
                     return data;
             });

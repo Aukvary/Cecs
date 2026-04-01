@@ -1,0 +1,76 @@
+{
+	"manager_config":	{
+		"dense_size":	4,
+		"sparse_size":	4,
+		"recycle_size":	4,
+		"children_size":	2,
+		"components_count":	3,
+		"pools_size":	4,
+		"include_mask_count":	4,
+		"exclude_mask_count":	4,
+		"filters_size":	4,
+		"masks_size":	4
+	},
+	"update_systems":	[],
+	"draw_systems":	["DrawSprite"],
+	"entities":	{
+		"0":	{
+			"components":	[{
+					"name":	"DtTransform2D",
+					"values":	{
+						"position":	[0, 0],
+						"scale":	[0.300000011920929, 0.300000011920929],
+						"rotation":	0
+					}
+				}, {
+					"name":	"GameType",
+					"values":	{
+						"field1":	0,
+						"num":	"word"
+					}
+				}, {
+					"name":	"Sprite",
+					"values":	{
+						"path":	"./minon.png",
+						"origin":	[0.5, 0.5],
+						"color":	[231, 231, 231, 248],
+						"source":	[0, 0, 1, 1],
+						"horizontal_flip":	false,
+						"vertical_flip":	false
+					}
+				}]
+		},
+		"1":	{
+			"components":	[{
+					"name":	"DtTransform2D",
+					"values":	{
+						"position":	[0, 0],
+						"scale":	[0, 0],
+						"rotation":	0
+					}
+				}]
+		},
+		"2":	{
+			"components":	[{
+					"name":	"DtTransform2D",
+					"values":	{
+						"position":	[0, 0],
+						"scale":	[0, 0],
+						"rotation":	0
+					}
+				}],
+			"parent":	0
+		},
+		"3":	{
+			"components":	[{
+					"name":	"DtTransform2D",
+					"values":	{
+						"position":	[0, 0],
+						"scale":	[0, 0],
+						"rotation":	0
+					}
+				}],
+			"parent":	0
+		}
+	}
+}

@@ -67,14 +67,14 @@ static void draw_single_component(DtEcsManager* manager, DtEntity entity, u16 po
     if (!component_ptr)
         return;
 
-    if (nk_tree_push_id(ctx, NK_TREE_TAB, comp_name, NK_MAXIMIZED, id)) {
+    if (nk_tree_push_id(nk_ctx, NK_TREE_TAB, comp_name, NK_MAXIMIZED, id)) {
         draw_component_fields(data, entity, pool, component_ptr);
 
-        nk_layout_row_dynamic(ctx, 25, 1);
-        if (nk_button_label(ctx, "Remove Component")) {
+        nk_layout_row_dynamic(nk_ctx, 25, 1);
+        if (nk_button_label(nk_ctx, "Remove Component")) {
             dt_ecs_manager_entity_remove_component(manager, entity, comp_name);
         }
-        nk_tree_pop(ctx);
+        nk_tree_pop(nk_ctx);
     }
 }
 
@@ -89,9 +89,9 @@ static void component_panel_draw(void* _) {
     snprintf(title, sizeof(title), "Components (ID: %u)", selected_entity);
 
     struct nk_rect bounds = nk_rect(width - width / 5, height / 30, width / 5, height);
-    nk_flags flags = NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_TITLE;
+    nk_flags flags = NK_WINDOW_BORDER | NK_WINDOW_TITLE;
 
-    if (nk_begin(ctx, title, bounds, flags)) {
+    if (nk_begin(nk_ctx, title, bounds, flags)) {
         DtEcsManager* mgr = game_scene->manager;
         DtEntityInfo info = dt_ecs_manager_get_entity(mgr, selected_entity);
 
@@ -99,5 +99,5 @@ static void component_panel_draw(void* _) {
             draw_single_component(mgr, selected_entity, info.components[i], i);
         }
     }
-    nk_end(ctx);
+    nk_end(nk_ctx);
 }

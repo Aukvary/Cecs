@@ -7,7 +7,7 @@
 void on_change_path_to_sprite(DtEcsPool* data, DtEntity entity);
 
 #define SPRITE(X, name)                                                                            \
-    X(char*, path_to_sprite, name, DTE_ON_FIELD_CHANGE(on_change_path_to_sprite))                  \
+    X(char*, path, name, DTE_ON_FIELD_CHANGE(on_change_path_to_sprite))                            \
     X(Texture2D, texture, name)                                                                    \
     X(Vector2, origin, name)                                                                       \
     X(Color, color, name)                                                                          \

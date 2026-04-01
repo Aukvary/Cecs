@@ -17,6 +17,9 @@ static void parse_json_to_float(cJSON* src, void* dst);
 static void parse_json_to_double(cJSON* src, void* dst);
 static void parse_json_to_char_ptr(cJSON* src, void* dst);
 static void parse_json_to_vector2(cJSON* src, void* dst);
+static void parse_json_to_rectangle(cJSON* src, void* dst);
+static void parse_json_to_bool(cJSON* src, void* dst);
+static void parse_json_to_color(cJSON* src, void* dst);
 
 static cJSON* serialize_int_to_json(const void* src);
 static cJSON* serialize_unsigned_int_to_json(const void* src);
@@ -30,6 +33,9 @@ static cJSON* serialize_float_to_json(const void* src);
 static cJSON* serialize_double_to_json(const void* src);
 static cJSON* serialize_char_ptr_to_json(const void* src);
 static cJSON* serialize_vector2_to_json(const void* src);
+static cJSON* serialize_rectangle_to_json(const void* src);
+static cJSON* serialize_bool_to_json(const void* src);
+static cJSON* serialize_color_to_json(const void* src);
 
 static u64 get_hash(const char* name) {
     int hash = 2147483647;
@@ -54,6 +60,9 @@ __attribute__((constructor)) static void dt_parser_initialize(void) {
     dt_add_parser_json_to_type("double", parse_json_to_double);
     dt_add_parser_json_to_type("char*", parse_json_to_char_ptr);
     dt_add_parser_json_to_type("Vector2", parse_json_to_vector2);
+    dt_add_parser_json_to_type("Rectangle", parse_json_to_rectangle);
+    dt_add_parser_json_to_type("bool", parse_json_to_bool);
+    dt_add_parser_json_to_type("Color", parse_json_to_color);
 
     serializers_type_to_json = dt_rb_tree_new();
 
@@ -69,6 +78,9 @@ __attribute__((constructor)) static void dt_parser_initialize(void) {
     dt_add_serializer_type_to_json("double", serialize_double_to_json);
     dt_add_serializer_type_to_json("char*", serialize_char_ptr_to_json);
     dt_add_serializer_type_to_json("Vector2", serialize_vector2_to_json);
+    dt_add_serializer_type_to_json("Rectangle", serialize_rectangle_to_json);
+    dt_add_serializer_type_to_json("bool", serialize_bool_to_json);
+    dt_add_serializer_type_to_json("Color", serialize_color_to_json);
 }
 
 void dt_add_parser_json_to_type(const char* type, const TypeParser parser) {
@@ -90,8 +102,8 @@ void dt_parse_json_to_type(const char* type, cJSON* src, void* dst) {
         return;
     }
 
-    FOREACH(ModuleInfo*, module, &dt_environment_instance()->modules.iterator, {
-        TypeParser parser = *(TypeParser*) DT_LIB_GET(module->handle, "dt_parse_json_to_type");
+    FOREACH(ModuleInfo, module, &dt_environment_instance()->modules.iterator, {
+        TypeParser parser = *(TypeParser*) DT_LIB_GET(module.handle, "dt_parse_json_to_type");
         if (parser) {
             parser(src, dst);
         }
@@ -177,18 +189,78 @@ static void parse_json_to_char_ptr(cJSON* src, void* dst) {
 }
 
 static void parse_json_to_vector2(cJSON* src, void* dst) {
-    if (cJSON_IsArray(src)) {
-        cJSON* x = cJSON_GetArrayItem(src, 0);
-        if (!cJSON_IsNumber(x))
-            return;
+    if (!cJSON_IsArray(src))
+        return;
 
-        cJSON* y = cJSON_GetArrayItem(src, 1);
-        if (!cJSON_IsNumber(y))
-            return;
+    cJSON* x = cJSON_GetArrayItem(src, 0);
+    if (!cJSON_IsNumber(x))
+        return;
 
-        ((Vector2*) dst)->x = (float) cJSON_GetNumberValue(x);
-        ((Vector2*) dst)->y = (float) cJSON_GetNumberValue(y);
-    }
+    cJSON* y = cJSON_GetArrayItem(src, 1);
+    if (!cJSON_IsNumber(y))
+        return;
+
+    ((Vector2*) dst)->x = (float) cJSON_GetNumberValue(x);
+    ((Vector2*) dst)->y = (float) cJSON_GetNumberValue(y);
+}
+
+static void parse_json_to_rectangle(cJSON* src, void* dst) {
+    if (!cJSON_IsArray(src))
+        return;
+
+    cJSON* x = cJSON_GetArrayItem(src, 0);
+    if (!cJSON_IsNumber(x))
+        return;
+
+    cJSON* y = cJSON_GetArrayItem(src, 1);
+    if (!cJSON_IsNumber(y))
+        return;
+
+    cJSON* w = cJSON_GetArrayItem(src, 2);
+    if (!cJSON_IsNumber(w))
+        return;
+
+    cJSON* h = cJSON_GetArrayItem(src, 3);
+    if (!cJSON_IsNumber(h))
+        return;
+
+    ((Rectangle*) dst)->x = (float) cJSON_GetNumberValue(x);
+    ((Rectangle*) dst)->y = (float) cJSON_GetNumberValue(y);
+    ((Rectangle*) dst)->width = (float) cJSON_GetNumberValue(w);
+    ((Rectangle*) dst)->height = (float) cJSON_GetNumberValue(h);
+}
+
+static void parse_json_to_bool(cJSON* src, void* dst) {
+    if (!cJSON_IsBool(src))
+        return;
+
+    *(bool*)dst = cJSON_IsTrue(src);
+}
+
+static void parse_json_to_color(cJSON* src, void* dst) {
+    if (!cJSON_IsArray(src))
+        return;
+
+    cJSON* r = cJSON_GetArrayItem(src, 0);
+    if (!cJSON_IsNumber(r))
+        return;
+
+    cJSON* g = cJSON_GetArrayItem(src, 1);
+    if (!cJSON_IsNumber(g))
+        return;
+
+    cJSON* b = cJSON_GetArrayItem(src, 2);
+    if (!cJSON_IsNumber(b))
+        return;
+
+    cJSON* a = cJSON_GetArrayItem(src, 3);
+    if (!cJSON_IsNumber(a))
+        return;
+
+    ((Color*) dst)->r = (u8) cJSON_GetNumberValue(r);
+    ((Color*) dst)->g = (u8) cJSON_GetNumberValue(g);
+    ((Color*) dst)->b = (u8) cJSON_GetNumberValue(b);
+    ((Color*) dst)->a = (u8) cJSON_GetNumberValue(a);
 }
 
 void dt_add_serializer_type_to_json(const char* type, const TypeSerializer serializer) {
@@ -201,13 +273,15 @@ cJSON* dt_serialize_type_to_json(const char* type, const void* src) {
         return serializer(src);
     }
 
-    FOREACH(ModuleInfo*, module, &dt_environment_instance()->modules.iterator, {
-        TypeSerializer serializer =
-            *(TypeSerializer*) DT_LIB_GET(module->handle, "dt_serialize_type_to_json");
+    FOREACH(ModuleInfo, module, &dt_environment_instance()->modules.iterator, {
+        cJSON* (*serializer_type_to_json)(const char*, const void* src) =
+            (cJSON * (*) (const char*, const void* src))
+                DT_LIB_GET(module.handle, "dt_serialize_type_to_json");
 
-        if (serializer) {
-            return serializer(src);
-        }
+        cJSON* res = serializer_type_to_json(type, src);
+
+        if (res)
+            return res;
     });
 
     return NULL;
@@ -259,9 +333,33 @@ static cJSON* serialize_char_ptr_to_json(const void* src) {
 }
 
 static cJSON* serialize_vector2_to_json(const void* src) {
-    const Vector2* v = (const Vector2*) src;
+    const Vector2* v = src;
     cJSON* arr = cJSON_CreateArray();
     cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->x));
     cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->y));
+    return arr;
+}
+
+static cJSON* serialize_rectangle_to_json(const void* src) {
+    const Rectangle* v = src;
+    cJSON* arr = cJSON_CreateArray();
+    cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->x));
+    cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->y));
+    cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->width));
+    cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->height));
+    return arr;
+}
+
+static cJSON* serialize_bool_to_json(const void* src) {
+    return cJSON_CreateBool(*(bool*)src);
+}
+
+static cJSON* serialize_color_to_json(const void* src) {
+    const Color* v = src;
+    cJSON* arr = cJSON_CreateArray();
+    cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->r));
+    cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->g));
+    cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->b));
+    cJSON_AddItemToArray(arr, cJSON_CreateNumber(v->a));
     return arr;
 }

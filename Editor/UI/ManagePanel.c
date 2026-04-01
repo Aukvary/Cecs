@@ -1,5 +1,5 @@
+#include "../GameLib.h"
 #include "DtAllocators.h"
-#include "GameLibLink/GameLib.h"
 #include "UI.h"
 #include "scheduler/RuntimeScheduler.h"
 static DrawSystem* manager_panel_new();
@@ -23,42 +23,42 @@ static void manage_panel_draw(void* data) {
     float width = (float) GetScreenWidth();
     float panel_height = 30;
 
-    if (nk_begin(ctx, "MainMenuBar", nk_rect(0, 0, width, panel_height),
+    if (nk_begin(nk_ctx, "MainMenuBar", nk_rect(0, 0, width, panel_height),
                  NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BACKGROUND | NK_WINDOW_BORDER)) {
 
-        nk_menubar_begin(ctx);
+        nk_menubar_begin(nk_ctx);
 
-        nk_layout_row_template_begin(ctx, 25);
-        nk_layout_row_template_push_static(ctx, 45);
-        nk_layout_row_template_push_static(ctx, 80);
-        nk_layout_row_template_end(ctx);
+        nk_layout_row_template_begin(nk_ctx, 25);
+        nk_layout_row_template_push_static(nk_ctx, 45);
+        nk_layout_row_template_push_static(nk_ctx, 80);
+        nk_layout_row_template_end(nk_ctx);
 
-        if (nk_menu_begin_label(ctx, "File", NK_TEXT_LEFT, nk_vec2(120, 200))) {
-            nk_layout_row_dynamic(ctx, 25, 1);
-            if (nk_menu_item_label(ctx, "New Scene", NK_TEXT_LEFT)) {
+        if (nk_menu_begin_label(nk_ctx, "File", NK_TEXT_LEFT, nk_vec2(120, 200))) {
+            nk_layout_row_dynamic(nk_ctx, 25, 1);
+            if (nk_menu_item_label(nk_ctx, "New Scene", NK_TEXT_LEFT)) {
             }
-            if (nk_menu_item_label(ctx, "Save", NK_TEXT_LEFT)) {
+            if (nk_menu_item_label(nk_ctx, "Save", NK_TEXT_LEFT)) {
                 save_game_scene();
             }
-            nk_menu_end(ctx);
+            nk_menu_end(nk_ctx);
         }
 
-        if (nk_menu_begin_label(ctx, "Game Lib", NK_TEXT_LEFT, nk_vec2(150, 200))) {
-            nk_layout_row_dynamic(ctx, 25, 1);
-            if (nk_menu_item_label(ctx, "Rebuild Lib", NK_TEXT_LEFT)) {
+        if (nk_menu_begin_label(nk_ctx, "Game Lib", NK_TEXT_LEFT, nk_vec2(150, 200))) {
+            nk_layout_row_dynamic(nk_ctx, 25, 1);
+            if (nk_menu_item_label(nk_ctx, "Rebuild Lib", NK_TEXT_LEFT)) {
                 save_game_scene();
                 reload_game_lib(true);
                 reload_game_scene();
             }
-            if (nk_menu_item_label(ctx, "Reload Lib", NK_TEXT_LEFT)) {
+            if (nk_menu_item_label(nk_ctx, "Reload Lib", NK_TEXT_LEFT)) {
                 save_game_scene();
                 reload_game_lib(false);
                 reload_game_scene();
             }
-            nk_menu_end(ctx);
+            nk_menu_end(nk_ctx);
         }
 
-        nk_menubar_end(ctx);
+        nk_menubar_end(nk_ctx);
     }
-    nk_end(ctx);
+    nk_end(nk_ctx);
 }

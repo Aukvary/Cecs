@@ -7,6 +7,7 @@ set(EDITOR_SOURCES
         Editor/UI/MessagePanel.c
         Editor/UI/EditorApi.c
         Editor/GameLibLink/GameLibDraw.c
+        Editor/GameObjectInteract/GameCamera.c
 )
 
 add_executable(Editor Editor/main_editor.c ${EDITOR_SOURCES})
@@ -36,7 +37,9 @@ if (TARGET Editor)
     target_compile_definitions(Editor PRIVATE
             -DRAYLIB_NUKLEAR_INCLUDE_DEFAULT_FONT
     )
-#    if (LINUX)
-#        target_link_options(Editor PUBLIC "-rdynamic")
-#    endif ()
+
+    file(
+        COPY ${CMAKE_CURRENT_SOURCE_DIR}/Editor/source
+        DESTINATION ${EDITOR_OUTPUT_DIR}
+    )
 endif ()

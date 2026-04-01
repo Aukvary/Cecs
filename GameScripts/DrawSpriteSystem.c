@@ -66,8 +66,15 @@ static void draw_sprite_entity(Sprite* sprite, DtTransform2D* transform) {
     if (sprite->vertical_flip)
         sourceRec.height *= -1.0f;
 
-    float final_w = fabsf(sourceRec.width) * transform->scale.x;
-    float final_h = fabsf(sourceRec.height) * transform->scale.y;
+    float final_w;
+    float final_h;
+    if (sprite->texture.id > 0) {
+        final_w = fabsf(sourceRec.width) * transform->scale.x;
+        final_h = fabsf(sourceRec.height) * transform->scale.y;
+    } else {
+        final_w = transform->scale.x;
+        final_h = transform->scale.y;
+    }
 
     Rectangle destRec = {
         .x = transform->position.x,
@@ -96,9 +103,7 @@ void draw_sprite_draw(void* data) {
                 Sprite* sprite = dt_ecs_pool_get(sys->sprites, e);
                 DtTransform2D* transform = dt_ecs_pool_get(sys->transforms, e);
 
-                if (sprite && transform) {
-                    draw_sprite_entity(sprite, transform);
-                }
+                draw_sprite_entity(sprite, transform);
             }));
 }
 

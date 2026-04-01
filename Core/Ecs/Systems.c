@@ -25,7 +25,7 @@ UpdateHandler* dt_update_handler_new(DtEcsManager* manager, u16 updater_count) {
 
 void dt_update_handler_add(UpdateHandler* handler, UpdateSystem* system, char* name) {
     DT_VEC_ADD(handler->systems, system);
-    DT_VEC_ADD(handler->names, system);
+    DT_VEC_ADD(handler->names, name);
 }
 
 void dt_update_handler_init(const UpdateHandler* handler) {
@@ -70,7 +70,7 @@ DrawHandler* dt_draw_handler_new(DtEcsManager* manager, u16 drawers_count) {
 
 void dt_draw_handler_add(DrawHandler* handler, const DrawSystem* system, char* name) {
     DT_VEC_ADD(handler->systems, system);
-    DT_VEC_ADD(handler->names, system);
+    DT_VEC_ADD(handler->names, name);
 }
 
 void dt_draw_handler_init(const DrawHandler* handler) {
