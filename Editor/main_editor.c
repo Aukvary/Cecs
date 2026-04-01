@@ -33,7 +33,6 @@ int main(void) {
     load_game_scene();
     initialize_window();
 
-
     while (!WindowShouldClose()) {
         dt_update_handler_update(main_scene->update_handler, &update_ctx);
 

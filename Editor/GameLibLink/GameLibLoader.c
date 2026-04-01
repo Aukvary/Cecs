@@ -1,7 +1,5 @@
 #include <math.h>
 #include <string.h>
-
-
 #include "DtAllocators.h"
 #include "EditorApi.h"
 #include "GameLib.h"
@@ -63,7 +61,8 @@ void load_game_lib() {
         *game_lib_func_table = func_table;
     }
 
-    if (init) init();
+    if (init)
+        init();
 }
 
 void build_game_lib() { system(REBUILD_SCRIPT_PATH); }
@@ -87,7 +86,8 @@ void reload_game_lib(bool rebuild) {
         *game_lib_func_table = func_table;
     }
 
-    if (init) init();
+    if (init)
+        init();
 }
 
 void save_game_scene() {
@@ -96,15 +96,14 @@ void save_game_scene() {
     cJSON_AddItemToObject(root, "manager_config",
                           dt_scene_serialize_ecs_manager(game_scene->manager));
 
-    // TODO: add scene -> json parser
-    //  cJSON* update_sys = cJSON_AddArrayToObject(root, "update_systems");
-    //  for(int i = 0; i < dt_vec_count(scene->update_handler->systems); i++)
-    //      cJSON_AddItemToArray(update_sys,
-    //      cJSON_CreateString(scene->update_handler->systems[i]->));
-    //  cJSON* draw_sys = cJSON_AddArrayToObject(root, "draw_systems");
-    //  for(int i = 0; i < dt_vec_count(scene->draw_handler->systems); i++)
-    //      cJSON_AddItemToArray(draw_sys,
-    //      cJSON_CreateString(scene->draw_handler->systems[i]->name));
+    cJSON* update_sys = cJSON_AddArrayToObject(root, "update_systems");
+
+    FOREACH(char*, name, DT_VEC_ITERATOR(game_scene->update_handler->names),
+            { cJSON_AddItemToArray(update_sys, cJSON_CreateString(name)); });
+
+    cJSON* draw_sys = cJSON_AddArrayToObject(root, "draw_systems");
+    FOREACH(char*, name, DT_VEC_ITERATOR(game_scene->draw_handler->names),
+            { cJSON_AddItemToArray(draw_sys, cJSON_CreateString(name)); });
 
     cJSON_AddItemToObject(root, "entities", dt_scene_serialize_entities(game_scene));
 
@@ -150,6 +149,7 @@ void load_game_scene() {
 void reload_game_scene() {
     dt_scene_unload_by(game_scene);
     game_scene = dt_add_scene_from_json(json_scene, game_scene->name);
+    load_game_systems();
 }
 
 static cJSON* dt_scene_serialize_ecs_manager(const DtEcsManager* manager) {

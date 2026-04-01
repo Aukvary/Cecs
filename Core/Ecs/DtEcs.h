@@ -475,10 +475,11 @@ typedef struct {
 typedef struct {
     DtEcsManager* manager;
     DT_VEC(UpdateSystem*) systems;
+    DT_VEC(char*) names;
 } UpdateHandler;
 
 UpdateHandler* dt_update_handler_new(DtEcsManager* manager, u16 updater_count);
-void dt_update_handler_add(UpdateHandler* handler, UpdateSystem* system);
+void dt_update_handler_add(UpdateHandler* handler, UpdateSystem* system, char* name);
 void dt_update_handler_init(const UpdateHandler* handler);
 void dt_update_handler_update(const UpdateHandler* handler, DtUpdateContext* ctx);
 void dt_update_handler_destroy(const UpdateHandler* handler);
@@ -503,10 +504,11 @@ typedef struct {
 typedef struct {
     DtEcsManager* manager;
     DT_VEC(DrawSystem*) systems;
+    DT_VEC(char*) names;
 } DrawHandler;
 
 DrawHandler* dt_draw_handler_new(DtEcsManager* manager, u16 drawers_count);
-void dt_draw_handler_add(DrawHandler* handler, const DrawSystem* system);
+void dt_draw_handler_add(DrawHandler* handler, const DrawSystem* system, char* name);
 void dt_draw_handler_init(const DrawHandler* handler);
 void dt_draw_handler_draw(const DrawHandler* handler);
 void dt_draw_handler_destroy(const DrawHandler* handler);

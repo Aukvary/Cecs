@@ -17,17 +17,19 @@ UpdateHandler* dt_update_handler_new(DtEcsManager* manager, u16 updater_count) {
     *system_handler = (UpdateHandler) {
         .manager = manager,
         .systems = DT_VEC_NEW(UpdateSystem*, updater_count),
+        .names = DT_VEC_NEW(char*, updater_count)
     };
 
     return system_handler;
 }
 
-void dt_update_handler_add(UpdateHandler* handler, UpdateSystem* system) {
+void dt_update_handler_add(UpdateHandler* handler, UpdateSystem* system, char* name) {
     DT_VEC_ADD(handler->systems, system);
+    DT_VEC_ADD(handler->names, system);
 }
 
 void dt_update_handler_init(const UpdateHandler* handler) {
-    qsort(handler->systems, dt_vec_count(handler->systems), sizeof(UpdateSystem), cmp_updaters);
+    qsort(handler->systems, dt_vec_count(handler->systems), sizeof(UpdateSystem*), cmp_updaters);
 
     FOREACH(UpdateSystem*, system, DT_VEC_ITERATOR(handler->systems), {
         if (system->init)
@@ -60,13 +62,15 @@ DrawHandler* dt_draw_handler_new(DtEcsManager* manager, u16 drawers_count) {
     *handler = (DrawHandler) {
         .manager = manager,
         .systems = DT_VEC_NEW(DrawSystem*, drawers_count),
+        .names = DT_VEC_NEW(char*, drawers_count)
     };
 
     return handler;
 }
 
-void dt_draw_handler_add(DrawHandler* handler, const DrawSystem* system) {
+void dt_draw_handler_add(DrawHandler* handler, const DrawSystem* system, char* name) {
     DT_VEC_ADD(handler->systems, system);
+    DT_VEC_ADD(handler->names, system);
 }
 
 void dt_draw_handler_init(const DrawHandler* handler) {
@@ -93,5 +97,6 @@ void dt_draw_handler_destroy(const DrawHandler* handler) {
 
 void dt_draw_handler_free(DrawHandler* handler) {
     dt_vec_free(handler->systems);
+    dt_vec_free(handler->names);
     free(handler);
 }

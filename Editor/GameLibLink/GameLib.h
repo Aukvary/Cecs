@@ -10,6 +10,12 @@ void save_game_scene();
 void load_game_scene();
 void reload_game_scene();
 
-void init_game_systems();
+void load_draw_game_systems();
+void load_update_game_systems();
+
+static inline void load_game_systems() {
+    load_draw_game_systems();
+    // load_update_game_systems();
+}
 
 #endif /*GAME_LIB_H*/

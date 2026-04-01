@@ -249,8 +249,7 @@ static void dt_scene_parse_update_systems(cJSON* systems, DtScene* scene) {
         const DtUpdateData* data = NULL;
         const char* name = cJSON_GetStringValue(system);
         if ((data = dt_update_get_data_by_name(name))) {
-            UpdateSystem* s = data->new();
-            dt_update_handler_add(scene->update_handler, s);
+            dt_update_handler_add(scene->update_handler, data->new(), data->name);
         }
     }
 }
@@ -268,7 +267,7 @@ static void dt_scene_parse_draw_systems(cJSON* systems, DtScene* scene) {
         const DtDrawData* data = NULL;
         const char* name = cJSON_GetStringValue(system);
         if ((data = dt_draw_get_data_by_name(name))) {
-            dt_draw_handler_add(scene->draw_handler, data->new());
+            dt_draw_handler_add(scene->draw_handler, data->new(), data->name);
         }
     }
 }

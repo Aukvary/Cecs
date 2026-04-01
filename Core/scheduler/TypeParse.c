@@ -87,7 +87,15 @@ void dt_parse_json_to_type(const char* type, cJSON* src, void* dst) {
     const TypeParser parser = dt_rb_tree_get(&parsers_json_to_type, get_hash(type));
     if (parser) {
         parser(src, dst);
+        return;
     }
+
+    FOREACH(ModuleInfo*, module, &dt_environment_instance()->modules.iterator, {
+        TypeParser parser = *(TypeParser*) DT_LIB_GET(module->handle, "dt_parse_json_to_type");
+        if (parser) {
+            parser(src, dst);
+        }
+    });
 }
 
 static void parse_json_to_int(cJSON* src, void* dst) {
@@ -192,6 +200,16 @@ cJSON* dt_serialize_type_to_json(const char* type, const void* src) {
     if (serializer) {
         return serializer(src);
     }
+
+    FOREACH(ModuleInfo*, module, &dt_environment_instance()->modules.iterator, {
+        TypeSerializer serializer =
+            *(TypeSerializer*) DT_LIB_GET(module->handle, "dt_serialize_type_to_json");
+
+        if (serializer) {
+            return serializer(src);
+        }
+    });
+
     return NULL;
 }
 
