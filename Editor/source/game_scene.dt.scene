@@ -31,7 +31,7 @@
 				}, {
 					"name":	"Sprite",
 					"values":	{
-						"path":	"./minon.png",
+						"path":	"./source/dc.png",
 						"origin":	[0.5, 0.5],
 						"color":	[231, 231, 231, 248],
 						"source":	[0, 0, 1, 1],

@@ -2,6 +2,7 @@ set(GAME_SOURCES
         GameScripts/DeleteMe.c
         GameScripts/DrawSpriteSystem.c
         GameScripts/Sprite.c
+        GameScripts/ColliderGrid.c
 )
 
 add_library(GameLibStatic STATIC ${GAME_SOURCES})

@@ -99,12 +99,23 @@ static void draw_sprite_entity(Sprite* sprite, DtTransform2D* transform) {
 void draw_sprite_draw(void* data) {
     DrawSpriteSystem* sys = data;
 
-    FOREACH(DtEntity, e, &sys->filter->entities.entities_iterator, ({
+    ( {
+        (&sys->filter->entities.entities_iterator)->start(
+            (&sys->filter->entities.entities_iterator)->enumerable);
+        DtEntity e;
+        while ((&sys->filter->entities.entities_iterator)->
+            has_current((&sys->filter->entities.entities_iterator)->enumerable)) {
+            e = *(DtEntity*) (&sys->filter->entities.entities_iterator)->current(
+                (&sys->filter->entities.entities_iterator)->enumerable);
+            ( {
                 Sprite* sprite = dt_ecs_pool_get(sys->sprites, e);
                 DtTransform2D* transform = dt_ecs_pool_get(sys->transforms, e);
-
                 draw_sprite_entity(sprite, transform);
-            }));
+            });
+            (&sys->filter->entities.entities_iterator)->next(
+                (&sys->filter->entities.entities_iterator)->enumerable);
+        }
+    });
 }
 
 void draw_sprite_destroy(void* data) {}

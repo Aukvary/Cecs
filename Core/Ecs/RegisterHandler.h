@@ -7,6 +7,18 @@
 #include "ExecuteOrder.h"
 #include "scheduler/FileHandle.h"
 
+#define DT_RESET_HANDLER_NAME "dt_reset"
+#define DT_RESET_HANDLER(func)                                                                     \
+    (DtAttributeData) { .attribute_name = DT_RESET_HANDLER_NAME, .data = func, }
+
+#define DT_INIT_HANDLER_NAME "dt_init"
+#define DT_INIT_HANDLER(func)                                                                      \
+    (DtAttributeData) { .attribute_name = DT_INIT_HANDLER_NAME, .data = func, }
+
+#define DT_COPY_HANDLER_NAME "dt_copy"
+#define DT_COPY_HANDLER(func)                                                                      \
+    (DtAttributeData) { .attribute_name = DT_COPY_HANDLER_NAME, .data = func, }
+
 #define DT_FIELD_DECL(type, name, component_name, ...) type name;
 #define DT_FIELD_COUNT(type, name, component_name, ...) +1
 #define DT_FIELD_NAME(type, name, component_name, ...) #name,

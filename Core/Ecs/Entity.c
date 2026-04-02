@@ -470,7 +470,7 @@ static void entity_container_entities_start(void* data) {
 
 static void* entity_container_entities_current(void* data) {
     const DtEntityContainer* container = data;
-    return &container->entities[container->items_iterator_ptr];
+    return &container->entities[container->entities_iterator_ptr];
 }
 
 static bool entity_container_entities_has_current(void* data) {

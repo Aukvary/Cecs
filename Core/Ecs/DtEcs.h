@@ -59,7 +59,9 @@ typedef struct DtComponentData {
     u16 id;
     u64 hash;
 
+    void (*reset)(void*);
     void (*init)(void*);
+    void (*copy)(void*, const void*);
 
     u16 field_count;
     char** field_names;

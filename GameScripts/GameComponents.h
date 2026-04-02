@@ -14,7 +14,18 @@ void on_change_path_to_sprite(DtEcsPool* data, DtEntity entity);
     X(Rectangle, source, name)                                                                     \
     X(bool, horizontal_flip, name)                                                                 \
     X(bool, vertical_flip, name)
-
 DT_DEFINE_COMPONENT(Sprite, SPRITE)
+
+#define COLLIDER_GRID(X, name)                                                                     \
+    X(int, cell_size, name)                                                                        \
+    X(bool, show, name)                                                                            \
+    X(Color, grid_color, name)
+DT_DEFINE_COMPONENT(ColliderGrid, COLLIDER_GRID)
+
+#define COLLIDER(X, name)\
+    X(Rectangle, size, name)\
+    X(Vector2, offset, name)\
+    X(bool, show, name)\
+
 
 #endif /*GAME_COMPONENTS_H*/
