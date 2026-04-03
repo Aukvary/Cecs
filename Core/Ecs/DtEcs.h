@@ -15,7 +15,6 @@
 
 typedef u16 DtEntity;
 #define DT_ENTITY_NULL (0xFFFF)
-#define DT_KILLED_ENTITY (0xFFFF)
 
 /*=============================================================================
  *                        Определения типов и структур
@@ -58,7 +57,7 @@ typedef struct {
 /**
  * @brief data of serialized component
  */
-typedef struct DtComponentData {
+typedef struct {
     char* name;
     u16 id;
     u64 hash;
@@ -398,18 +397,14 @@ struct DtEcsManager {
 
 DtEcsManager* dt_ecs_manager_new(DtEcsManagerConfig cfg);
 DtEntity dt_ecs_manager_new_entity(DtEcsManager* manager);
-DtEntity dt_ecs_manager_new_entity_from(DtEcsManager* manager,
-                                        DtEntityInfo info); // TODO: implement
-DtEntity dt_ecs_manager_new_entity_from_prefab(DtEcsManager* manager,
-                                               DtRawEntity entity); // TODO: implement
 DtEntityInfo dt_ecs_manager_get_entity(const DtEcsManager* manager, DtEntity entity);
 DtEntityInfo dt_ecs_manager_get_parent(const DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_set_parent(const DtEcsManager* manager, DtEntity child, DtEntity parent);
 void dt_ecs_manager_add_child(const DtEcsManager* manager, DtEntity parent, DtEntity child);
 void dt_ecs_manager_remove_child(const DtEcsManager* manager, DtEntity parent, DtEntity child);
-DtEntity* dt_ecs_manager_get_children(const DtEcsManager* manager, DtEntity entity, u16* count);
+const DtEntity* dt_ecs_manager_get_children(const DtEcsManager* manager, DtEntity entity, u16* count);
 size_t dt_ecs_manager_get_entity_components_count(const DtEcsManager* manager, DtEntity entity);
-uint16_t dt_ecs_manager_get_entity_gen(const DtEcsManager* manager, DtEntity entity);
+u16 dt_ecs_manager_get_entity_gen(const DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_copy_entity(const DtEcsManager* manager, DtEntity dst, DtEntity src);
 void dt_ecs_manager_reset_entity(const DtEcsManager* manager, DtEntity entity);
 void dt_ecs_manager_clear_entity(const DtEcsManager* manager, DtEntity entity);

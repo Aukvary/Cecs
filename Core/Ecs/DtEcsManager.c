@@ -179,18 +179,26 @@ DtEcsManager* dt_ecs_manager_new(DtEcsManagerConfig cfg) {
     DtEcsManager* manager = DT_MALLOC(sizeof(DtEcsManager));
 
     if (!manager) {
-        //TODO: add handle
+        // TODO: add handle
         exit(1);
     }
 
-    if (!cfg.sparse_size) cfg.sparse_size = 50;
-    if (!cfg.dense_size) cfg.dense_size = 50;
-    if (!cfg.recycle_size) cfg.recycle_size = 10;
-    if (!cfg.children_size) cfg.children_size = 50;
-    if (!cfg.pools_size) cfg.pools_size = 50;
-    if (!cfg.include_mask_count) cfg.include_mask_count = 10;
-    if (!cfg.exclude_mask_count) cfg.exclude_mask_count = 10;
-    if (!cfg.filters_size) cfg.filters_size = 50;
+    if (!cfg.sparse_size)
+        cfg.sparse_size = 50;
+    if (!cfg.dense_size)
+        cfg.dense_size = 50;
+    if (!cfg.recycle_size)
+        cfg.recycle_size = 10;
+    if (!cfg.children_size)
+        cfg.children_size = 50;
+    if (!cfg.pools_size)
+        cfg.pools_size = 50;
+    if (!cfg.include_mask_count)
+        cfg.include_mask_count = 10;
+    if (!cfg.exclude_mask_count)
+        cfg.exclude_mask_count = 10;
+    if (!cfg.filters_size)
+        cfg.filters_size = 50;
 
     *manager = (DtEcsManager) {
         .sparse_entities = DT_CALLOC(cfg.sparse_size, sizeof(DtEntityInfo)),
@@ -376,8 +384,18 @@ void dt_ecs_manager_remove_child(const DtEcsManager* manager, const DtEntity par
                                 &manager->sparse_entities[child]);
 }
 
-DtEntity* dt_ecs_manager_get_children(const DtEcsManager* manager, const DtEntity entity,
-                                      u16* count) {
+const DtEntity* dt_ecs_manager_get_children(const DtEcsManager* manager, const DtEntity entity,
+                                            u16* count) {
+    if (entity > manager->entities_ptr) {
+        *count = 0;
+        return NULL;
+    }
+
+    if (!manager->sparse_entities[entity].alive) {
+        *count = 0;
+        return NULL;
+    }
+
     *count = manager->sparse_entities[entity].children_count;
 
     return manager->sparse_entities[entity].children;
@@ -422,7 +440,7 @@ size_t dt_ecs_manager_get_entity_components_count(const DtEcsManager* manager,
     return manager->sparse_entities[entity].component_count;
 }
 
-uint16_t dt_ecs_manager_get_entity_gen(const DtEcsManager* manager, const DtEntity entity) {
+u16 dt_ecs_manager_get_entity_gen(const DtEcsManager* manager, const DtEntity entity) {
     if (manager->entities_ptr < entity || entity < 0)
         return 0;
     if (!manager->sparse_entities[entity].alive)
@@ -464,7 +482,7 @@ void dt_ecs_manager_clear_entity(const DtEcsManager* manager, const DtEntity ent
 }
 
 void dt_ecs_manager_entity_add_component(DtEcsManager* manager, const DtEntity entity,
-                                                 const char* name, const void* data) {
+                                         const char* name, const void* data) {
     if (manager->entities_ptr < entity || entity < 0)
         return;
     if (!manager->sparse_entities[entity].alive)
@@ -476,7 +494,7 @@ void dt_ecs_manager_entity_add_component(DtEcsManager* manager, const DtEntity e
 }
 
 void dt_ecs_manager_entity_remove_component(DtEcsManager* manager, DtEntity entity,
-                                                    const char* name) {
+                                            const char* name) {
     if (manager->entities_ptr < entity || entity < 0)
         return;
     if (!manager->sparse_entities[entity].alive)
@@ -509,13 +527,13 @@ void dt_ecs_manager_add_pool(DtEcsManager* manager, DtEcsPool* pool) {
 
 DtEcsPool* dt_ecs_manager_get_pool(DtEcsManager* manager, const char* name) {
     const DtComponentData* data = dt_component_get_data_by_name(name);
-    if (data == NULL) return NULL;
+    if (data == NULL)
+        return NULL;
     const u64 hash = data->hash;
     size_t idx = hash % manager->pools_table_size;
     const size_t start = idx;
 
-    while (manager->pools_table[idx] != NULL &&
-           hash != manager->pools_table[idx]->hash) {
+    while (manager->pools_table[idx] != NULL && hash != manager->pools_table[idx]->hash) {
         idx = (idx + 1) % manager->pools_table_size;
         if (idx == start) {
             DtEcsPool* pool = dt_ecs_pool_new_by_name(manager, name);
@@ -788,9 +806,7 @@ void dt_ecs_manager_free(DtEcsManager* manager) {
     free(manager->filter_by_include);
     free(manager->filter_by_exclude);
 
-    FOREACH(DtEcsPool*, pool, DT_VEC_ITERATOR(manager->pools), {
-        dt_ecs_pool_free(pool);
-    });
+    FOREACH(DtEcsPool*, pool, DT_VEC_ITERATOR(manager->pools), { dt_ecs_pool_free(pool); });
 
     dt_vec_free(manager->pools);
     free(manager->pools_table);
