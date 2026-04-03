@@ -1,4 +1,4 @@
-#include "GameComponents.h"
+#include "../GameComponents.h"
 #include "Ecs/RegisterHandler.h"
 
 void colliderGridInit(void* data);

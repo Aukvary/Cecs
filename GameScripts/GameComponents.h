@@ -18,14 +18,23 @@ DT_DEFINE_COMPONENT(Sprite, SPRITE)
 
 #define COLLIDER_GRID(X, name)                                                                     \
     X(int, cell_size, name)                                                                        \
+    X(Vector2, cell_count, name)                                                                   \
     X(bool, show, name)                                                                            \
     X(Color, grid_color, name)
 DT_DEFINE_COMPONENT(ColliderGrid, COLLIDER_GRID)
 
-#define COLLIDER(X, name)\
-    X(Rectangle, size, name)\
-    X(Vector2, offset, name)\
-    X(bool, show, name)\
+#define COLLIDER(X, name)                                                                          \
+    X(Rectangle, size, name)                                                                       \
+    X(Vector2, offset, name)                                                                       \
+    X(DtEntity, grid_entity, name)                                                                 \
+    X(bool, show, name)
+DT_DEFINE_COMPONENT(GameCollider2D, COLLIDER)
+
+#define GAME_CAMERA_2D(X, name)                                                                    \
+    X(Vector2, target, name)                                                                       \
+    X(float, rotation, name)                                                                       \
+    X(float, zoom, name)
+DT_DEFINE_COMPONENT(GameCamera2D, GAME_CAMERA_2D)
 
 
 #endif /*GAME_COMPONENTS_H*/

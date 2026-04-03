@@ -1,8 +1,8 @@
 #include <math.h>
+#include "../GameComponents.h"
 #include "Components/Components.h"
 #include "DtAllocators.h"
 #include "EditorApi.h"
-#include "GameComponents.h"
 #include "scheduler/RuntimeScheduler.h"
 
 typedef struct {
