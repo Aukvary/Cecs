@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include "EditorApi.h"
 #include "scheduler/RuntimeScheduler.h"
+#include "Ecs/RegisterHandler.h"
 
 void on_change_path_to_sprite(DtEcsPool* data, DtEntity entity);
 
@@ -23,12 +24,12 @@ DT_DEFINE_COMPONENT(Sprite, SPRITE)
     X(Color, grid_color, name)
 DT_DEFINE_COMPONENT(ColliderGrid, COLLIDER_GRID)
 
-#define COLLIDER(X, name)                                                                          \
+#define GAME_COLLIDER_2D(X, name)                                                                          \
     X(Rectangle, size, name)                                                                       \
     X(Vector2, offset, name)                                                                       \
     X(DtEntity, grid_entity, name)                                                                 \
     X(bool, show, name)
-DT_DEFINE_COMPONENT(GameCollider2D, COLLIDER)
+DT_DEFINE_COMPONENT(GameCollider2D, GAME_COLLIDER_2D)
 
 #define GAME_CAMERA_2D(X, name)                                                                    \
     X(Vector2, target, name)                                                                       \

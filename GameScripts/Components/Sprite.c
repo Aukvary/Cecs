@@ -1,4 +1,4 @@
-#include "GameComponents.h"
+#include "../GameComponents.h"
 
 extern DtEFuncTable func_table;
 
