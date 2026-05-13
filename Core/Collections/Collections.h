@@ -185,7 +185,7 @@ DtVecHeader* dt_vec_iterator(void* data);
  */
 void dt_vec_free(void* data);
 
-//TODO:comment
+// TODO:comment
 typedef struct DtRbNode {
     bool is_red;
     struct DtRbNode* parent;
@@ -196,7 +196,7 @@ typedef struct DtRbNode {
     u64 hash;
 } DtRbNode;
 
-//TODO:comment
+// TODO:comment
 typedef struct {
     DtRbNode* root;
 
@@ -204,15 +204,15 @@ typedef struct {
     DtRbNode* iterator_node;
 } DtRbTree;
 
-//TODO:comment
+// TODO:comment
 DtRbTree dt_rb_tree_new();
-//TODO:comment
+// TODO:comment
 void dt_rb_tree_add(DtRbTree* head, void* data, u64 hash);
-//TODO:comment
+// TODO:comment
 void* dt_rb_tree_get(DtRbTree* head, u64 hash);
-//TODO:comment
+// TODO:comment
 void dt_rb_tree_remove(DtRbTree* head, u64 hash);
-//TODO:comment
+// TODO:comment
 void dt_rb_tree_free(DtRbTree* head);
 
 #endif

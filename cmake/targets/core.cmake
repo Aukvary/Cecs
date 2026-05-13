@@ -7,7 +7,7 @@ set(CORE_SOURCES
         Core/Ecs/Systems.c
         Core/Ecs/TagPool.c
         Core/Ecs/ComponentPool.c
-        Core/Components/Components.c
+        Core/DtComponents/Components.c
         Core/Ecs/ComponentHandler.c
         Core/Ecs/UpdateHandler.c
         Core/Ecs/UpdateRegister.c
@@ -16,7 +16,7 @@ set(CORE_SOURCES
         Core/Collections/RbTree.c
         Core/scheduler/Environment.c
         Core/scheduler/TypeParse.c
-        Core/Components/DtTransform2D.c
+        Core/DtComponents/DtTransform2D.c
 )
 
 add_library(DtEngine_Objects OBJECT ${CORE_SOURCES})

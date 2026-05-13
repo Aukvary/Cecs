@@ -34,3 +34,7 @@ void on_change_path_to_sprite(DtEcsPool* pool, DtEntity entity) {
 
     sprite_init(sprite);
 }
+
+void on_change_field_test(DtEcsPool* data, DtEntity entity) {
+    func_table.log("change");
+}

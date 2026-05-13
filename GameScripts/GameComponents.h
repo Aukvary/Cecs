@@ -6,6 +6,7 @@
 #include "Ecs/RegisterHandler.h"
 
 void on_change_path_to_sprite(DtEcsPool* data, DtEntity entity);
+void on_change_field_test(DtEcsPool* data, DtEntity entity);
 
 #define SPRITE(X, name)                                                                            \
     X(char*, path, name, DTE_ON_FIELD_CHANGE(on_change_path_to_sprite))                            \
@@ -14,21 +15,22 @@ void on_change_path_to_sprite(DtEcsPool* data, DtEntity entity);
     X(Color, color, name)                                                                          \
     X(Rectangle, source, name)                                                                     \
     X(bool, horizontal_flip, name)                                                                 \
-    X(bool, vertical_flip, name)
+    X(bool, vertical_flip, name, DTE_ON_FIELD_CHANGE(on_change_field_test))
 DT_DEFINE_COMPONENT(Sprite, SPRITE)
 
 #define COLLIDER_GRID(X, name)                                                                     \
     X(int, cell_size, name)                                                                        \
     X(Vector2, cell_count, name)                                                                   \
     X(bool, show, name)                                                                            \
-    X(Color, grid_color, name)
+    X(Color, grid_color, name)\
+    X(DT_VEC(DtEntity)**, cells, name)
 DT_DEFINE_COMPONENT(ColliderGrid, COLLIDER_GRID)
 
 #define GAME_COLLIDER_2D(X, name)                                                                          \
-    X(Rectangle, size, name)                                                                       \
-    X(Vector2, offset, name)                                                                       \
-    X(DtEntity, grid_entity, name)                                                                 \
-    X(bool, show, name)
+    X(Rectangle, source, name)                                                                     \
+    X(DtEntity, grid, name)                                                                        \
+    X(bool, show, name)\
+    X(Vector2, cell, name, DTE_INSPECTOR_HIDE)
 DT_DEFINE_COMPONENT(GameCollider2D, GAME_COLLIDER_2D)
 
 #define GAME_CAMERA_2D(X, name)                                                                    \

@@ -89,10 +89,20 @@ void dt_draw_handler_draw(const DrawHandler* handler) {
 }
 
 void dt_draw_handler_destroy(const DrawHandler* handler) {
-    FOREACH(DrawSystem*, system, DT_VEC_ITERATOR(handler->systems), {
-        if (system->destroy)
-            system->destroy(system->data);
-    });
+    (&dt_vec_header(handler->systems)->iterator)->start(
+        (&dt_vec_header(handler->systems)->iterator)->enumerable);
+    DrawSystem* system;
+    while ((&dt_vec_header(handler->systems)->iterator)->
+        has_current((&dt_vec_header(handler->systems)->iterator)->enumerable)) {
+        system = *(DrawSystem**) (&dt_vec_header(handler->systems)->iterator)->current(
+            (&dt_vec_header(handler->systems)->iterator)->enumerable);
+        {
+            if (system->destroy)
+                system->destroy(system->data);
+        };
+        (&dt_vec_header(handler->systems)->iterator)->next(
+            (&dt_vec_header(handler->systems)->iterator)->enumerable);
+        }
 }
 
 void dt_draw_handler_free(DrawHandler* handler) {

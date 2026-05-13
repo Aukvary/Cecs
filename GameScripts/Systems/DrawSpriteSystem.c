@@ -1,8 +1,8 @@
 #include <math.h>
-#include "../GameComponents.h"
-#include "Components/Components.h"
 #include "DtAllocators.h"
+#include "DtComponents/Components.h"
 #include "EditorApi.h"
+#include "GameComponents.h"
 #include "scheduler/RuntimeScheduler.h"
 
 typedef struct {
@@ -99,22 +99,10 @@ static void draw_sprite_entity(Sprite* sprite, DtTransform2D* transform) {
 void draw_sprite_draw(void* data) {
     DrawSpriteSystem* sys = data;
 
-    ( {
-        (&sys->filter->entities.entities_iterator)->start(
-            (&sys->filter->entities.entities_iterator)->enumerable);
-        DtEntity e;
-        while ((&sys->filter->entities.entities_iterator)->
-            has_current((&sys->filter->entities.entities_iterator)->enumerable)) {
-            e = *(DtEntity*) (&sys->filter->entities.entities_iterator)->current(
-                (&sys->filter->entities.entities_iterator)->enumerable);
-            ( {
-                Sprite* sprite = dt_ecs_pool_get(sys->sprites, e);
-                DtTransform2D* transform = dt_ecs_pool_get(sys->transforms, e);
-                draw_sprite_entity(sprite, transform);
-            });
-            (&sys->filter->entities.entities_iterator)->next(
-                (&sys->filter->entities.entities_iterator)->enumerable);
-        }
+    FOREACH(DtEntity, e, &sys->filter->entities.entities_iterator, {
+        Sprite* sprite = dt_ecs_pool_get(sys->sprites, e);
+        DtTransform2D* transform = dt_ecs_pool_get(sys->transforms, e);
+        draw_sprite_entity(sprite, transform);
     });
 }
 

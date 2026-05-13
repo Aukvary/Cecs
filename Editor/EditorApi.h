@@ -39,15 +39,12 @@ typedef struct {
 } DtEMessage;
 
 typedef struct {
-    // general
     DtEnvironment* (*environment_instance)(void);
 
-    // logs
     void (*log)(const char*, ...);
     void (*warn)(const char*, ...);
     void (*error)(const char*, ...);
 
-    // type parsing
     void (*add_inspector_type)(const char* type, bool (*handle)(const char* name, void* data));
     void (*add_parser_json_to_type)(const char* type, TypeParser parser);
     void (*link_parser_json_to_type)(const char* type, const char* base_type);
