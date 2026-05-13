@@ -289,6 +289,7 @@ static void dt_scene_parse_entities(cJSON* entities, DtScene* scene) {
                 const char* name = cJSON_GetStringValue(cJSON_GetObjectItem(component, "name"));
                 const cJSON* values = cJSON_GetObjectItem(component, "values");
                 const DtComponentData* data = dt_component_get_data_by_name(name);
+                if (data == NULL) continue;
                 void* instance = DT_STACK_ALLOC(data->component_size);
 
                 cJSON* value = NULL;

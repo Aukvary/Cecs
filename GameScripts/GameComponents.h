@@ -15,7 +15,7 @@ void on_change_field_test(DtEcsPool* data, DtEntity entity);
     X(Color, color, name)                                                                          \
     X(Rectangle, source, name)                                                                     \
     X(bool, horizontal_flip, name)                                                                 \
-    X(bool, vertical_flip, name, DTE_ON_FIELD_CHANGE(on_change_field_test))
+    X(bool, vertical_flip, name)
 DT_DEFINE_COMPONENT(Sprite, SPRITE)
 
 #define COLLIDER_GRID(X, name)                                                                     \
